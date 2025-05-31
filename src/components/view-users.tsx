@@ -1,6 +1,7 @@
 "use client";
 
 import { trpc } from "@/app/_trpc/client";
+import { Button } from "./ui/button";
 
 export const ViewUsers = () => {
   const { data: users } = trpc.users.getUsers.useQuery();
@@ -10,9 +11,9 @@ export const ViewUsers = () => {
         <div key={user.id}>
           <p>{user.fullname}</p>
           <p>{user.email}</p>
-          <p>{user.userName}</p>
         </div>
       ))}
+      <Button variant="default">Hallo</Button>
     </div>
   );
 };
