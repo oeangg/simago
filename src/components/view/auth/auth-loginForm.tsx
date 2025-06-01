@@ -32,7 +32,7 @@ export const LoginForm = () => {
       onSuccess: (data) => {
         toast.success(data.message);
         reset();
-        router.push("/");
+        router.push("/dashboard");
       },
       onError: (error) => {
         toast.error(error.message);
