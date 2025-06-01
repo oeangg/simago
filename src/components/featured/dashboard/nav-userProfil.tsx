@@ -19,15 +19,18 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-export function NavUserProfil({
-  user,
-}: {
-  user: {
-    name: string;
-    email: string;
-    avatar: string;
-  };
-}) {
+type User = {
+  name: string;
+  email: string;
+  avatar: string;
+};
+
+interface NavUserProfilProps {
+  onCLickLogout: () => void;
+  user: User;
+}
+
+export function NavUserProfil({ onCLickLogout, user }: NavUserProfilProps) {
   const { isMobile } = useSidebar();
 
   return (
@@ -81,7 +84,7 @@ export function NavUserProfil({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={onCLickLogout}>
               <LogOut />
               Log out
             </DropdownMenuItem>

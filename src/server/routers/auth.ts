@@ -116,7 +116,7 @@ export const authLoginRouter = router({
       });
 
       const payload = {
-        sessionId: session,
+        sessionId: session.id,
         role: findUser.role,
         userId: findUser.id,
       };
@@ -140,5 +140,32 @@ export const authLoginRouter = router({
       });
 
       return { message: `${findUser.fullname}, Selamat datang kembali!` };
+    }),
+});
+
+export const AuthLogoutRouter = router({
+  authLogout: publicProcedure
+    .input(
+      z.object({
+        sessionId: z.string(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      try {
+        await db.session.delete({
+          where: {
+            id: input.sessionId,
+          },
+        });
+
+        (await cookies()).delete("__AingMaung");
+
+        return { message: `Logout Berhasil!` };
+      } catch {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "Logout tidak berhasil",
+        });
+      }
     }),
 });

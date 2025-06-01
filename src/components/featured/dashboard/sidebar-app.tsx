@@ -1,5 +1,8 @@
+"use client";
+
 import * as React from "react";
 import { ChevronRight, Truck } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import {
   Collapsible,
@@ -31,6 +34,8 @@ import {
 import Link from "next/link";
 
 import { NavUserProfil } from "./nav-userProfil";
+import { trpc } from "@/app/_trpc/client";
+import { toast } from "sonner";
 
 // This is sample data.
 export const data = {
@@ -167,7 +172,30 @@ export const data = {
   ],
 };
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  sessionId: string | undefined;
+}
+
+export function AppSidebar({ sessionId, ...props }: AppSidebarProps) {
+  const router = useRouter();
+
+  const { mutate: LogoutUser } = trpc.Logout.authLogout.useMutation({
+    onSuccess: () => {
+      toast.success("Logout berhasil");
+      router.push("/login");
+    },
+
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  console.log(`SesionId di  Sidebar : ${sessionId}`);
+  const HandleLogout = () => {
+    if (!sessionId) return;
+
+    LogoutUser({ sessionId: sessionId });
+  };
   return (
     <Sidebar {...props} collapsible="icon">
       <SidebarHeader className="flex flex-row gap-2">
@@ -225,7 +253,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
       <SidebarRail />
       <SidebarFooter>
-        <NavUserProfil user={data.user} />
+        <NavUserProfil user={data.user} onCLickLogout={HandleLogout} />
       </SidebarFooter>
     </Sidebar>
   );
