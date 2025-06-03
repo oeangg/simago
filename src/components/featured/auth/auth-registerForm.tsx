@@ -19,7 +19,7 @@ import {
   AuthRegisterSchema,
 } from "@/schemas/auth-zodSchema";
 import { useForm } from "react-hook-form";
-import { trpc } from "@/app/_trpc/client";
+import { trpc } from "@/app/_trpcClient/client";
 import { toast } from "sonner";
 
 export const RegisterForm = () => {
@@ -36,7 +36,7 @@ export const RegisterForm = () => {
   const { handleSubmit, control, reset } = form;
 
   const { mutate: authCreateAccount, isPending: isPendingRegister } =
-    trpc.Register.authRegister.useMutation({
+    trpc.Auth.Register.useMutation({
       onSuccess: (data) => {
         toast.success(data.message);
         reset();

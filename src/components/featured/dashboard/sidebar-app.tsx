@@ -34,8 +34,9 @@ import {
 import Link from "next/link";
 
 import { NavUserProfil } from "./nav-userProfil";
-import { trpc } from "@/app/_trpc/client";
+import { trpc } from "@/app/_trpcClient/client";
 import { toast } from "sonner";
+import { Payload } from "@/app/dashboard/layout";
 
 // This is sample data.
 export const data = {
@@ -173,13 +174,13 @@ export const data = {
 };
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
-  sessionId: string | undefined;
+  payload: Payload;
 }
 
-export function AppSidebar({ sessionId, ...props }: AppSidebarProps) {
+export function AppSidebar({ payload, ...props }: AppSidebarProps) {
   const router = useRouter();
 
-  const { mutate: LogoutUser } = trpc.Logout.authLogout.useMutation({
+  const { mutate: LogoutUser } = trpc.Auth.Logout.useMutation({
     onSuccess: () => {
       toast.success("Logout berhasil");
       router.push("/login");
@@ -190,11 +191,11 @@ export function AppSidebar({ sessionId, ...props }: AppSidebarProps) {
     },
   });
 
-  console.log(`SesionId di  Sidebar : ${sessionId}`);
+  console.log(`SesionId di  Sidebar : ${payload.sessionId}`);
   const HandleLogout = () => {
-    if (!sessionId) return;
+    if (!payload.sessionId) return;
 
-    LogoutUser({ sessionId: sessionId });
+    LogoutUser({ sessionId: payload.sessionId });
   };
   return (
     <Sidebar {...props} collapsible="icon">
@@ -253,7 +254,7 @@ export function AppSidebar({ sessionId, ...props }: AppSidebarProps) {
       </SidebarContent>
       <SidebarRail />
       <SidebarFooter>
-        <NavUserProfil user={data.user} onCLickLogout={HandleLogout} />
+        <NavUserProfil user={payload} onCLickLogout={HandleLogout} />
       </SidebarFooter>
     </Sidebar>
   );

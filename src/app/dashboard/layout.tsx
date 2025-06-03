@@ -11,6 +11,12 @@ interface PararelProps {
   children: ReactNode;
 }
 
+export type Payload = {
+  sessionId: string;
+  role: string;
+  userId: string;
+};
+
 export default async function Layout({ children }: PararelProps) {
   const token = (await cookies()).get("__AingMaung")?.value;
 
@@ -36,7 +42,7 @@ export default async function Layout({ children }: PararelProps) {
 
   return (
     <SidebarProvider>
-      <AppSidebar sessionId={payload.sessionId as string | undefined} />
+      <AppSidebar payload={(payload as Payload) || undefined} />
       <main className="w-full">
         <div className="flex h-16 w-full items-center justify-between border-b px-10">
           <div className="flex flex-row items-center gap-2">

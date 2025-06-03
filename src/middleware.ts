@@ -9,7 +9,7 @@ export async function middleware(req: NextRequest) {
 
   //protected jika user sudah login & ingin masuk ke halaman login/register
 
-  if (pathname === "/login") {
+  if (pathname === "/login" || pathname === "/") {
     return NextResponse.redirect(new URL("/auth/login", req.url));
   }
   if (pathname === "/register") {
@@ -36,5 +36,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/auth/:path*", "/dashboard/:path*", "/login", "/register"],
+  matcher: ["/", "/login", "/register", "/auth/:path*", "/dashboard/:path*"],
 };

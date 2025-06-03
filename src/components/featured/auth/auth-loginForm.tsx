@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AuthLoginTypeSchema, AuthLoginSchema } from "@/schemas/auth-zodSchema";
 import { CardAuthWrapper } from "./auth-wrapper";
-import { trpc } from "@/app/_trpc/client";
+import { trpc } from "@/app/_trpcClient/client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -28,7 +28,7 @@ export const LoginForm = () => {
   const router = useRouter();
 
   const { mutate: authLoginAccount, isPending: isPendingLogin } =
-    trpc.Login.authLogin.useMutation({
+    trpc.Auth.Login.useMutation({
       onSuccess: (data) => {
         toast.success(data.message);
         reset();

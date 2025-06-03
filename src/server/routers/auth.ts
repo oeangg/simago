@@ -1,14 +1,13 @@
 import { AuthLoginSchema } from "@/schemas/auth-zodSchema";
 import { publicProcedure, router } from "../trpc";
-import { db } from "@/lib/prisma";
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcrypt";
 import { z } from "zod";
 import { SignJWT } from "jose";
 import { cookies } from "next/headers";
 
-export const authRegisterRouter = router({
-  authRegister: publicProcedure
+export const authRouter = router({
+  Register: publicProcedure
     .input(
       z.object({
         fullname: z.string().min(5),
@@ -20,8 +19,10 @@ export const authRegisterRouter = router({
           .regex(/(?=.*?[0-9])/),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       // cek apakah ada email sama
+
+      const { db } = ctx;
       const findEmail = await db.user.findUnique({
         where: {
           email: input.email,
@@ -54,15 +55,13 @@ export const authRegisterRouter = router({
         });
       }
     }),
-});
 
-const JWT_SECRET = process.env.JWT_SECRET;
-
-export const authLoginRouter = router({
-  authLogin: publicProcedure
+  Login: publicProcedure
     .input(AuthLoginSchema)
-    .mutation(async ({ input }) => {
-      const JWTSECRET = new TextEncoder().encode(JWT_SECRET);
+    .mutation(async ({ ctx, input }) => {
+      const JWTSECRET = new TextEncoder().encode(process.env.JWT_SECRET);
+
+      const { db } = ctx;
 
       //cek email ada dan user active
       const findUser = await db.user.findFirst({
@@ -141,16 +140,15 @@ export const authLoginRouter = router({
 
       return { message: `${findUser.fullname}, Selamat datang kembali!` };
     }),
-});
 
-export const AuthLogoutRouter = router({
-  authLogout: publicProcedure
+  Logout: publicProcedure
     .input(
       z.object({
         sessionId: z.string(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      const { db } = ctx;
       try {
         await db.session.delete({
           where: {

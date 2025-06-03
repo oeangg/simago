@@ -5,6 +5,16 @@ import React, { useState } from "react";
 
 import { trpc } from "./client";
 
+function getUrl() {
+  const base = (() => {
+    if (typeof window !== "undefined") return "";
+    if (process.env.PRODUCTION_URL)
+      return `https://${process.env.PRODUCTION_ULR}`;
+    return "http://localhost:3000/";
+  })();
+  return `${base}/api/trpc`;
+}
+
 export default function Provider({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({}));
   const [trpcClient] = useState(() =>
@@ -12,7 +22,7 @@ export default function Provider({ children }: { children: React.ReactNode }) {
       links: [
         httpBatchLink({
           // url: `${process.env.NEXT_PUBLIC_APP_URL}/api/trpc`,
-          url: "/api/trpc",
+          url: getUrl(),
         }),
       ],
     })
