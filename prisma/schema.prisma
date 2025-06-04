@@ -17,6 +17,7 @@ datasource db {
 
 model User {
   id String @id @default(cuid())
+  username String @unique
   fullname String
   email String @unique
   password String
@@ -41,4 +42,5 @@ enum Role {
   SUPERVISOR
   MANAGER
   ADMIN
+  SUPER_ADMIN
 }
