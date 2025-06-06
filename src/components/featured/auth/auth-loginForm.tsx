@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AuthLoginTypeSchema, AuthLoginSchema } from "@/schemas/auth-zodSchema";
+import { AuthLoginTypeSchema, AuthLoginSchema } from "@/schemas/auth-schema";
 import { CardAuthWrapper } from "./auth-wrapper";
 import { trpc } from "@/app/_trpcClient/client";
 import { toast } from "sonner";
@@ -21,7 +21,7 @@ import { useRouter } from "next/navigation";
 export const LoginForm = () => {
   const form = useForm<AuthLoginTypeSchema>({
     resolver: zodResolver(AuthLoginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { identifier: "", password: "" },
   });
 
   const { control, handleSubmit, reset } = form;
@@ -41,7 +41,7 @@ export const LoginForm = () => {
 
   const HandleSubmitLogin = (data: AuthLoginTypeSchema) => {
     authLoginAccount({
-      email: data.email,
+      identifier: data.identifier,
       password: data.password,
     });
   };
@@ -60,18 +60,18 @@ export const LoginForm = () => {
             control={control}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel>Username/Email</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
-                    type="email"
-                    placeholder="Input your email"
+                    type="text"
+                    placeholder="Input your Username/email"
                   />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
-            name="email"
+            name="identifier"
             // render=
           />
           <FormField

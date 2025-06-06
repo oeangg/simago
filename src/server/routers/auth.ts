@@ -1,38 +1,37 @@
-import { AuthLoginSchema } from "@/schemas/auth-zodSchema";
+import { AuthLoginSchema, AuthRegisterSchema } from "@/schemas/auth-schema";
 import { publicProcedure, router } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcrypt";
 import { z } from "zod";
 import { SignJWT } from "jose";
 import { cookies } from "next/headers";
+import { Payload } from "@/types/payload";
 
 export const authRouter = router({
   Register: publicProcedure
-    .input(
-      z.object({
-        fullname: z.string().min(5),
-        email: z.string().email(),
-        password: z
-          .string()
-          .min(8)
-          .regex(/(?=.*?[A-Z])/)
-          .regex(/(?=.*?[0-9])/),
-      })
-    )
+    .input(AuthRegisterSchema)
     .mutation(async ({ input, ctx }) => {
       // cek apakah ada email sama
 
       const { db } = ctx;
-      const findEmail = await db.user.findUnique({
+
+      const userIsExist = await db.user.findFirst({
         where: {
-          email: input.email,
+          OR: [
+            {
+              username: input.username,
+            },
+            {
+              email: input.username,
+            },
+          ],
         },
       });
 
-      if (findEmail) {
+      if (userIsExist) {
         throw new TRPCError({
           code: "CONFLICT",
-          message: "Email sudah ada, isikan yang lain!",
+          message: "Username/Email sudah ada, isikan yang lain!",
         });
       }
 
@@ -42,6 +41,7 @@ export const authRouter = router({
       try {
         await db.user.create({
           data: {
+            username: input.username,
             email: input.email,
             password: hashPassword,
             fullname: input.fullname,
@@ -66,10 +66,19 @@ export const authRouter = router({
       //cek email ada dan user active
       const findUser = await db.user.findFirst({
         where: {
-          AND: {
-            email: input.email,
-            isActive: true,
-          },
+          AND: [
+            { isActive: true },
+            {
+              OR: [
+                {
+                  username: input.identifier,
+                },
+                {
+                  email: input.identifier,
+                },
+              ],
+            },
+          ],
         },
       });
 
@@ -92,7 +101,7 @@ export const authRouter = router({
         });
       }
 
-      //cek session
+      //cek session jika active delete
       const isSessionActive = await db.session.findUnique({
         where: {
           userId: findUser.id,
@@ -108,19 +117,21 @@ export const authRouter = router({
       }
 
       // create session jika tidak ada sessiin aktif
-      const session = await db.session.create({
+      const createSession = await db.session.create({
         data: {
           userId: findUser.id,
         },
       });
 
-      const payload = {
-        sessionId: session.id,
+      // return { message: `${createSession.userId}, Selamat datang kembali!` };
+
+      const payload: Payload = {
+        sessionId: createSession.id,
         role: findUser.role,
         userId: findUser.id,
       };
 
-      // create jwt token u cookie
+      // // create jwt token u cookie
       const token = await new SignJWT(payload)
         .setProtectedHeader({
           alg: "HS256",
@@ -137,6 +148,8 @@ export const authRouter = router({
         maxAge: 60 * 60 * 24, //1day
         sameSite: "lax",
       });
+
+      console.log(token);
 
       return { message: `${findUser.fullname}, Selamat datang kembali!` };
     }),

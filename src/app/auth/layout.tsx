@@ -12,7 +12,7 @@ export default function Layout({
       <div className="hidden lg:flex w-full h-full relative ">
         <Image src="/delivery.jpg" alt="image bg" fill />
       </div>
-      <div className="flex justify-center mx-auto items-center min-w-96">
+      <div className="flex justify-center mx-auto items-center max-w-md w-full">
         {children}
       </div>
     </section>

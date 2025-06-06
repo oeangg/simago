@@ -17,29 +17,31 @@ import { CardAuthWrapper } from "./auth-wrapper";
 import {
   AuthRegisterTypeSchema,
   AuthRegisterSchema,
-} from "@/schemas/auth-zodSchema";
+} from "@/schemas/auth-schema";
 import { useForm } from "react-hook-form";
 import { trpc } from "@/app/_trpcClient/client";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export const RegisterForm = () => {
   const form = useForm<AuthRegisterTypeSchema>({
     resolver: zodResolver(AuthRegisterSchema),
     defaultValues: {
+      username: "",
       email: "",
       fullname: "",
       password: "",
-      confirmPassword: "",
     },
   });
 
   const { handleSubmit, control, reset } = form;
-
+  const router = useRouter();
   const { mutate: authCreateAccount, isPending: isPendingRegister } =
     trpc.Auth.Register.useMutation({
       onSuccess: (data) => {
         toast.success(data.message);
         reset();
+        router.push("/auth/login");
       },
 
       onError: (error) => {
@@ -51,6 +53,7 @@ export const RegisterForm = () => {
     data: Omit<AuthRegisterTypeSchema, "confirmPassword">
   ) => {
     authCreateAccount({
+      username: data.username,
       fullname: data.fullname,
       email: data.email,
       password: data.password,
@@ -68,8 +71,26 @@ export const RegisterForm = () => {
       <Form {...form}>
         <form
           onSubmit={handleSubmit(HandleRegisterSubmit)}
-          className="space-y-4"
+          className="space-y-3"
         >
+          <FormField
+            control={control}
+            name="username"
+            render={({ field }) => (
+              <FormItem className="flex flex-col space-y-1">
+                <FormLabel>Username</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    type="text"
+                    placeholder="Input your username"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={control}
             name="fullname"
@@ -97,7 +118,7 @@ export const RegisterForm = () => {
                   <Input
                     {...field}
                     type="email"
-                    placeholder="Input your email"
+                    placeholder="Example : email@gmail.com"
                   />
                 </FormControl>
                 <FormMessage />
@@ -115,23 +136,6 @@ export const RegisterForm = () => {
                     {...field}
                     type="password"
                     placeholder="Input your password"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={control}
-            name="confirmPassword"
-            render={({ field }) => (
-              <FormItem className="flex flex-col space-y-1">
-                <FormLabel>Confirm Password</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    type="password"
-                    placeholder="Input your confirm password"
                   />
                 </FormControl>
                 <FormMessage />

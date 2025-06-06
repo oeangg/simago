@@ -1,10 +1,5 @@
+import { Payload } from "@/types/payload";
 import { jwtVerify } from "jose";
-
-export type TSession = {
-  sessionId: string;
-  role: string;
-  userId: string;
-} | null;
 
 export async function getSession(req: Request) {
   const JWTSECRET = new TextEncoder().encode(process.env.JWT_SECRET);
@@ -19,7 +14,7 @@ export async function getSession(req: Request) {
 
     const { payload } = await jwtVerify(token, JWTSECRET);
     // return payload as { sessionId: string; role: string; userId: string };
-    return payload as TSession;
+    return (payload as Payload) || null;
   } catch {
     return null;
   }
