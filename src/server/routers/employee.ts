@@ -6,13 +6,19 @@ import {
 } from "@/schemas/employee-schema";
 import { TRPCError } from "@trpc/server";
 
-function isPrismaError(error: unknown): error is { code: string } {
-  return typeof error === "object" && error !== null && "code" in error;
-}
-
 export const employeeRouter = router({
   getAllEmployee: protectedProcedure.query(async ({ ctx }) => {
     const employees = await ctx.db.employee.findMany({
+      include: {
+        employment: {
+          include: {
+            position: true,
+          },
+          orderBy: {
+            startDate: "desc",
+          },
+        },
+      },
       orderBy: {
         name: "asc",
       },
@@ -29,8 +35,16 @@ export const employeeRouter = router({
     )
     .query(async ({ ctx, input }) => {
       const employeeById = await ctx.db.employee.findFirst({
-        where: {
-          id: input.id,
+        where: { id: input.id },
+        include: {
+          employment: {
+            include: {
+              position: true,
+            },
+            orderBy: {
+              startDate: "desc",
+            },
+          },
         },
       });
 
@@ -41,26 +55,58 @@ export const employeeRouter = router({
     .input(EmployeeFormSchema)
     .mutation(async ({ ctx, input }) => {
       try {
-        const employee = await ctx.db.employee.create({
-          data: input,
+        const existingEmployee = await ctx.db.employee.findUnique({
+          where: { nik: input.nik },
+        });
+
+        if (existingEmployee) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "NIK sudah terdaftar!",
+          });
+        }
+
+        const result = await ctx.db.$transaction(async (prisma) => {
+          // Create employee
+          const employee = await prisma.employee.create({
+            data: {
+              nik: input.nik,
+              name: input.name,
+              isActive: input.isActive,
+              gender: input.gender,
+              address: input.address,
+              city: input.city,
+              zipcode: input.zipcode,
+              photo: input.photo || null,
+              telNumber: input.telNumber || null,
+              phoneNumber: input.phoneNumber,
+            },
+          });
+
+          if (input.employment && input.employment.length > 0) {
+            await prisma.employment.createMany({
+              data: input.employment.map((emp) => ({
+                startDate: emp.startDate,
+                endDate: emp.endDate || null,
+                positionId: emp.positionId,
+                employeeId: employee.id,
+              })),
+            });
+          }
+
+          return employee;
         });
 
         return {
-          data: employee,
-          message: "Berhasil menambah data karyawan!",
+          message: "Data karyawan berhasil ditambahkan",
+          data: result,
         };
       } catch (error) {
-        if (isPrismaError(error) && error.code === "P2002") {
-          throw new TRPCError({
-            code: "CONFLICT",
-            message: "Data sudah ada! NIK atau informasi lain sudah terdaftar.",
-          });
-        } else {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Gagal menambah data karyawan!",
-          });
-        }
+        if (error instanceof TRPCError) throw error;
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Gagal menambahkan karyawan",
+        });
       }
     }),
 
@@ -68,30 +114,82 @@ export const employeeRouter = router({
     .input(EmployeeFormSchemaUpdate)
     .mutation(async ({ ctx, input }) => {
       try {
-        const { id, ...data } = input;
-        const employee = await ctx.db.employee.update({
-          where: {
-            id,
-          },
-          data,
+        // Check if employee exists
+        const existingEmployee = await ctx.db.employee.findUnique({
+          where: { id: input.id },
+        });
+
+        if (!existingEmployee) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Karyawan tidak ditemukan",
+          });
+        }
+
+        // Check if NIK is being changed and already exists
+        if (input.nik !== existingEmployee.nik) {
+          const nikExists = await ctx.db.employee.findUnique({
+            where: { nik: input.nik },
+          });
+
+          if (nikExists) {
+            throw new TRPCError({
+              code: "CONFLICT",
+              message: "NIK sudah terdaftar",
+            });
+          }
+        }
+
+        // Update employee with employment data using transaction
+        const result = await ctx.db.$transaction(async (prisma) => {
+          // Update employee data
+          const employee = await prisma.employee.update({
+            where: { id: input.id },
+            data: {
+              nik: input.nik,
+              name: input.name,
+              isActive: input.isActive,
+              gender: input.gender,
+              address: input.address,
+              city: input.city,
+              zipcode: input.zipcode,
+              photo: input.photo || null,
+              telNumber: input.telNumber || null,
+              phoneNumber: input.phoneNumber,
+            },
+          });
+
+          // Delete existing employment records
+          await prisma.employment.deleteMany({
+            where: { employeeId: input.id },
+          });
+
+          // Create new employment records if provided
+          if (input.employment && input.employment.length > 0) {
+            await prisma.employment.createMany({
+              data: input.employment.map((emp) => ({
+                startDate: emp.startDate,
+                endDate: emp.endDate || null,
+                positionId: emp.positionId,
+                employeeId: employee.id,
+              })),
+            });
+          }
+
+          return employee;
         });
 
         return {
-          data: employee,
-          message: "Berhasil mengupdate data karyawan!",
+          success: true,
+          message: "Karyawan berhasil diupdate",
+          data: result,
         };
       } catch (error) {
-        if (isPrismaError(error) && error.code === "P2002") {
-          throw new TRPCError({
-            code: "CONFLICT",
-            message: "Data sudah ada! NIK atau informasi lain sudah terdaftar.",
-          });
-        } else {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Gagal mengupdate data karyawan!",
-          });
-        }
+        if (error instanceof TRPCError) throw error;
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Gagal mengupdate karyawan",
+        });
       }
     }),
 
@@ -99,14 +197,31 @@ export const employeeRouter = router({
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
       try {
+        const employee = await ctx.db.employee.findUnique({
+          where: { id: input.id },
+        });
+
+        if (!employee) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Karyawan tidak ditemukan",
+          });
+        }
+
+        // Delete employee (employment records will be deleted by cascade)
         await ctx.db.employee.delete({
           where: { id: input.id },
         });
-        return { message: "Berhasil menghapus data karyawan!" };
-      } catch {
+
+        return {
+          success: true,
+          message: "Karyawan berhasil dihapus",
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Gagal menghapus data karyawan",
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Gagal menghapus karyawan",
         });
       }
     }),

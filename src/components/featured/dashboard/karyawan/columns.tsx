@@ -12,6 +12,7 @@ import {
   Filter,
   CheckCircle,
   XCircle,
+  Briefcase,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -63,6 +64,9 @@ export interface IEmployeeColumnProps {
   name: string;
   gender: Gender;
   phoneNumber: string;
+  employment: {
+    position: string;
+  };
 }
 
 const GenderOpt = [
@@ -138,6 +142,35 @@ export const baseColumns: ColumnDef<IEmployeeColumnProps>[] = [
       );
     },
   },
+
+  {
+    accessorKey: "employment.position",
+    header: () => (
+      <div className="flex items-center space-x-2 font-semibold text-gray-700">
+        <Briefcase className="h-4 w-4" />
+        <span>Jabatan</span>
+      </div>
+    ),
+    cell: ({ row }) => {
+      if (row.original.id.startsWith("skeleton-")) {
+        return <SkeletonCell width="w-32" />;
+      }
+      return (
+        <div className="flex items-center space-x-2">
+          <div className="h-6 w-6 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-md flex items-center justify-center">
+            <Briefcase className="h-3 w-3 text-white" />
+          </div>
+          <Badge
+            variant="outline"
+            className="bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 px-3 py-1 font-medium"
+          >
+            {row.original.employment?.position || "Tidak Ada Jabatan"}
+          </Badge>
+        </div>
+      );
+    },
+  },
+
   {
     accessorKey: "gender",
     header: ({ table, column }) => {
@@ -255,7 +288,7 @@ export const baseColumns: ColumnDef<IEmployeeColumnProps>[] = [
             value={filterValue === undefined ? "All" : String(filterValue)}
             onValueChange={handleFilterChange}
           >
-            <SelectTrigger className="w-[180px] border-2 border-slate-200 hover:border-blue-400 transition-colors duration-300 rounded-xl">
+            <SelectTrigger className="w-[160px] border-2 border-slate-200 hover:border-blue-400 transition-colors duration-300 rounded-xl">
               <SelectValue placeholder="🔄 Status Aktif" />
             </SelectTrigger>
             <SelectContent className="rounded-xl border-2 shadow-xl">
@@ -296,7 +329,7 @@ export const baseColumns: ColumnDef<IEmployeeColumnProps>[] = [
         <Badge
           variant={status ? "default" : "destructive"}
           className={cn(
-            "flex items-center space-x-1 px-3 py-1 font-medium",
+            "flex items-center w-[190px] space-x-1 px-3 py-1 font-medium",
             status
               ? "bg-green-100 text-green-800 border-green-200 hover:bg-green-200"
               : "bg-red-100 text-red-800 border-red-200 hover:bg-red-200"

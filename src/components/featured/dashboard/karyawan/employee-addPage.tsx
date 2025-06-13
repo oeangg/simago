@@ -18,10 +18,10 @@ export default function EmployeeAddPage() {
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="container mx-auto  space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+        <div className="flex  items-center  space-x-4">
           <Button variant="outline" size="sm" onClick={handleCancel}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Kembali

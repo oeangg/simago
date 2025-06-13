@@ -32,7 +32,7 @@ export const EmployeeEditPage = ({ id }: EmployeeEditPageProps) => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-6">
+      <div className="container mx-auto ">
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto" />
@@ -48,7 +48,7 @@ export const EmployeeEditPage = ({ id }: EmployeeEditPageProps) => {
   // Error state
   if (error) {
     return (
-      <div className="container mx-auto py-6">
+      <div className="container mx-auto ">
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
@@ -69,7 +69,7 @@ export const EmployeeEditPage = ({ id }: EmployeeEditPageProps) => {
   // Employee not found
   if (!employee) {
     return (
-      <div className="container mx-auto py-6">
+      <div className="container mx-auto ">
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
@@ -85,7 +85,7 @@ export const EmployeeEditPage = ({ id }: EmployeeEditPageProps) => {
     );
   }
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="container mx-auto  space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">

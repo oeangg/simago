@@ -16,15 +16,18 @@ const generateSkeletonData = (count: number): IEmployeeColumnProps[] => {
     name: "nama",
     gender: Gender.MALE,
     phoneNumber: "0812",
+    employment: {
+      position: "Manager",
+    },
   }));
 };
 
 export const UpdateDataTable = () => {
-  const [data, setData] = useState<IEmployeeColumnProps[]>([]);
+  const [dataEmployee, setDataEmployee] = useState<IEmployeeColumnProps[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const {
-    data: dataEmployees,
+    data: dataEmployeesTrpc,
     isLoading: isLoadingKaryawan,
     refetch: refetchDataKaryawan,
   } = trpc.Employee.getAllEmployee.useQuery();
@@ -53,8 +56,8 @@ export const UpdateDataTable = () => {
   };
 
   useEffect(() => {
-    if (dataEmployees) {
-      const Employees: IEmployeeColumnProps[] = dataEmployees.map(
+    if (dataEmployeesTrpc) {
+      const Employees: IEmployeeColumnProps[] = dataEmployeesTrpc.map(
         (employee) => ({
           id: employee.id,
           isActive: employee.isActive,
@@ -62,14 +65,24 @@ export const UpdateDataTable = () => {
           name: employee.name,
           gender: employee.gender,
           phoneNumber: employee.phoneNumber,
+          employment: {
+            position:
+              employee.employment.length > 0
+                ? employee.employment[0].position.name
+                : "NA#",
+          },
         })
       );
-      setData(Employees);
+      setDataEmployee(Employees);
     }
-  }, [dataEmployees]);
+  }, [dataEmployeesTrpc]);
 
-  const displayData = isLoadingKaryawan ? generateSkeletonData(4) : data;
+  const displayData = isLoadingKaryawan
+    ? generateSkeletonData(4)
+    : dataEmployee;
   const columns = [...baseColumns, actionColumn];
+
+  console.log(displayData);
 
   return (
     <DataTable
