@@ -1,10 +1,12 @@
 import { authRouter } from "./routers/auth";
-import { usersRouter } from "./routers/users";
+import { employeeRouter } from "./routers/employee";
+import { userRouter } from "./routers/user";
 import { router } from "./trpc";
 
 export const appRouter = router({
-  users: usersRouter,
+  User: userRouter,
   Auth: authRouter,
+  Employee: employeeRouter,
 });
 
 export type AppRouter = typeof appRouter;

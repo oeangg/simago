@@ -1,11 +1,11 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
-import { AppSidebar } from "@/components/featured/dashboard/sidebar-app";
+import { AppSidebar } from "@/components/featured/dashboard/dash-sidebarApp";
 import { ReactNode } from "react";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 import { toast } from "sonner";
+import { DashboardHeader } from "@/components/featured/dashboard/dash-header";
 
 interface PararelProps {
   children: ReactNode;
@@ -37,9 +37,6 @@ export default async function Layout({ children }: PararelProps) {
     new TextEncoder().encode(JWTSECRET)
   );
 
-  console.log(`TOKEN : ${token}`);
-  console.log("PAYLOAD :", payload);
-
   return (
     <SidebarProvider>
       <AppSidebar payload={(payload as Payload) || undefined} />
@@ -48,9 +45,10 @@ export default async function Layout({ children }: PararelProps) {
           <div className="flex flex-row items-center gap-2">
             <SidebarTrigger />
           </div>
-          <Avatar className="h-12 w-12 border p-1">
+          <DashboardHeader payload={payload as Payload} />
+          {/* <Avatar className="h-12 w-12 border p-1">
             <AvatarImage src="/avatar1.png" alt="Avatar" />
-          </Avatar>
+          </Avatar> */}
         </div>
         <div className="px-10 py-10">{children}</div>
       </main>

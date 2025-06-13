@@ -15,6 +15,38 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+model Employee {
+  id String @id @default(cuid())
+  nik String @unique
+  name String
+  isActive Boolean @default(false)
+  gender Gender
+  address String
+  city String
+  zipcode String
+  photo String?
+  telNumber String?
+  phoneNumber String
+  employment Employment[]  
+}
+
+model Employment {
+  id String @id @default(cuid())
+  startDate DateTime
+  endDate DateTime? 
+  positionId String
+  position Position @relation(fields: [positionId], references: [id])
+  employeeId String
+  employees Employee @relation(fields: [employeeId], references: [id]) 
+}
+
+model Session {
+  id String @id @default(cuid())
+  userId String @unique
+  user User @relation(fields: [userId], references: [id])
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+}
 model User {
   id String @id @default(cuid())
   username String @unique
@@ -28,13 +60,18 @@ model User {
   updateAt DateTime @updatedAt
   session Session?
 }
-
-model Session {
+model Position {
   id String @id @default(cuid())
-  userId String @unique
-  user User @relation(fields: [userId], references: [id])
-  createAt DateTime @default(now())
-  updateAt DateTime @updatedAt
+  name String
+  description String?
+  employments Employment[]
+}
+
+
+//enum
+enum Gender {
+  MALE
+  FEMALE
 }
 
 enum Role {

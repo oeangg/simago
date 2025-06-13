@@ -47,7 +47,10 @@ export const authRouter = router({
             fullname: input.fullname,
           },
         });
-        return { message: "Register user berhasil, silahkan login!" };
+        return {
+          message:
+            "Register user berhasil, silahkan hubungi admin untuk aktivasi!",
+        };
       } catch {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",

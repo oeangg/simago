@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { ChevronRight, GalleryVerticalEnd } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { ChevronRight, GalleryVerticalEnd, LogOut } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 
 import {
   Collapsible,
@@ -26,11 +26,12 @@ import {
 
 import Link from "next/link";
 
-import { NavUserProfil } from "./nav-userProfil";
 import { trpc } from "@/app/_trpcClient/client";
 import { toast } from "sonner";
 import { Payload } from "@/app/dashboard/layout";
-import { data } from "@/constants/sidebar-item";
+import { data, SidebarItem } from "@/constants/sidebar-item";
+import { useSetAtom } from "jotai";
+import { HeaderTitleAtom } from "@/lib/jotai";
 
 // This is sample data.
 
@@ -40,6 +41,8 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 
 export function AppSidebar({ payload, ...props }: AppSidebarProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const setHeaderTitle = useSetAtom(HeaderTitleAtom);
 
   const { mutate: LogoutUser } = trpc.Auth.Logout.useMutation({
     onSuccess: () => {
@@ -52,12 +55,25 @@ export function AppSidebar({ payload, ...props }: AppSidebarProps) {
     },
   });
 
-  console.log(`SesionId di  Sidebar : ${payload.sessionId}`);
   const HandleLogout = () => {
     if (!payload.sessionId) return;
 
     LogoutUser({ sessionId: payload.sessionId });
   };
+
+  const dataFilteredItem = data.sidebar.filter((item: SidebarItem) => {
+    if (item.roles && item.roles.length > 0) {
+      return item.roles.includes(payload.role);
+    }
+
+    return true;
+  });
+
+  const handleSubItemClick = (subItemTitle: string, subItemUrl: string) => {
+    setHeaderTitle(`Dashboard / ${subItemTitle}`);
+    router.push(subItemUrl);
+  };
+
   return (
     <Sidebar {...props} collapsible="icon">
       <SidebarHeader className="flex flex-row gap-2">
@@ -70,8 +86,10 @@ export function AppSidebar({ payload, ...props }: AppSidebarProps) {
               <GalleryVerticalEnd className="size-4" />
             </div>
             <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-medium">My Application</span>
-              <span className="truncate text-xs">v.2.2</span>
+              <span className="truncate tracking-wider font-medium uppercase">
+                Simago
+              </span>
+              <span className="truncate text-xs">v.0.0.1</span>
             </div>
           </SidebarMenuButton>
         </Link>
@@ -79,16 +97,30 @@ export function AppSidebar({ payload, ...props }: AppSidebarProps) {
       <SidebarContent className="gap-0">
         <SidebarGroup>
           <SidebarMenu>
-            {data.sidebar.map((item) => (
+            {dataFilteredItem.map((item) => (
               <Collapsible
                 key={item.title}
                 asChild
-                defaultOpen={item.isActive}
+                defaultOpen={
+                  item.isActive ||
+                  item.items?.some((subItem) =>
+                    pathname.startsWith(subItem.url)
+                  )
+                }
                 className="group/collapsible"
               >
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
-                    <SidebarMenuButton tooltip={item.title}>
+                    <SidebarMenuButton
+                      tooltip={item.title}
+                      className={
+                        item.items?.some((subItem) =>
+                          pathname.startsWith(subItem.url)
+                        )
+                          ? " font-medium"
+                          : ""
+                      }
+                    >
                       {item.icon && <item.icon />}
                       <span>{item.title}</span>
                       <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
@@ -99,9 +131,19 @@ export function AppSidebar({ payload, ...props }: AppSidebarProps) {
                       {item.items?.map((subItem) => (
                         <SidebarMenuSubItem key={subItem.title}>
                           <SidebarMenuSubButton asChild>
-                            <a href={subItem.url}>
+                            <Link
+                              href={subItem.url}
+                              onClick={() =>
+                                handleSubItemClick(subItem.title, subItem.url)
+                              }
+                              className={
+                                pathname.startsWith(subItem.url)
+                                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                                  : ""
+                              }
+                            >
                               <span>{subItem.title}</span>
-                            </a>
+                            </Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                       ))}
@@ -115,7 +157,14 @@ export function AppSidebar({ payload, ...props }: AppSidebarProps) {
       </SidebarContent>
       <SidebarRail />
       <SidebarFooter>
-        <NavUserProfil user={payload} onCLickLogout={HandleLogout} />
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={HandleLogout}>
+              <LogOut />
+              Log out
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
   );

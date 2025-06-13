@@ -2,26 +2,58 @@ import {
   BookOpen,
   Bot,
   Frame,
+  LucideIcon,
   Settings2,
   SquareTerminal,
   Truck,
 } from "lucide-react";
 
-export const data = {
+export interface SubSidebarItem {
+  title: string;
+  url: string;
+}
+export interface SidebarItem {
+  url?: string;
+  title: string;
+  icon?: LucideIcon;
+  isActive?: boolean;
+  items?: SubSidebarItem[];
+  roles?: string[];
+}
+
+export interface SidebarData {
+  sidebar: SidebarItem[];
+}
+
+export const data: SidebarData = {
   sidebar: [
     {
       title: "Data Master",
       icon: SquareTerminal,
       isActive: true,
       url: "#",
+      roles: ["USER", "SUPERVISOR", "MANAGER", "ADMIN", "SUPER_ADMIN"],
       items: [
         {
-          title: "Data Material",
-          url: "#",
+          title: "Daftar Customer",
+          url: "/dashboard/customer",
         },
         {
-          title: "Data Master 2",
-          url: "#",
+          title: "Daftar Material",
+          url: "/dashboard/material",
+        },
+
+        {
+          title: "Daftar Supplier",
+          url: "/dashboard/supplier",
+        },
+        {
+          title: "Daftar Karyawan",
+          url: "/dashboard/karyawan",
+        },
+        {
+          title: "Daftar Kegiatan",
+          url: "/dashboard/kegiatan",
         },
       ],
     },
@@ -29,6 +61,7 @@ export const data = {
       title: "Marketing",
       icon: Bot,
       url: "#",
+      roles: ["USER", "SUPERVISOR", "MANAGER", "ADMIN", "SUPER_ADMIN"],
       items: [
         {
           title: "Data Marketing satu",
@@ -56,6 +89,7 @@ export const data = {
       title: "Data Finance",
       icon: BookOpen,
       url: "#",
+      roles: ["USER", "SUPERVISOR", "MANAGER", "ADMIN", "SUPER_ADMIN"],
       items: [
         {
           title: "Data finance satu",
@@ -79,6 +113,7 @@ export const data = {
       title: "Data Pengiriman",
       icon: Truck,
       url: "#",
+      roles: ["USER", "SUPERVISOR", "MANAGER", "ADMIN", "SUPER_ADMIN"],
       items: [
         {
           title: "Data Pengiriman satu",
@@ -98,6 +133,7 @@ export const data = {
       title: "Laporan",
       icon: Frame,
       url: "#",
+      roles: ["MANAGER", "ADMIN", "SUPER_ADMIN"],
       items: [
         {
           title: "Laporan satu",
@@ -121,14 +157,11 @@ export const data = {
       title: "Pengaturan",
       icon: Settings2,
       url: "#",
+      roles: ["SUPER_ADMIN"],
       items: [
         {
-          title: "Pengaturan satu",
-          url: "#",
-        },
-        {
           title: "Manajemen User",
-          url: "#",
+          url: "/dashboard/manuser",
         },
       ],
     },
