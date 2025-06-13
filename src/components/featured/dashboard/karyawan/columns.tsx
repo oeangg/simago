@@ -49,6 +49,7 @@ import { Badge } from "@/components/ui/badge";
 import { useEffect, useRef, useState } from "react";
 
 declare module "@tanstack/react-table" {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface TableMeta<TData extends RowData> {
     onDeleteEmployee?: (id: string) => void;
     deletingId?: string | null;
@@ -199,7 +200,7 @@ export const baseColumns: ColumnDef<IEmployeeColumnProps>[] = [
         <Badge
           variant="secondary"
           className={cn(
-            "flex items-center space-x-1 px-3 py-1",
+            "flex items-center space-x-1 w-[185px] px-3 py-1",
             row.original.gender === "MALE"
               ? "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-300"
               : "bg-pink-100 text-pink-800 border-pink-200 hover:bg-pink-200"

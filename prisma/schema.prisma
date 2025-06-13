@@ -40,6 +40,12 @@ model Employment {
   employees Employee @relation(fields: [employeeId], references: [id]) 
 }
 
+model Position {
+  id String @id @default(cuid())
+  name String
+  employments Employment[]
+}
+
 model Session {
   id String @id @default(cuid())
   userId String @unique
@@ -59,12 +65,6 @@ model User {
   createAt DateTime @default(now())
   updateAt DateTime @updatedAt
   session Session?
-}
-model Position {
-  id String @id @default(cuid())
-  name String
-  description String?
-  employments Employment[]
 }
 
 

@@ -41,16 +41,18 @@ export default async function Layout({ children }: PararelProps) {
     <SidebarProvider>
       <AppSidebar payload={(payload as Payload) || undefined} />
       <main className="w-full">
-        <div className="flex h-16 w-full items-center justify-between border-b px-10">
+        {/* Sticky Header */}
+        <div className="sticky top-0 z-50 flex h-16 w-full items-center justify-between border-b bg-background px-10">
           <div className="flex flex-row items-center gap-2">
             <SidebarTrigger />
           </div>
           <DashboardHeader payload={payload as Payload} />
-          {/* <Avatar className="h-12 w-12 border p-1">
-            <AvatarImage src="/avatar1.png" alt="Avatar" />
-          </Avatar> */}
         </div>
-        <div className="px-10 py-10">{children}</div>
+
+        {/*  Content */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="px-10 py-10">{children}</div>
+        </div>
       </main>
     </SidebarProvider>
   );
