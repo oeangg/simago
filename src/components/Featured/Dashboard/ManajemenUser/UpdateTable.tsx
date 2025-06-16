@@ -1,9 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { baseColumn, roleColumn, statusColumn } from "./columns";
-import { DataTable } from "./data-table";
-import { IUserProps } from "./columns";
+import {
+  ManUserRoleColumn,
+  ManUserStatusColumn,
+  manUserbaseColumn,
+} from "./Columns";
+import { DataTableManUser } from "./DataTable";
+import { IUserProps } from "./Columns";
 import { toast } from "sonner";
 import { trpc } from "@/app/_trpcClient/client";
 import { Role } from "@prisma/client";
@@ -16,7 +20,7 @@ const generateSkeletonData = (count: number): IUserProps[] => {
     email: "user@email.com..",
     profilPic: null, //
     role: Role.USER, //
-    createAt: new Date(),
+    createdAt: new Date(),
     isActive: false, //
   }));
 };
@@ -41,7 +45,7 @@ export const UpdateDataTable = () => {
         email: user.email,
         profilPic: user.profilPic,
         role: user.role as Role,
-        createAt: new Date(user.createAt),
+        createdAt: new Date(user.createdAt),
         isActive: user.isActive,
       }));
       setData(Users);
@@ -100,12 +104,15 @@ export const UpdateDataTable = () => {
   };
 
   const columns = [
-    ...baseColumn,
-    roleColumn({ onUpdateRole: handleUpdateRole, editingRoleId }),
-    statusColumn({ onToggleStatus: handleToggleStatus, editingStatusId }),
+    ...manUserbaseColumn,
+    ManUserRoleColumn({ onUpdateRole: handleUpdateRole, editingRoleId }),
+    ManUserStatusColumn({
+      onToggleStatus: handleToggleStatus,
+      editingStatusId,
+    }),
   ];
 
   const displayData = isLoadingUsers ? generateSkeletonData(4) : data;
 
-  return <DataTable columns={columns} data={displayData} />;
+  return <DataTableManUser columns={columns} data={displayData} />;
 };

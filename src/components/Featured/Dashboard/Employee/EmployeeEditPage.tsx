@@ -6,13 +6,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
-import { EmployeeForm } from "./employee-form";
+import { EmployeeForm } from "./EmployeeForm";
 
-interface EmployeeEditPageProps {
+interface employeeEditPageProps {
   id: string;
 }
 
-export const EmployeeEditPage = ({ id }: EmployeeEditPageProps) => {
+export const EmployeeEditPage = ({ id }: employeeEditPageProps) => {
   const router = useRouter();
   const employeeId = id;
 

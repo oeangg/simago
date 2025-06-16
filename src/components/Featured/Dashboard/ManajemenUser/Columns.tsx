@@ -35,11 +35,11 @@ import { Role } from "@prisma/client";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export interface IUserProps extends IUser {
-  createAt: Date;
+  createdAt: Date;
   isActive: boolean;
 }
 
-type StatusColumnProps = {
+type statusColumnProps = {
   onToggleStatus?: (id: string, newStatus: boolean) => void;
   editingStatusId: string | null;
 };
@@ -94,7 +94,7 @@ type RoleColumnProps = {
   editingRoleId: string | null;
 };
 
-export const baseColumn: ColumnDef<IUserProps>[] = [
+export const manUserbaseColumn: ColumnDef<IUserProps>[] = [
   {
     accessorKey: "rowIndex",
     header: () => (
@@ -138,7 +138,8 @@ export const baseColumn: ColumnDef<IUserProps>[] = [
           </div>
         );
       }
-      const date = new Date(row.original.createAt); // Ambil nilai dari data
+      const date = new Date(row.original.createdAt); // Ambil nilai dari data
+
       // const formater = new Intl.DateTimeFormat("id-ID", {
       //   dateStyle: "medium",
       //   timeStyle: "short",
@@ -224,10 +225,10 @@ export const baseColumn: ColumnDef<IUserProps>[] = [
   },
 ];
 
-export function statusColumn({
+export function ManUserStatusColumn({
   onToggleStatus,
   editingStatusId,
-}: StatusColumnProps): ColumnDef<IUserProps> {
+}: statusColumnProps): ColumnDef<IUserProps> {
   return {
     accessorKey: "isActive",
     header: ({ table, column }) => {
@@ -357,7 +358,7 @@ export function statusColumn({
   };
 }
 
-export function roleColumn({
+export function ManUserRoleColumn({
   onUpdateRole,
   editingRoleId,
 }: RoleColumnProps): ColumnDef<IUserProps> {

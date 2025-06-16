@@ -20,24 +20,17 @@ import {
   getPaginationRowModel,
 } from "@tanstack/react-table";
 import React from "react";
-import { DataTablePagination } from "./pagination";
-import { FilterInput } from "./filter-input";
-import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { ManUserDataPagination } from "./Pagination";
+import { FilterInputManUser } from "./FilterInput";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  onDeleteEmployee?: (id: string) => void;
-  deletingId?: string | null;
 }
 
-export function DataTable<TData, TValue>({
+export function DataTableManUser<TData, TValue>({
   columns,
   data,
-  deletingId,
-  onDeleteEmployee,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -59,28 +52,15 @@ export function DataTable<TData, TValue>({
         pageSize: 6,
       },
     },
-    meta: {
-      onDeleteEmployee,
-      deletingId,
-    },
   });
 
   return (
     <div className="space-y-4">
-      <div className="  flex flex-row items-center  gap-3">
-        <div className="w-full max-w-xl">
-          <FilterInput
-            placeholder="cari berdasarkan nama..."
-            column={table.getColumn("name")}
-          />
-        </div>
-        <Button asChild>
-          <Link href="/dashboard/karyawan/add">
-            <Plus /> Karyawan
-          </Link>
-        </Button>
-      </div>
-
+      <h2>Daftar User</h2>
+      <FilterInputManUser
+        placeholder="cari berdasarkan email..."
+        column={table.getColumn("email")}
+      />
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -131,7 +111,7 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      <DataTablePagination table={table} />
+      <ManUserDataPagination table={table} />
     </div>
   );
 }

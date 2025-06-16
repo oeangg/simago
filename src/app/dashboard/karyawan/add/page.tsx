@@ -1,4 +1,4 @@
-import EmployeeAddPage from "@/components/featured/dashboard/karyawan/employee-addPage";
+import EmployeeAddPage from "@/components/Featured/Dashboard/Employee/EmployeeAddPage";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {

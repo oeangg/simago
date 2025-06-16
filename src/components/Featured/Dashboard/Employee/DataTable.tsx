@@ -20,17 +20,24 @@ import {
   getPaginationRowModel,
 } from "@tanstack/react-table";
 import React from "react";
-import { DataTablePagination } from "./pagination";
-import { FilterInput } from "./filter-input";
+import { EmployeeDataPagination } from "./Pagination";
+import { EmployeeFilterInput } from "./FilterInput";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  onDeleteEmployee?: (id: string) => void;
+  deletingId?: string | null;
 }
 
-export function DataTable<TData, TValue>({
+export function EmployeeDataTable<TData, TValue>({
   columns,
   data,
+  deletingId,
+  onDeleteEmployee,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -52,15 +59,28 @@ export function DataTable<TData, TValue>({
         pageSize: 6,
       },
     },
+    meta: {
+      onDeleteEmployee,
+      deletingId,
+    },
   });
 
   return (
     <div className="space-y-4">
-      <h2>Daftar User</h2>
-      <FilterInput
-        placeholder="cari berdasarkan email..."
-        column={table.getColumn("email")}
-      />
+      <div className="  flex flex-row items-center  gap-3">
+        <div className="w-full max-w-xl">
+          <EmployeeFilterInput
+            placeholder="cari berdasarkan nama..."
+            column={table.getColumn("name")}
+          />
+        </div>
+        <Button asChild>
+          <Link href="/dashboard/karyawan/add">
+            <Plus /> Karyawan
+          </Link>
+        </Button>
+      </div>
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -111,7 +131,7 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      <DataTablePagination table={table} />
+      <EmployeeDataPagination table={table} />
     </div>
   );
 }

@@ -1,12 +1,12 @@
 import { z } from "zod";
 
-const UsernameRegex = /^[a-zA-Z0-9_]{5,}$/;
+const userNameRegex = /^[a-zA-Z0-9_]{5,}$/;
 
-export const AuthRegisterSchema = z.object({
+export const authRegisterSchema = z.object({
   username: z
     .string()
     .regex(
-      UsernameRegex,
+      userNameRegex,
       "Username minimal 5 karakter, hanya boleh huruf, angka, atau underscore."
     ),
   fullname: z.string().min(8, "Nama harus terdiri minimal 8 karakter"),
@@ -23,16 +23,16 @@ export const AuthRegisterSchema = z.object({
     }),
 });
 
-export type AuthRegisterTypeSchema = z.infer<typeof AuthRegisterSchema>;
+export type authRegisterTypeSchema = z.infer<typeof authRegisterSchema>;
 
-export const AuthLoginSchema = z.object({
+export const authLoginSchema = z.object({
   identifier: z.string().superRefine((val, ctx) => {
     // Cek email
     const emailResult = z.string().email().safeParse(val);
     if (emailResult.success) return;
 
     // Cek username
-    if (UsernameRegex.test(val)) return;
+    if (userNameRegex.test(val)) return;
 
     if (val.includes("@")) {
       ctx.addIssue({
@@ -59,4 +59,4 @@ export const AuthLoginSchema = z.object({
     }),
 });
 
-export type AuthLoginTypeSchema = z.infer<typeof AuthLoginSchema>;
+export type authLoginTypeSchema = z.infer<typeof authLoginSchema>;

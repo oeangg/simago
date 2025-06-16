@@ -5,8 +5,8 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import React from "react";
-import { AuthHeader } from "./auth-header";
-import { AuthFooter } from "./auth-footer";
+import { AuthHeader } from "./AuthHeader";
+import { AuthFooter } from "./AuthFooter";
 
 interface cardAuthWrapperProps {
   titleHeader: string;

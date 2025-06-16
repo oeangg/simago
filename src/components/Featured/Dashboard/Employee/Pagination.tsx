@@ -19,7 +19,7 @@ interface DataTablePaginationProps<TData> {
   table: Table<TData>;
 }
 
-export function DataTablePagination<TData>({
+export function EmployeeDataPagination<TData>({
   table,
 }: DataTablePaginationProps<TData>) {
   return (

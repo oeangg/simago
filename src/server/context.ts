@@ -1,5 +1,5 @@
 import { db } from "@/lib/prisma";
-import { getSession } from "./get-session";
+import { getSession } from "./getSession";
 import { Payload } from "@/types/payload";
 
 export type Context = {

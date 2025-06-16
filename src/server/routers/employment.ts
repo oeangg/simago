@@ -1,13 +1,13 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../trpc";
-import { EmploymentFormSchema } from "@/schemas/employee-schema"; // Sesuaikan path jika berbeda
+import { employmentSchema } from "@/schemas/employeeSchema"; // Sesuaikan path jika berbeda
 import { TRPCError } from "@trpc/server";
 
 export const employmentRouter = router({
   getAllEmployment: protectedProcedure.query(async ({ ctx }) => {
     const employments = await ctx.db.employment.findMany({
       include: {
-        employees: true,
+        employee: true,
         position: true,
       },
       orderBy: {
@@ -27,7 +27,7 @@ export const employmentRouter = router({
       const employmentById = await ctx.db.employment.findFirst({
         where: { id: input.id },
         include: {
-          employees: true,
+          employee: true,
           position: true,
         },
       });
@@ -36,7 +36,7 @@ export const employmentRouter = router({
 
   // Membuat data employment baru
   createEmployment: protectedProcedure
-    .input(EmploymentFormSchema)
+    .input(employmentSchema)
     .mutation(async ({ ctx, input }) => {
       try {
         const newEmployment = await ctx.db.employment.create({
@@ -62,7 +62,7 @@ export const employmentRouter = router({
 
   // Mengupdate data employment
   updateEmployment: protectedProcedure
-    .input(EmploymentFormSchema.extend({ id: z.string() })) // Menambahkan ID untuk update
+    .input(employmentSchema.extend({ id: z.string() })) // Menambahkan ID untuk update
     .mutation(async ({ ctx, input }) => {
       try {
         const existingEmployment = await ctx.db.employment.findUnique({

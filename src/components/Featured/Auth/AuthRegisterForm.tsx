@@ -13,19 +13,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-import { CardAuthWrapper } from "./auth-wrapper";
+import { CardAuthWrapper } from "./AuthWrapper";
 import {
-  AuthRegisterTypeSchema,
-  AuthRegisterSchema,
-} from "@/schemas/auth-schema";
+  authRegisterSchema,
+  authRegisterTypeSchema,
+} from "@/schemas/authSchema";
 import { useForm } from "react-hook-form";
 import { trpc } from "@/app/_trpcClient/client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 export const RegisterForm = () => {
-  const form = useForm<AuthRegisterTypeSchema>({
-    resolver: zodResolver(AuthRegisterSchema),
+  const form = useForm<authRegisterTypeSchema>({
+    resolver: zodResolver(authRegisterSchema),
     defaultValues: {
       username: "",
       email: "",
@@ -49,8 +49,8 @@ export const RegisterForm = () => {
       },
     });
 
-  const HandleRegisterSubmit = (
-    data: Omit<AuthRegisterTypeSchema, "confirmPassword">
+  const handleRegisterSubmit = (
+    data: Omit<authRegisterTypeSchema, "confirmPassword">
   ) => {
     authCreateAccount({
       username: data.username,
@@ -70,7 +70,7 @@ export const RegisterForm = () => {
     >
       <Form {...form}>
         <form
-          onSubmit={handleSubmit(HandleRegisterSubmit)}
+          onSubmit={handleSubmit(handleRegisterSubmit)}
           className="space-y-3"
         >
           <FormField

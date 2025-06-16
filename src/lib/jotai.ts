@@ -1,2 +1,2 @@
 import { atom } from "jotai";
-export const HeaderTitleAtom = atom<string>("Dashboar");
+export const headerTitleAtom = atom<string>("Dashboar");

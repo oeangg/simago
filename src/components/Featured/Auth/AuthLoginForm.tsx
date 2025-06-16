@@ -12,15 +12,15 @@ import {
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AuthLoginTypeSchema, AuthLoginSchema } from "@/schemas/auth-schema";
-import { CardAuthWrapper } from "./auth-wrapper";
+import { authLoginSchema, authLoginTypeSchema } from "@/schemas/authSchema";
+import { CardAuthWrapper } from "./AuthWrapper";
 import { trpc } from "@/app/_trpcClient/client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 export const LoginForm = () => {
-  const form = useForm<AuthLoginTypeSchema>({
-    resolver: zodResolver(AuthLoginSchema),
+  const form = useForm<authLoginTypeSchema>({
+    resolver: zodResolver(authLoginSchema),
     defaultValues: { identifier: "", password: "" },
   });
 
@@ -39,7 +39,7 @@ export const LoginForm = () => {
       },
     });
 
-  const HandleSubmitLogin = (data: AuthLoginTypeSchema) => {
+  const handleSubmitLogin = (data: authLoginTypeSchema) => {
     authLoginAccount({
       identifier: data.identifier,
       password: data.password,
@@ -55,7 +55,7 @@ export const LoginForm = () => {
       hrefFooter="/auth/register"
     >
       <Form {...form}>
-        <form onSubmit={handleSubmit(HandleSubmitLogin)} className="space-y-4">
+        <form onSubmit={handleSubmit(handleSubmitLogin)} className="space-y-4">
           <FormField
             control={control}
             render={({ field }) => (

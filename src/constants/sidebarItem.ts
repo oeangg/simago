@@ -21,11 +21,11 @@ export interface SidebarItem {
   roles?: string[];
 }
 
-export interface SidebarData {
+export interface sidebarData {
   sidebar: SidebarItem[];
 }
 
-export const data: SidebarData = {
+export const data: sidebarData = {
   sidebar: [
     {
       title: "Data Master",

@@ -1,11 +1,11 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
-import { AppSidebar } from "@/components/featured/dashboard/dash-sidebarApp";
+import { DashboardSidebarApp } from "@/components/Featured/Dashboard/DashboardSidebarApp";
 import { ReactNode } from "react";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 import { toast } from "sonner";
-import { DashboardHeader } from "@/components/featured/dashboard/dash-header";
+import { DashboardHeader } from "@/components/Featured/Dashboard/DashboardHeader";
 
 interface PararelProps {
   children: ReactNode;
@@ -39,7 +39,7 @@ export default async function Layout({ children }: PararelProps) {
 
   return (
     <SidebarProvider>
-      <AppSidebar payload={(payload as Payload) || undefined} />
+      <DashboardSidebarApp payload={(payload as Payload) || undefined} />
       <main className="w-full">
         {/* Sticky Header */}
         <div className="sticky top-0 z-50 flex h-16 w-full items-center justify-between border-b bg-background px-10">

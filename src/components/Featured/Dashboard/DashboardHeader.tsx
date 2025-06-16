@@ -1,21 +1,21 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { DashboardUserProfil } from "./dash-dropdownProfil";
+import { DashboardUserProfil } from "./DashboardProfil";
 import { trpc } from "@/app/_trpcClient/client";
 import { toast } from "sonner";
 import { usePathname, useRouter } from "next/navigation";
 import { Payload } from "@/types/payload";
 
-import { HeaderTitleAtom } from "@/lib/jotai";
-import { data, SidebarData } from "@/constants/sidebar-item";
+import { headerTitleAtom } from "@/lib/jotai";
+import { data, sidebarData } from "@/constants/sidebarItem";
 import { useAtom } from "jotai";
 
 type DashboardHeaderProps = {
   payload: Payload;
 };
 
-const findTitleByPathname = (pathname: string, sidebarData: SidebarData) => {
+const findTitleByPathname = (pathname: string, sidebarData: sidebarData) => {
   if (pathname === "/dashboard") {
     return "Dashboard";
   }
@@ -37,7 +37,7 @@ const findTitleByPathname = (pathname: string, sidebarData: SidebarData) => {
 export const DashboardHeader = ({ payload }: DashboardHeaderProps) => {
   const router = useRouter();
   const pathname = usePathname();
-  const [currentHeaderTitle, setHeaderTitle] = useAtom(HeaderTitleAtom);
+  const [currentHeaderTitle, setHeaderTitle] = useAtom(headerTitleAtom);
   const { mutate: LogoutUser } = trpc.Auth.Logout.useMutation({
     onSuccess: () => {
       toast.success("Logout berhasil");

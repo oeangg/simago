@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../trpc";
-import { PositionFromSchema } from "@/schemas/employee-schema"; // Sesuaikan path jika berbeda
+import { positionSchema } from "@/schemas/employeeSchema"; // Sesuaikan path jika berbeda
 import { TRPCError } from "@trpc/server";
 
 export const positionRouter = router({
@@ -30,7 +30,7 @@ export const positionRouter = router({
 
   // Membuat data posisi baru
   createPosition: protectedProcedure
-    .input(PositionFromSchema)
+    .input(positionSchema)
     .mutation(async ({ ctx, input }) => {
       try {
         const existingPosition = await ctx.db.position.findUnique({
@@ -64,7 +64,7 @@ export const positionRouter = router({
 
   // Mengupdate data posisi
   updatePosition: protectedProcedure
-    .input(PositionFromSchema.extend({ id: z.string() })) // Menambahkan ID untuk update
+    .input(positionSchema.extend({ id: z.string() })) // Menambahkan ID untuk update
     .mutation(async ({ ctx, input }) => {
       try {
         const existingPosition = await ctx.db.position.findUnique({

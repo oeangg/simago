@@ -57,7 +57,7 @@ declare module "@tanstack/react-table" {
   }
 }
 
-export interface IEmployeeColumnProps {
+export interface employeeColumnProps {
   id: string;
   isActive: boolean;
   nik: string;
@@ -80,7 +80,7 @@ const SkeletonCell = ({ width = "w-24" }: { width?: string }) => (
   </div>
 );
 
-export const baseColumns: ColumnDef<IEmployeeColumnProps>[] = [
+export const baseColumns: ColumnDef<employeeColumnProps>[] = [
   {
     accessorKey: "rowIndex",
     header: () => (
@@ -347,7 +347,7 @@ export const baseColumns: ColumnDef<IEmployeeColumnProps>[] = [
   },
 ];
 
-export const actionColumn: ColumnDef<IEmployeeColumnProps> = {
+export const actionColumn: ColumnDef<employeeColumnProps> = {
   id: "actions",
   header: () => (
     <div className="flex justify-center">
@@ -378,7 +378,7 @@ const ActionCell = ({
   deletingId,
 }: {
   rowId: string;
-  employee: IEmployeeColumnProps;
+  employee: employeeColumnProps;
   onDeleteEmployee?: (id: string) => void;
   deletingId?: string | null;
 }) => {

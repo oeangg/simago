@@ -1,4 +1,4 @@
-import { UpdateDataTable } from "@/components/featured/dashboard/man-user/update-table";
+import { UpdateDataTable } from "@/components/Featured/Dashboard/ManajemenUser/UpdateTable";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {

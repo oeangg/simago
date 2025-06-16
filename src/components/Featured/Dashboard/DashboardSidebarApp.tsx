@@ -29,9 +29,9 @@ import Link from "next/link";
 import { trpc } from "@/app/_trpcClient/client";
 import { toast } from "sonner";
 import { Payload } from "@/app/dashboard/layout";
-import { data, SidebarItem } from "@/constants/sidebar-item";
+import { data, SidebarItem } from "@/constants/sidebarItem";
 import { useSetAtom } from "jotai";
-import { HeaderTitleAtom } from "@/lib/jotai";
+import { headerTitleAtom } from "@/lib/jotai";
 
 // This is sample data.
 
@@ -39,10 +39,10 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   payload: Payload;
 }
 
-export function AppSidebar({ payload, ...props }: AppSidebarProps) {
+export function DashboardSidebarApp({ payload, ...props }: AppSidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const setHeaderTitle = useSetAtom(HeaderTitleAtom);
+  const setHeaderTitle = useSetAtom(headerTitleAtom);
 
   const { mutate: LogoutUser } = trpc.Auth.Logout.useMutation({
     onSuccess: () => {

@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { DataTable } from "./data-table";
+import { EmployeeDataTable } from "./DataTable";
 import { trpc } from "@/app/_trpcClient/client";
 // import { Gender } from "@prisma/client";
-import { actionColumn, baseColumns, IEmployeeColumnProps } from "./columns";
+import { actionColumn, baseColumns, employeeColumnProps } from "./Columns";
 import { Gender } from "@prisma/client";
 import { toast } from "sonner";
 
-const generateSkeletonData = (count: number): IEmployeeColumnProps[] => {
+const generateSkeletonData = (count: number): employeeColumnProps[] => {
   return Array.from({ length: count }).map((_, index) => ({
     id: `skeleton-${index}`,
     isActive: false,
@@ -23,7 +23,7 @@ const generateSkeletonData = (count: number): IEmployeeColumnProps[] => {
 };
 
 export const UpdateDataTable = () => {
-  const [dataEmployee, setDataEmployee] = useState<IEmployeeColumnProps[]>([]);
+  const [dataEmployee, setDataEmployee] = useState<employeeColumnProps[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const {
@@ -57,7 +57,7 @@ export const UpdateDataTable = () => {
 
   useEffect(() => {
     if (dataEmployeesTrpc) {
-      const Employees: IEmployeeColumnProps[] = dataEmployeesTrpc.map(
+      const Employees: employeeColumnProps[] = dataEmployeesTrpc.map(
         (employee) => ({
           id: employee.id,
           isActive: employee.isActive,
@@ -65,10 +65,11 @@ export const UpdateDataTable = () => {
           name: employee.name,
           gender: employee.gender,
           phoneNumber: employee.phoneNumber,
+
           employment: {
             position:
-              employee.employment.length > 0
-                ? employee.employment[0].position.name
+              employee.employments.length > 0
+                ? employee.employments[0].position.name
                 : "NA#",
           },
         })
@@ -85,7 +86,7 @@ export const UpdateDataTable = () => {
   console.log(displayData);
 
   return (
-    <DataTable
+    <EmployeeDataTable
       columns={columns}
       data={displayData}
       deletingId={deletingId}

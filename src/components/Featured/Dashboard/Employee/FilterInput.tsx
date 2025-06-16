@@ -6,7 +6,7 @@ interface FilterInputProps<TData, TValue> {
   column: Column<TData, TValue> | undefined;
 }
 
-export function FilterInput<TData, TValue>({
+export function EmployeeFilterInput<TData, TValue>({
   column,
   placeholder,
 }: FilterInputProps<TData, TValue>) {

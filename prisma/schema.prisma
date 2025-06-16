@@ -10,63 +10,161 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
+model Customer {
+  id           String            @id @default(cuid())
+  code         String            @unique
+  name         String
+  customerType CustomerType
+  statusActive StatusActive      @default(ACTIVE)
+  notes        String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  addresses    CustomerAddress[]
+  contacts     CustomerContact[]
+  npwpInfo     CustomerNpwp?
+
+  @@index([name])
+}
+
+model CustomerAddress {
+  id               String      @id @default(cuid())
+  addressType      AddressType
+  addressLine1     String
+  addressLine2     String?
+  zipcode          String?
+  isPrimaryAddress Boolean
+  customerId       String
+  countryId        String
+  provinceId       String? //optional domestic/international
+  cityId           String? //optional domestic/international
+  customer         Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  country          Country     @relation(fields: [countryId], references: [id])
+  province         Province?   @relation(fields: [provinceId], references: [id])
+  city             City?       @relation(fields: [cityId], references: [id])
+
+  @@unique([customerId, isPrimaryAddress], name: "OnePrimaryAddressPerCustomer")
+  @@unique([customerId, addressType], name: "OneAddressTypePerCustomer")
+}
+
+model CustomerContact {
+  id               String      @id @default(cuid())
+  contactType      ContactType
+  name             String
+  phoneNumber      String
+  email            String?
+  isPrimaryContact Boolean
+  customerId       String
+  customer         Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, isPrimaryContact], name: "OnePrimaryContactPerCustomer")
+  @@unique([customerId, contactType], name: "OneContactTypePerCustomer")
+}
+
+model CustomerNpwp {
+  id          String   @id @default(cuid())
+  npwpNumber  String   @unique
+  npwpName    String
+  npwpAddress String
+  npwpDate    DateTime
+  customerId  String   @unique
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+}
+
+model Country {
+  id              String            @id @default(cuid())
+  code            String            @unique
+  name            String
+  customerAddress CustomerAddress[]
+  provinces       Province[]
+  cities          City[]
+}
+
+model Province {
+  id              String            @id @default(cuid())
+  code            String            @unique
+  name            String
+  countryId       String
+  customerAddress CustomerAddress[]
+  country         Country           @relation(fields: [countryId], references: [id])
+  cities          City[]
+}
+
+model City {
+  id              String            @id @default(cuid())
+  code            String            @unique
+  name            String
+  provinceId      String
+  countryId       String
+  customerAddress CustomerAddress[]
+  province        Province          @relation(fields: [provinceId], references: [id])
+  country         Country           @relation(fields: [countryId], references: [id])
+}
+
 model Employee {
-  id String @id @default(cuid())
-  nik String @unique
-  name String
-  isActive Boolean @default(false)
-  gender Gender
-  address String
-  city String
-  zipcode String
-  photo String?
-  telNumber String?
+  id          String       @id @default(cuid())
+  nik         String       @unique
+  name        String
+  isActive    Boolean      @default(true)
+  gender      Gender
+  address     String
+  city        String
+  zipcode     String
+  photo       String?
   phoneNumber String
-  employment Employment[]  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  employments Employment[]
+
+  @@index([name])
+  @@index([phoneNumber])
 }
 
 model Employment {
-  id String @id @default(cuid())
-  startDate DateTime
-  endDate DateTime? 
+  id         String    @id @default(cuid())
+  startDate  DateTime
+  endDate    DateTime?
   positionId String
-  position Position @relation(fields: [positionId], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  position   Position  @relation(fields: [positionId], references: [id], onDelete: Cascade)
   employeeId String
-  employees Employee @relation(fields: [employeeId], references: [id]) 
+  employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 }
 
 model Position {
-  id String @id @default(cuid())
-  name String @unique
+  id          String       @id @default(cuid())
+  name        String       @unique
   employments Employment[]
 }
 
 model Session {
-  id String @id @default(cuid())
-  userId String @unique
-  user User @relation(fields: [userId], references: [id])
-  createAt DateTime @default(now())
-  updateAt DateTime @updatedAt
-}
-model User {
-  id String @id @default(cuid())
-  username String @unique
-  fullname String
-  email String @unique
-  password String
-  role Role @default(USER)
-  profilPic String?
-  isActive Boolean @default(false)
-  createAt DateTime @default(now())
-  updateAt DateTime @updatedAt
-  session Session?
+  id       String   @id @default(cuid())
+  userId   String   @unique
+  user     User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  fullname  String
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  profilPic String?
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  session   Session?
+
+  
+}
 
 //enum
 enum Gender {
@@ -74,8 +172,35 @@ enum Gender {
   FEMALE
 }
 
+enum StatusActive {
+  ACTIVE
+  NOACTIVE
+  SUSPENDED
+}
+
+enum CustomerType {
+  DOMESTIC
+  INTERNATIONAL
+}
+
+enum AddressType {
+  HEAD_OFFICE
+  BRANCH
+  WAREHOUSE
+  BILLING
+  SHIPPING
+}
+
+enum ContactType {
+  PRIMARY
+  BILLING
+  SHIPPING
+  EMERGENCY
+  TECHNICAL
+}
+
 enum Role {
-  USER 
+  USER
   SUPERVISOR
   MANAGER
   ADMIN

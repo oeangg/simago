@@ -6,7 +6,7 @@ const phoneRegex = new RegExp(
 );
 
 // Employment schema
-export const EmploymentFormSchema = z.object({
+export const employmentSchema = z.object({
   id: z.string().optional(),
   startDate: z.string().min(1, "Tanggal mulai harus diisi"),
   endDate: z.string().optional(),
@@ -14,7 +14,7 @@ export const EmploymentFormSchema = z.object({
   employeeId: z.string().optional(),
 });
 
-export const EmployeeFormSchema = z.object({
+export const employeeSchema = z.object({
   nik: z
     .string()
     .min(1, { message: "NIK tidak boleh kosong" })
@@ -29,25 +29,25 @@ export const EmployeeFormSchema = z.object({
     .min(1, { message: "Kode pos tidak boleh kosong" })
     .max(5, { message: "Kode pos max 5 karakter" }),
   photo: z.string().optional(),
-  telNumber: z.string().optional(),
+
   phoneNumber: z
     .string()
     .min(10, "Phonenumber harus terdiri minimal 10 karakter")
     .max(14, "Phonenumber harus terdiri minimal 10 karakter")
     .regex(phoneRegex, "Invalid format phone!"),
-  employment: z.array(EmploymentFormSchema).optional(),
+  employments: z.array(employmentSchema).optional(),
 });
 
-export type EmployeeFormSchemaType = z.infer<typeof EmployeeFormSchema>;
-export type EmploymentSchemaType = z.infer<typeof EmploymentFormSchema>;
+export type employeeTypeSchema = z.infer<typeof employeeSchema>;
+export type employmentTYpeSchema = z.infer<typeof employmentSchema>;
 
-export const EmployeeFormSchemaUpdate = EmployeeFormSchema.extend({
+export const employeeSchemaUpdate = employeeSchema.extend({
   id: z.string(),
 });
 
-export const PositionFromSchema = z.object({
+export const positionSchema = z.object({
   // id: z.string(),
   name: z.string().min(1, "Nama posisi harus diisi"),
 });
 
-export type PositionSchemaType = z.infer<typeof PositionFromSchema>;
+export type positionTypeSchema = z.infer<typeof positionSchema>;

@@ -1,4 +1,4 @@
-import { AuthLoginSchema, AuthRegisterSchema } from "@/schemas/auth-schema";
+import { authLoginSchema, authRegisterSchema } from "@/schemas/authSchema";
 import { publicProcedure, router } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcrypt";
@@ -9,7 +9,7 @@ import { Payload } from "@/types/payload";
 
 export const authRouter = router({
   Register: publicProcedure
-    .input(AuthRegisterSchema)
+    .input(authRegisterSchema)
     .mutation(async ({ input, ctx }) => {
       // cek apakah ada email sama
 
@@ -60,7 +60,7 @@ export const authRouter = router({
     }),
 
   Login: publicProcedure
-    .input(AuthLoginSchema)
+    .input(authLoginSchema)
     .mutation(async ({ ctx, input }) => {
       const JWTSECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 

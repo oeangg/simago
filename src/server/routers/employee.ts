@@ -1,16 +1,13 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../trpc";
-import {
-  EmployeeFormSchema,
-  EmployeeFormSchemaUpdate,
-} from "@/schemas/employee-schema";
+import { employeeSchema, employeeSchemaUpdate } from "@/schemas/employeeSchema";
 import { TRPCError } from "@trpc/server";
 
 export const employeeRouter = router({
   getAllEmployee: protectedProcedure.query(async ({ ctx }) => {
     const employees = await ctx.db.employee.findMany({
       include: {
-        employment: {
+        employments: {
           include: {
             position: true,
           },
@@ -37,7 +34,7 @@ export const employeeRouter = router({
       const employeeById = await ctx.db.employee.findFirst({
         where: { id: input.id },
         include: {
-          employment: {
+          employments: {
             include: {
               position: true,
             },
@@ -52,7 +49,7 @@ export const employeeRouter = router({
     }),
 
   createEmployee: protectedProcedure
-    .input(EmployeeFormSchema)
+    .input(employeeSchema)
     .mutation(async ({ ctx, input }) => {
       try {
         const existingEmployee = await ctx.db.employee.findUnique({
@@ -78,19 +75,68 @@ export const employeeRouter = router({
               city: input.city,
               zipcode: input.zipcode,
               photo: input.photo || null,
-              telNumber: input.telNumber || null,
               phoneNumber: input.phoneNumber,
             },
           });
 
-          if (input.employment && input.employment.length > 0) {
-            await prisma.employment.createMany({
-              data: input.employment.map((emp) => ({
-                startDate: emp.startDate,
-                endDate: emp.endDate || null,
+          // Memproses data employment jika ada
+          if (input.employments && input.employments.length > 0) {
+            // mengonversi string tanggal kembali ke objek Date
+            const employmentDataForPrismaDB = input.employments.map((emp) => {
+              // --- Validasi dan Konversi startDate ---
+              let startDateObj = null;
+              if (typeof emp.startDate === "string" && emp.startDate) {
+                const tempDate = new Date(emp.startDate);
+                // Periksa apakah hasil konversinya adalah tanggal yang valid (bukan "Invalid Date")
+                if (!isNaN(tempDate.getTime())) {
+                  startDateObj = tempDate;
+                } else {
+                  // jika tanggal tidak valid
+                  console.warn(
+                    `Peringatan: startDate tidak valid di backend untuk input: ${emp.startDate}`
+                  );
+                  throw new TRPCError({
+                    code: "BAD_REQUEST",
+                    message: `Format startDate tidak valid: ${emp.startDate}`,
+                  });
+                }
+              } else {
+                console.warn(
+                  `Peringatan: startDate bukan string atau kosong di backend untuk input: ${emp.startDate}`
+                );
+                throw new TRPCError({
+                  code: "BAD_REQUEST",
+                  message: `startDate wajib diisi dan dalam format yang benar.`,
+                });
+              }
+
+              // --- Validasi dan Konversi endDate ---
+              let endDateObj = null;
+              if (typeof emp.endDate === "string" && emp.endDate) {
+                const tempDate = new Date(emp.endDate);
+                if (!isNaN(tempDate.getTime())) {
+                  endDateObj = tempDate;
+                } else {
+                  console.warn(
+                    `Peringatan: endDate tidak valid di backend untuk input: ${emp.endDate}`
+                  );
+                  throw new TRPCError({
+                    code: "BAD_REQUEST",
+                    message: `endDate wajib diisi dan dalam format yang benar.`,
+                  });
+                }
+              }
+
+              return {
+                startDate: startDateObj, // Gunakan objek Date yang sudah dikonversi
+                endDate: endDateObj, // Gunakan objek Date yang sudah dikonversi (atau null)
                 positionId: emp.positionId,
-                employeeId: employee.id,
-              })),
+                employeeId: employee.id, // Gunakan ID karyawan yang baru dibuat
+              };
+            });
+
+            await prisma.employment.createMany({
+              data: employmentDataForPrismaDB,
             });
           }
 
@@ -111,7 +157,7 @@ export const employeeRouter = router({
     }),
 
   updateEmployee: protectedProcedure
-    .input(EmployeeFormSchemaUpdate)
+    .input(employeeSchemaUpdate)
     .mutation(async ({ ctx, input }) => {
       try {
         // Check if employee exists
@@ -154,7 +200,6 @@ export const employeeRouter = router({
               city: input.city,
               zipcode: input.zipcode,
               photo: input.photo || null,
-              telNumber: input.telNumber || null,
               phoneNumber: input.phoneNumber,
             },
           });
@@ -164,15 +209,59 @@ export const employeeRouter = router({
             where: { employeeId: input.id },
           });
 
-          // Create new employment records if provided
-          if (input.employment && input.employment.length > 0) {
-            await prisma.employment.createMany({
-              data: input.employment.map((emp) => ({
-                startDate: emp.startDate,
-                endDate: emp.endDate || null,
+          // Memproses data employment jika ada
+          if (input.employments && input.employments.length > 0) {
+            // mengonversi string tanggal kembali ke objek Date
+            const employmentDataForPrismaDB = input.employments.map((emp) => {
+              // --- Validasi dan Konversi startDate ---
+              let startDateObj = null;
+              if (typeof emp.startDate === "string" && emp.startDate) {
+                const tempDate = new Date(emp.startDate);
+                // Periksa apakah hasil konversinya adalah tanggal yang valid (bukan "Invalid Date")
+                if (!isNaN(tempDate.getTime())) {
+                  startDateObj = tempDate;
+                } else {
+                  // jika tanggal tidak valid
+
+                  throw new TRPCError({
+                    code: "BAD_REQUEST",
+                    message: `Format startDate tidak valid: ${emp.startDate}`,
+                  });
+                }
+              } else {
+                throw new TRPCError({
+                  code: "BAD_REQUEST",
+                  message: `startDate wajib diisi dan dalam format yang benar.`,
+                });
+              }
+
+              // --- Validasi dan Konversi endDate ---
+              let endDateObj = null;
+              if (typeof emp.endDate === "string" && emp.endDate) {
+                const tempDate = new Date(emp.endDate);
+                if (!isNaN(tempDate.getTime())) {
+                  endDateObj = tempDate;
+                } else {
+                  console.warn(
+                    `Peringatan: endDate tidak valid di backend untuk input: ${emp.endDate}`
+                  );
+                  throw new TRPCError({
+                    code: "BAD_REQUEST",
+                    message: `endDate wajib diisi dan dalam format yang benar.`,
+                  });
+                }
+              }
+
+              return {
+                startDate: startDateObj, // Gunakan objek Date yang sudah dikonversi
+                endDate: endDateObj, // Gunakan objek Date yang sudah dikonversi (atau null)
                 positionId: emp.positionId,
-                employeeId: employee.id,
-              })),
+                employeeId: employee.id, // Gunakan ID karyawan yang baru dibuat
+              };
+            });
+
+            await prisma.employment.createMany({
+              data: employmentDataForPrismaDB,
             });
           }
 

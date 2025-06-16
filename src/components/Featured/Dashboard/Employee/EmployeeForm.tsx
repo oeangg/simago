@@ -37,10 +37,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import {
-  EmployeeFormSchema,
-  EmployeeFormSchemaType,
-} from "@/schemas/employee-schema";
+import { employeeSchema, employeeTypeSchema } from "@/schemas/employeeSchema";
 import { Gender } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import {
@@ -65,9 +62,9 @@ interface EmployeeFormProps {
     city: string;
     zipcode: string;
     photo?: string | null;
-    telNumber?: string | null;
+
     phoneNumber: string;
-    employment: Array<{
+    employments: Array<{
       id: string;
       startDate: string;
       endDate?: string | null;
@@ -206,8 +203,8 @@ export function EmployeeForm({
   const { data: positions = [], refetch: refetchPositions } =
     trpc.Position.getAllPositions.useQuery();
 
-  const form = useForm<EmployeeFormSchemaType>({
-    resolver: zodResolver(EmployeeFormSchema),
+  const form = useForm<employeeTypeSchema>({
+    resolver: zodResolver(employeeSchema),
     defaultValues: {
       nik: employee?.nik || "",
       name: employee?.name || "",
@@ -217,10 +214,10 @@ export function EmployeeForm({
       city: employee?.city || "",
       zipcode: employee?.zipcode || "",
       photo: employee?.photo || "",
-      telNumber: employee?.telNumber || "",
+
       phoneNumber: employee?.phoneNumber || "",
-      employment:
-        employee?.employment?.map((emp) => ({
+      employments:
+        employee?.employments?.map((emp) => ({
           id: emp.id,
           startDate: emp.startDate ? emp.startDate.slice(0, 10) : "",
           endDate: emp.endDate ? emp.endDate.slice(0, 10) : "",
@@ -230,7 +227,6 @@ export function EmployeeForm({
     mode: "onChange", // Enable real-time validation
   });
 
-  // Watch for form changes to show unsaved indicator
   const { control, formState, handleSubmit, getValues, reset, setValue } = form;
   const isDirty = formState.isDirty;
   const isValid = formState.isValid;
@@ -246,17 +242,16 @@ export function EmployeeForm({
 
   const { fields, append, remove } = useFieldArray({
     control: control,
-    name: "employment",
+    name: "employments",
   });
 
-  // Optimized handlers
   const handleAddPosition = useCallback(
     (newPosition: { id: string; name: string }) => {
       refetchPositions();
-      // Optionally auto-select the new position in the last employment entry
+
       const lastIndex = fields.length - 1;
-      if (lastIndex >= 0 && !getValues(`employment.${lastIndex}.positionId`)) {
-        setValue(`employment.${lastIndex}.positionId`, newPosition.id);
+      if (lastIndex >= 0 && !getValues(`employments.${lastIndex}.positionId`)) {
+        setValue(`employments.${lastIndex}.positionId`, newPosition.id);
       }
     },
     [refetchPositions, fields.length, getValues, setValue]
@@ -278,11 +273,11 @@ export function EmployeeForm({
   );
 
   const onSubmit = useCallback(
-    async (data: EmployeeFormSchemaType) => {
+    async (data: employeeTypeSchema) => {
       try {
         const processedData = {
           ...data,
-          employment: data.employment?.map((emp) => ({
+          employment: data.employments?.map((emp) => ({
             ...emp,
             startDate: new Date(emp.startDate).toISOString(),
             endDate: emp.endDate
@@ -445,24 +440,6 @@ export function EmployeeForm({
 
                 <FormField
                   control={control}
-                  name="telNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nomor Telepon</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Masukkan nomor telepon"
-                          {...field}
-                          disabled={isSubmitting}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={control}
                   name="city"
                   render={({ field }) => (
                     <FormItem>
@@ -612,7 +589,7 @@ export function EmployeeForm({
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <FormField
                           control={control}
-                          name={`employment.${index}.positionId`}
+                          name={`employments.${index}.positionId`}
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Posisi *</FormLabel>
@@ -649,7 +626,7 @@ export function EmployeeForm({
 
                         <FormField
                           control={control}
-                          name={`employment.${index}.startDate`}
+                          name={`employments.${index}.startDate`}
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Tanggal Mulai *</FormLabel>
@@ -667,7 +644,7 @@ export function EmployeeForm({
 
                         <FormField
                           control={control}
-                          name={`employment.${index}.endDate`}
+                          name={`employments.${index}.endDate`}
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Tanggal Selesai</FormLabel>
