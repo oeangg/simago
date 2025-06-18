@@ -40,12 +40,14 @@ model CustomerAddress {
   isPrimaryAddress Boolean
   customerId       String
   countryId        String
-  provinceId       String? //optional domestic/international
-  cityId           String? //optional domestic/international
+  provinceCode       String? //optional domestic/international
+  regencyCode           String? //optional domestic/international
+  districtCode           String? //optional domestic/international
   customer         Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
   country          Country     @relation(fields: [countryId], references: [id])
-  province         Province?   @relation(fields: [provinceId], references: [id])
-  city             City?       @relation(fields: [cityId], references: [id])
+  province         Province?   @relation(fields: [provinceCode], references: [code])
+  regency             Regency?       @relation(fields: [regencyCode], references: [code])
+  district             District?       @relation(fields: [districtCode], references: [code])
 
   @@unique([customerId, isPrimaryAddress], name: "OnePrimaryAddressPerCustomer")
   @@unique([customerId, addressType], name: "OneAddressTypePerCustomer")
@@ -80,29 +82,34 @@ model Country {
   code            String            @unique
   name            String
   customerAddress CustomerAddress[]
-  provinces       Province[]
-  cities          City[]
+  @@index([name])
 }
 
 model Province {
-  id              String            @id @default(cuid())
-  code            String            @unique
+  code            String            @id
   name            String
-  countryId       String
   customerAddress CustomerAddress[]
-  country         Country           @relation(fields: [countryId], references: [id])
-  cities          City[]
+  regencies          Regency[]
+  @@index([name])
 }
 
-model City {
-  id              String            @id @default(cuid())
-  code            String            @unique
+model Regency {
+  code            String            @id
   name            String
-  provinceId      String
-  countryId       String
+  provinceCode  String
   customerAddress CustomerAddress[]
-  province        Province          @relation(fields: [provinceId], references: [id])
-  country         Country           @relation(fields: [countryId], references: [id])
+  province        Province          @relation(fields:[provinceCode], references: [code])
+  district          District[]
+  @@index([name])
+}
+
+model District {
+  code            String            @id
+  name            String
+  regencyCode      String
+  customerAddress CustomerAddress[]
+  regency        Regency          @relation(fields:[regencyCode], references: [code])
+  @@index([name])
 }
 
 model Employee {

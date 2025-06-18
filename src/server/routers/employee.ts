@@ -48,7 +48,7 @@ export const employeeRouter = router({
       return employeeById;
     }),
 
-  createEmployee: protectedProcedure
+  createFullEmployee: protectedProcedure
     .input(employeeSchema)
     .mutation(async ({ ctx, input }) => {
       try {
@@ -87,23 +87,15 @@ export const employeeRouter = router({
               let startDateObj = null;
               if (typeof emp.startDate === "string" && emp.startDate) {
                 const tempDate = new Date(emp.startDate);
-                // Periksa apakah hasil konversinya adalah tanggal yang valid (bukan "Invalid Date")
                 if (!isNaN(tempDate.getTime())) {
                   startDateObj = tempDate;
                 } else {
-                  // jika tanggal tidak valid
-                  console.warn(
-                    `Peringatan: startDate tidak valid di backend untuk input: ${emp.startDate}`
-                  );
                   throw new TRPCError({
                     code: "BAD_REQUEST",
                     message: `Format startDate tidak valid: ${emp.startDate}`,
                   });
                 }
               } else {
-                console.warn(
-                  `Peringatan: startDate bukan string atau kosong di backend untuk input: ${emp.startDate}`
-                );
                 throw new TRPCError({
                   code: "BAD_REQUEST",
                   message: `startDate wajib diisi dan dalam format yang benar.`,
@@ -117,9 +109,6 @@ export const employeeRouter = router({
                 if (!isNaN(tempDate.getTime())) {
                   endDateObj = tempDate;
                 } else {
-                  console.warn(
-                    `Peringatan: endDate tidak valid di backend untuk input: ${emp.endDate}`
-                  );
                   throw new TRPCError({
                     code: "BAD_REQUEST",
                     message: `endDate wajib diisi dan dalam format yang benar.`,
@@ -156,7 +145,7 @@ export const employeeRouter = router({
       }
     }),
 
-  updateEmployee: protectedProcedure
+  updateFullEmployee: protectedProcedure
     .input(employeeSchemaUpdate)
     .mutation(async ({ ctx, input }) => {
       try {

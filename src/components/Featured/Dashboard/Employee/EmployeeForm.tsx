@@ -233,10 +233,10 @@ export function EmployeeForm({
 
   // tRPC mutations
   const { mutateAsync: createEmployee, isPending: isCreating } =
-    trpc.Employee.createEmployee.useMutation();
+    trpc.Employee.createFullEmployee.useMutation();
 
   const { mutateAsync: updateEmployee, isPending: isUpdating } =
-    trpc.Employee.updateEmployee.useMutation();
+    trpc.Employee.updateFullEmployee.useMutation();
 
   const isSubmitting = isCreating || isUpdating;
 

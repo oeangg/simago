@@ -4,6 +4,7 @@ import {
   Frame,
   LucideIcon,
   Settings2,
+  ShieldUser,
   SquareTerminal,
   Truck,
 } from "lucide-react";
@@ -153,14 +154,27 @@ export const data: sidebarData = {
         },
       ],
     },
+
     {
       title: "Pengaturan",
       icon: Settings2,
       url: "#",
+      roles: ["SUPER_ADMIN", "ADMIN"],
+      items: [
+        {
+          title: "Data wilayah",
+          url: "/dashboard/wilayah",
+        },
+      ],
+    },
+    {
+      title: "Manajemen User",
+      icon: ShieldUser,
+      url: "#",
       roles: ["SUPER_ADMIN"],
       items: [
         {
-          title: "Manajemen User",
+          title: "Daftar User",
           url: "/dashboard/manuser",
         },
       ],

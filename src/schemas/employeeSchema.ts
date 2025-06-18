@@ -33,7 +33,7 @@ export const employeeSchema = z.object({
   phoneNumber: z
     .string()
     .min(10, "Phonenumber harus terdiri minimal 10 karakter")
-    .max(14, "Phonenumber harus terdiri minimal 10 karakter")
+    .max(14, "Phonenumber harus terdiri maksimal 14 karakter")
     .regex(phoneRegex, "Invalid format phone!"),
   employments: z.array(employmentSchema).optional(),
 });

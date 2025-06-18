@@ -1,4 +1,6 @@
 import { authRouter } from "./routers/auth";
+import { cityRouter } from "./routers/city";
+import { customerRouter } from "./routers/customer";
 import { employeeRouter } from "./routers/employee";
 import { employmentRouter } from "./routers/employment";
 import { positionRouter } from "./routers/position";
@@ -11,6 +13,8 @@ export const appRouter = router({
   Employee: employeeRouter,
   Employment: employmentRouter,
   Position: positionRouter,
+  Customer: customerRouter,
+  City: cityRouter,
 });
 
 export type AppRouter = typeof appRouter;
