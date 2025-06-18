@@ -220,11 +220,14 @@ export const customerRouter = router({
                         ...(addressData.countryId !== undefined && {
                           countryId: addressData.countryId,
                         }),
-                        ...(addressData.provinceId !== undefined && {
-                          provinceId: addressData.provinceId,
+                        ...(addressData.provinceCode !== undefined && {
+                          provinceId: addressData.provinceCode,
                         }),
-                        ...(addressData.cityId !== undefined && {
-                          cityId: addressData.cityId,
+                        ...(addressData.regencyCode !== undefined && {
+                          cityId: addressData.regencyCode,
+                        }),
+                        ...(addressData.districtCode !== undefined && {
+                          cityId: addressData.districtCode,
                         }),
                       },
                     });
@@ -251,8 +254,9 @@ export const customerRouter = router({
                         zipcode: addressData.zipcode,
                         isPrimaryAddress: addressData.isPrimaryAddress,
                         countryId: addressData.countryId,
-                        provinceId: addressData.provinceId,
-                        cityId: addressData.cityId,
+                        provinceCode: addressData.provinceCode,
+                        regencyCode: addressData.regencyCode,
+                        districtCode: addressData.districtCode,
                         customerId: id,
                       },
                     });

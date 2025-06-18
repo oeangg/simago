@@ -48,8 +48,9 @@ export const createAddressInputSchema = z.object({
   zipcode: z.string().optional(),
   isPrimaryAddress: z.boolean(),
   countryId: z.string().cuid("ID Negara tidak valid"),
-  provinceId: z.string().cuid("ID Provinsi tidak valid").optional(),
-  cityId: z.string().cuid("ID Kota tidak valid").optional(),
+  provinceCode: z.string().cuid("Provinsi tidak valid").optional(),
+  regencyCode: z.string().cuid("Kota tidak valid").optional(),
+  districtCode: z.string().cuid("Kota tidak valid").optional(),
 });
 
 export const updateAddressInputSchema = z
@@ -64,8 +65,9 @@ export const updateAddressInputSchema = z
     zipcode: z.string().optional(),
     isPrimaryAddress: z.boolean().optional(),
     countryId: z.string().cuid("ID Negara tidak valid").optional(),
-    provinceId: z.string().cuid("ID Provinsi tidak valid").optional(),
-    cityId: z.string().cuid("ID Kota tidak valid").optional(),
+    provinceCode: z.string().cuid("Provinsi tidak valid").optional(),
+    regencyCode: z.string().cuid("Kota tidak valid").optional(),
+    districtCode: z.string().cuid("Kota tidak valid").optional(),
   })
   .refine(
     (data) =>

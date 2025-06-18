@@ -56,6 +56,25 @@ interface CsvRow {
   [key: string]: string;
 }
 
+interface Province {
+  code: string;
+  name: string;
+}
+
+interface Regency {
+  code: string;
+  name: string;
+  provinceCode: string;
+}
+
+interface District {
+  code: string;
+  name: string;
+  regencyCode: string;
+}
+
+type DataTableItem = Province | Regency | District;
+
 export const CsvUploadForm = () => {
   const [uploadResults, setUploadResults] = useState<{
     provinces?: UploadResult;
@@ -79,7 +98,7 @@ export const CsvUploadForm = () => {
     data: provinces = [],
     isLoading: provincesLoading,
     refetch: refetchProvinces,
-  } = trpc.City.getProvinces.useQuery();
+  } = trpc.City.getProvinces.useQuery<Province[]>();
 
   const [selectedProvinceCode, setSelectedProvinceCode] = useState<string>("");
   const [selectedRegencyCode, setSelectedRegencyCode] = useState<string>("");
@@ -88,7 +107,7 @@ export const CsvUploadForm = () => {
     data: regencies = [],
     isLoading: regenciesLoading,
     refetch: refetchRegencies,
-  } = trpc.City.getRegenciesByProvinceCode.useQuery(
+  } = trpc.City.getRegenciesByProvinceCode.useQuery<Regency[]>(
     { provinceCode: selectedProvinceCode },
     { enabled: !!selectedProvinceCode }
   );
@@ -97,7 +116,7 @@ export const CsvUploadForm = () => {
     data: districts = [],
     isLoading: districtsLoading,
     refetch: refetchDistricts,
-  } = trpc.City.getDistrictsByRegencyCode.useQuery(
+  } = trpc.City.getDistrictsByRegencyCode.useQuery<District[]>(
     { regencyCode: selectedRegencyCode },
     { enabled: !!selectedRegencyCode }
   );
@@ -147,7 +166,7 @@ export const CsvUploadForm = () => {
       const csvData = await parseCsv(file);
 
       // Transform CSV data ke format yang dibutuhkan
-      const provincesData = csvData.map((row) => ({
+      const provincesData: Province[] = csvData.map((row) => ({
         code: row.code || row.Code || row.kode || row.Kode || "",
         name: row.name || row.Name || row.nama || row.Nama || "",
       }));
@@ -187,7 +206,7 @@ export const CsvUploadForm = () => {
       const csvData = await parseCsv(file);
 
       // Transform CSV data ke format yang dibutuhkan
-      const regenciesData = csvData.map((row) => ({
+      const regenciesData: Regency[] = csvData.map((row) => ({
         provinceCode:
           row.provinceCode || row.province_code || row.kode_provinsi || "",
         code: row.code || row.Code || row.kode || row.Kode || "",
@@ -273,7 +292,7 @@ export const CsvUploadForm = () => {
       const csvData = await parseCsv(file);
 
       // Transform CSV data ke format yang dibutuhkan
-      const districtsData = csvData.map((row) => ({
+      const districtsData: District[] = csvData.map((row) => ({
         regencyCode:
           row.regencyCode || row.regency_code || row.kode_kabupaten || "",
         code: row.code || row.Code || row.kode || row.Kode || "",
@@ -306,11 +325,11 @@ export const CsvUploadForm = () => {
     }
   };
 
-  const renderDataTable = (
+  const renderDataTable = <T extends DataTableItem>(
     title: string,
-    data: any[],
+    data: T[],
     isLoading: boolean,
-    columns: { key: string; label: string }[],
+    columns: { key: keyof T; label: string }[],
     onRefresh?: () => void,
     showSelector?: {
       type: "province" | "regency";
@@ -392,7 +411,7 @@ export const CsvUploadForm = () => {
                 <TableRow>
                   <TableHead className="w-16">No</TableHead>
                   {columns.map((col) => (
-                    <TableHead key={col.key}>{col.label}</TableHead>
+                    <TableHead key={col.key as string}>{col.label}</TableHead>
                   ))}
                 </TableRow>
               </TableHeader>
@@ -402,11 +421,13 @@ export const CsvUploadForm = () => {
                   <TableRow key={item.code || index}>
                     <TableCell className="font-medium">{index + 1}</TableCell>
                     {columns.map((col) => (
-                      <TableCell key={col.key}>
+                      <TableCell key={col.key as string}>
                         {col.key === "code" ? (
-                          <Badge variant="outline">{item[col.key]}</Badge>
+                          <Badge variant="outline">
+                            {String(item[col.key]) as React.ReactNode}
+                          </Badge>
                         ) : (
-                          item[col.key]
+                          (item[col.key] as React.ReactNode) 
                         )}
                       </TableCell>
                     ))}
@@ -424,9 +445,9 @@ export const CsvUploadForm = () => {
     form: UseFormReturn<FileUploadTypeSchema>,
     onSubmit: (data: FileUploadTypeSchema) => void,
     isLoading: boolean,
-    result?: UploadResult,
     acceptedHeaders: string[],
-    description: string
+    description: string,
+    result?: UploadResult
   ) => (
     <Card>
       <CardHeader>
@@ -518,9 +539,9 @@ export const CsvUploadForm = () => {
                 provincesForm,
                 handleProvincesUpload,
                 isUploading.provinces,
-                uploadResults.provinces,
                 ["code", "name"],
-                "Upload file CSV berisi data provinsi dengan kolom code dan name"
+                "Upload file CSV berisi data provinsi dengan kolom code dan name",
+                uploadResults.provinces
               )}
             </div>
             <div>
@@ -545,9 +566,9 @@ export const CsvUploadForm = () => {
                 regenciesForm,
                 handleRegenciesUpload,
                 isUploading.regencies,
-                uploadResults.regencies,
                 ["provinceCode", "code", "name"],
-                "Upload file CSV berisi data kabupaten/kota dengan kolom provinceCode, code, dan name"
+                "Upload file CSV berisi data kabupaten/kota dengan kolom provinceCode, code, dan name",
+                uploadResults.regencies
               )}
             </div>
             <div>
@@ -578,9 +599,9 @@ export const CsvUploadForm = () => {
                 districtsForm,
                 handleDistrictsUpload,
                 isUploading.districts,
-                uploadResults.districts,
                 ["regencyCode", "code", "name"],
-                "Upload file CSV berisi data kecamatan dengan kolom regencyCode, code, dan name"
+                "Upload file CSV berisi data kecamatan dengan kolom regencyCode, code, dan name",
+                uploadResults.districts
               )}
             </div>
             <div>
