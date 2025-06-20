@@ -206,7 +206,7 @@ export function CustomerDataTable<TData extends CustomerColumnsProps, TValue>({
       )}
 
       {/* Table */}
-      <div className="rounded-md border">
+      <div className="rounded-md border  overflow-x-auto ">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (

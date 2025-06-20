@@ -50,7 +50,7 @@ export default async function Layout({ children }: PararelProps) {
         </div>
 
         {/*  Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto ">
           <div className="px-10 py-10">{children}</div>
         </div>
       </main>

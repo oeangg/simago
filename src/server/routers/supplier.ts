@@ -2,18 +2,17 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
 
+import { StatusActive, SupplierType } from "@prisma/client";
 import {
-  customerSchema,
-  customerUpdateSchema,
-  InputAddressTypeSchema,
-  InputContactTypeSchema,
-} from "@/schemas/customerSchema";
-import { CustomerType, StatusActive } from "@prisma/client";
+  InputSupplierAddressTypeSchema,
+  InputSupplierContactTypeSchema,
+  supplierSchema,
+  supplierUpdateSchema,
+} from "@/schemas/supplierSchema";
 
-export const customerRouter = router({
-  // Create Customer dengan atomic transaction
-  createAllCustomer: protectedProcedure
-    .input(customerSchema)
+export const supplierRouter = router({
+  createAllSupplier: protectedProcedure
+    .input(supplierSchema)
     .mutation(async ({ ctx, input }) => {
       try {
         const result = await ctx.db.$transaction(async (tx) => {
@@ -21,14 +20,14 @@ export const customerRouter = router({
 
           let npwpDateObj: Date | null = null;
 
-          const existingCustomer = await tx.customer.findUnique({
+          const existingSupplier = await tx.supplier.findUnique({
             where: { code: input.code },
           });
 
-          if (existingCustomer) {
+          if (existingSupplier) {
             throw new TRPCError({
               code: "CONFLICT",
-              message: "Kode customer sudah digunakan",
+              message: "Kode supplier sudah digunakan",
             });
           }
 
@@ -47,12 +46,12 @@ export const customerRouter = router({
             }
           }
 
-          // 2. Create customer
-          const customer = await tx.customer.create({
+          // 2. Create supplier
+          const supplier = await tx.supplier.create({
             data: {
               code: input.code,
               name: input.name,
-              customerType: input.customerType,
+              supplierType: input.supplierType,
               notes: input.notes,
               npwpNumber: input.npwpNumber,
               npwpName: input.npwpName,
@@ -63,27 +62,27 @@ export const customerRouter = router({
 
           // 3. Create addresses
           if (input.addresses && input.addresses.length > 0) {
-            await tx.customerAddress.createMany({
+            await tx.supplierAddress.createMany({
               data: input.addresses.map((address) => ({
                 ...address,
-                customerId: customer.id,
+                supplierId: supplier.id,
               })),
             });
           }
 
           // 4. Create contacts
           if (input.contacts && input.contacts.length > 0) {
-            await tx.customerContact.createMany({
+            await tx.supplierContact.createMany({
               data: input.contacts.map((contact) => ({
                 ...contact,
-                customerId: customer.id,
+                supplierId: supplier.id,
               })),
             });
           }
 
-          // Return complete customer data
-          return await tx.customer.findUnique({
-            where: { id: customer.id },
+          // Return complete supplier data
+          return await tx.supplier.findUnique({
+            where: { id: supplier.id },
             include: {
               addresses: {
                 include: {
@@ -101,22 +100,22 @@ export const customerRouter = router({
         return {
           success: true,
           data: result,
-          message: "Customer berhasil dibuat",
+          message: "Data supplier berhasil dibuat",
         };
       } catch (error) {
         if (error instanceof TRPCError) throw error;
 
-        console.error("Create customer error:", error);
+        console.error("Create supplier error:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Gagal membuat customer",
+          message: "Gagal membuat data supplier",
         });
       }
     }),
 
-  // Update Customer dengan atomic transaction
-  updateAllCustomer: protectedProcedure
-    .input(customerUpdateSchema)
+  // Update Supplier dengan atomic transaction
+  updateAllSupplier: protectedProcedure
+    .input(supplierUpdateSchema)
     .mutation(async ({ ctx, input }) => {
       try {
         const result = await ctx.db.$transaction(async (tx) => {
@@ -124,7 +123,7 @@ export const customerRouter = router({
 
           let npwpDateObj: Date | null = null;
 
-          const existingCustomer = await tx.customer.findUnique({
+          const existingSupplier = await tx.supplier.findUnique({
             where: { id: input.id },
             include: {
               addresses: true,
@@ -132,23 +131,23 @@ export const customerRouter = router({
             },
           });
 
-          if (!existingCustomer) {
+          if (!existingSupplier) {
             throw new TRPCError({
               code: "NOT_FOUND",
-              message: "Customer tidak ditemukan",
+              message: "Supplier tidak ditemukan",
             });
           }
 
-          // 2. Update customer data if provided
-          if (input.code && input.code !== existingCustomer.code) {
-            const codeExists = await tx.customer.findUnique({
+          // 2. Update supplier data if provided
+          if (input.code && input.code !== existingSupplier.code) {
+            const codeExists = await tx.supplier.findUnique({
               where: { code: input.code },
             });
 
             if (codeExists) {
               throw new TRPCError({
                 code: "CONFLICT",
-                message: "Kode customer sudah digunakan",
+                message: "Kode supplier sudah digunakan",
               });
             }
           }
@@ -168,13 +167,13 @@ export const customerRouter = router({
             }
           }
 
-          // Update customer basic info
-          await tx.customer.update({
+          // Update supplier basic info
+          await tx.supplier.update({
             where: { id: input.id },
             data: {
               code: input.code,
               name: input.name,
-              customerType: input.customerType,
+              supplierType: input.supplierType,
               statusActive: input.statusActive,
               notes: input.notes,
               npwpNumber: input.npwpNumber,
@@ -188,8 +187,8 @@ export const customerRouter = router({
           if (input.addresses && input.addresses.length > 0) {
             for (const address of input.addresses) {
               if (address.id) {
-                // Update existing address - only update provided fields
-                const updateData: Partial<InputAddressTypeSchema> = {};
+                // Update existing address - hanya update provided fields
+                const updateData: Partial<InputSupplierAddressTypeSchema> = {};
                 if (address.addressType !== undefined)
                   updateData.addressType = address.addressType;
                 if (address.addressLine1 !== undefined)
@@ -209,12 +208,12 @@ export const customerRouter = router({
                 if (address.districtCode !== undefined)
                   updateData.districtCode = address.districtCode;
 
-                await tx.customerAddress.update({
+                await tx.supplierAddress.update({
                   where: { id: address.id },
                   data: updateData,
                 });
               } else {
-                // Create new address - ensure required fields
+                // Create new jika address msh kosong - cek data wajib diisi sudah tersedia
                 if (
                   !address.addressType ||
                   !address.addressLine1 ||
@@ -228,7 +227,8 @@ export const customerRouter = router({
                   });
                 }
 
-                await tx.customerAddress.create({
+                //jika address kosong create
+                await tx.supplierAddress.create({
                   data: {
                     addressType: address.addressType,
                     addressLine1: address.addressLine1,
@@ -239,7 +239,7 @@ export const customerRouter = router({
                     provinceCode: address.provinceCode || null,
                     regencyCode: address.regencyCode || null,
                     districtCode: address.districtCode || null,
-                    customerId: input.id,
+                    supplierId: input.id,
                   },
                 });
               }
@@ -251,7 +251,7 @@ export const customerRouter = router({
             for (const contact of input.contacts) {
               if (contact.id) {
                 // Update existing contact - only update provided fields
-                const updateData: Partial<InputContactTypeSchema> = {};
+                const updateData: Partial<InputSupplierContactTypeSchema> = {};
                 if (contact.contactType !== undefined)
                   updateData.contactType = contact.contactType;
                 if (contact.name !== undefined) updateData.name = contact.name;
@@ -262,7 +262,7 @@ export const customerRouter = router({
                 if (contact.isPrimaryContact !== undefined)
                   updateData.isPrimaryContact = contact.isPrimaryContact;
 
-                await tx.customerContact.update({
+                await tx.supplierContact.update({
                   where: { id: contact.id },
                   data: updateData,
                 });
@@ -281,22 +281,22 @@ export const customerRouter = router({
                   });
                 }
 
-                await tx.customerContact.create({
+                await tx.supplierContact.create({
                   data: {
                     contactType: contact.contactType,
                     name: contact.name,
                     phoneNumber: contact.phoneNumber,
                     email: contact.email || null,
                     isPrimaryContact: contact.isPrimaryContact,
-                    customerId: input.id,
+                    supplierId: input.id,
                   },
                 });
               }
             }
           }
 
-          // Return updated customer data
-          return await tx.customer.findUnique({
+          // Return updated supplier data
+          return await tx.supplier.findUnique({
             where: { id: input.id },
             include: {
               addresses: {
@@ -315,21 +315,21 @@ export const customerRouter = router({
         return {
           success: true,
           data: result,
-          message: "Customer berhasil diperbarui",
+          message: "Data supplier berhasil diperbarui",
         };
       } catch (error) {
         if (error instanceof TRPCError) throw error;
 
-        console.error("Update customer error:", error);
+        console.error("Update supplier error:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Gagal memperbarui customer",
+          message: "Gagal memperbarui supplier",
         });
       }
     }),
 
-  // Delete Customer
-  deleteCustomer: protectedProcedure
+  // Delete Supplier
+  deleteSupplier: protectedProcedure
     .input(
       z.object({
         id: z.string(),
@@ -337,38 +337,38 @@ export const customerRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        const customer = await ctx.db.customer.findUnique({
+        const supplier = await ctx.db.supplier.findUnique({
           where: { id: input.id },
         });
 
-        if (!customer) {
+        if (!supplier) {
           throw new TRPCError({
             code: "NOT_FOUND",
-            message: "Customer tidak ditemukan",
+            message: "Supplier tidak ditemukan",
           });
         }
 
-        await ctx.db.customer.delete({
+        await ctx.db.supplier.delete({
           where: { id: input.id },
         });
 
         return {
           success: true,
-          message: "Customer berhasil dihapus",
+          message: "Supplier berhasil dihapus",
         };
       } catch (error) {
         if (error instanceof TRPCError) throw error;
 
-        console.error("Delete customer error:", error);
+        console.error("Delete Supplier error:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Gagal menghapus customer",
+          message: "Gagal menghapus supplier",
         });
       }
     }),
 
-  // Get Customer by ID
-  getCustomer: protectedProcedure
+  // Get Supplier by ID
+  getSupplier: protectedProcedure
     .input(
       z.object({
         id: z.string(),
@@ -376,7 +376,7 @@ export const customerRouter = router({
     )
     .query(async ({ ctx, input }) => {
       try {
-        const customer = await ctx.db.customer.findUnique({
+        const supplier = await ctx.db.supplier.findUnique({
           where: { id: input.id },
           include: {
             addresses: {
@@ -391,38 +391,39 @@ export const customerRouter = router({
           },
         });
 
-        if (!customer) {
+        if (!supplier) {
           throw new TRPCError({
             code: "NOT_FOUND",
-            message: "Customer tidak ditemukan",
+            message: "Supplier tidak ditemukan",
           });
         }
 
-        return customer;
+        return supplier;
       } catch (error) {
         if (error instanceof TRPCError) throw error;
 
-        console.error("Get customer error:", error);
+        console.error("Get supplier error:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Gagal mengambil data customer",
+          message: "Gagal mengambil data supplier",
         });
       }
     }),
 
-  // Get All Customers
-  getAllCustomers: protectedProcedure
+  // Get All Suppliers
+  getAllSuppliers: protectedProcedure
     .input(
       z.object({
         page: z.number().default(1),
         limit: z.number().default(10),
         search: z.string().optional(),
-        customerType: z.nativeEnum(CustomerType).optional(),
+        supplierType: z.nativeEnum(SupplierType).optional(),
         statusActive: z.nativeEnum(StatusActive).optional(),
       })
     )
     .query(async ({ ctx, input }) => {
       try {
+        //params search
         const where = {
           AND: [
             input.search
@@ -443,13 +444,13 @@ export const customerRouter = router({
                   ],
                 }
               : {},
-            input.customerType ? { customerType: input.customerType } : {},
+            input.supplierType ? { supplierType: input.supplierType } : {},
             input.statusActive ? { statusActive: input.statusActive } : {},
           ],
         };
 
-        const [customers, total] = await Promise.all([
-          ctx.db.customer.findMany({
+        const [suppliers, total] = await Promise.all([
+          ctx.db.supplier.findMany({
             where,
             skip: (input.page - 1) * input.limit,
             take: input.limit,
@@ -470,21 +471,21 @@ export const customerRouter = router({
             },
             orderBy: { createdAt: "desc" },
           }),
-          ctx.db.customer.count({ where }),
+          ctx.db.supplier.count({ where }),
         ]);
 
-        console.log(customers);
+        console.log(suppliers);
         return {
-          data: customers,
+          data: suppliers,
           total,
           page: input.page,
           totalPages: Math.ceil(total / input.limit),
         };
       } catch (error) {
-        console.error("Get all customers error:", error);
+        console.error("Get all suppliers error:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Gagal mengambil data customers",
+          message: "Gagal mengambil data suppliers",
         });
       }
     }),

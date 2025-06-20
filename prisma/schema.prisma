@@ -75,7 +75,7 @@ model Country {
   code            String            @id
   name            String
   customerAddress CustomerAddress[]
-
+  supplierAddress SupplierAddress[]
   @@index([name])
 }
 
@@ -83,6 +83,7 @@ model Province {
   code            String            @id
   name            String
   customerAddress CustomerAddress[]
+  supplierAddress SupplierAddress[]
   regencies       Regency[]
 
   @@index([name])
@@ -93,6 +94,7 @@ model Regency {
   name            String
   provinceCode    String
   customerAddress CustomerAddress[]
+  supplierAddress SupplierAddress[]
   province        Province          @relation(fields: [provinceCode], references: [code])
   district        District[]
 
@@ -104,6 +106,7 @@ model District {
   name            String
   regencyCode     String
   customerAddress CustomerAddress[]
+  supplierAddress SupplierAddress[]
   regency         Regency           @relation(fields: [regencyCode], references: [code])
 
   @@index([name])
@@ -146,6 +149,63 @@ model Position {
   employments Employment[]
 }
 
+//new
+model Supplier {
+  id           String            @id @default(cuid())
+  code         String            @unique
+  name         String
+  supplierType SupplierType
+  statusActive StatusActive      @default(ACTIVE)
+  activeDate  DateTime  @default(now()) 
+  notes        String?
+  npwpNumber   String?
+  npwpName     String?
+  npwpAddress  String?
+  npwpDate     DateTime?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  addresses SupplierAddress[]
+  contacts SupplierContact[]
+  @@index([name])
+}
+
+model SupplierAddress {
+  id               String      @id @default(cuid())
+  addressType      AddressType
+  addressLine1     String
+  addressLine2     String?
+  zipcode          String?
+  isPrimaryAddress Boolean
+  supplierId       String
+  countryCode      String
+  provinceCode     String? //optional domestic/international
+  regencyCode      String? //optional domestic/international
+  districtCode     String? //optional domestic/international
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  country          Country     @relation(fields: [countryCode], references: [code])
+  province         Province?   @relation(fields: [provinceCode], references: [code])
+  regency          Regency?    @relation(fields: [regencyCode], references: [code])
+  district         District?   @relation(fields: [districtCode], references: [code])
+
+  @@unique([supplierId, isPrimaryAddress], name: "OnePrimaryAddressPerSupplier")
+  @@unique([supplierId, addressType], name: "OneAddressTypePerSupplier")
+}
+
+model SupplierContact {
+  id               String      @id @default(cuid())
+  contactType      ContactType
+  name             String
+  phoneNumber      String
+  email            String?
+  isPrimaryContact Boolean
+  supplierId       String
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  @@unique([supplierId, isPrimaryContact], name: "OnePrimaryContactPerSupplier")
+  @@unique([supplierId, contactType], name: "OneContactTypePerSupplier")
+}
+//
+
 model Session {
   id        String   @id @default(cuid())
   userId    String   @unique
@@ -184,6 +244,12 @@ enum CustomerType {
   DOMESTIC
   INTERNATIONAL
 }
+
+enum SupplierType {
+  SERVICES
+  LOGISTIC
+}
+
 
 enum AddressType {
   HEAD_OFFICE

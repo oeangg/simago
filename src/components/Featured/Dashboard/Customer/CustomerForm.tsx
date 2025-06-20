@@ -45,7 +45,6 @@ import {
   Plus,
   Trash2,
   Save,
-  X,
   Building2,
   User,
   MapPin,
@@ -164,10 +163,12 @@ export function CustomerForm({
   );
 
   // Fetch countries
-  const { data: countries = [] } = trpc.Customer.getCountries.useQuery();
+  // const { data: countries = [] } = trpc.Customer.getCountries.useQuery();
+  const { data: countries = [] } = trpc.City.getCountries.useQuery();
 
   // Fetch provinces
-  const { data: provinces = [] } = trpc.Customer.getProvinces.useQuery();
+  // const { data: provinces = [] } = trpc.Customer.getProvinces.useQuery();
+  const { data: provinces = [] } = trpc.City.getProvinces.useQuery();
 
   // Initialize form default values
   const getDefaultValues = useCallback(() => {
@@ -270,7 +271,7 @@ export function CustomerForm({
 
   // Dynamic regency queries based on province selection
   const regencyQueries = (watchedAddresses || []).map((address) => {
-    return trpc.Customer.getRegencies.useQuery(
+    return trpc.City.getRegenciesByProvinceCode.useQuery(
       { provinceCode: address?.provinceCode || "" },
       {
         enabled: !!address?.provinceCode && address?.countryCode === "ID",
@@ -281,7 +282,7 @@ export function CustomerForm({
 
   // Dynamic district queries based on regency selection
   const districtQueries = (watchedAddresses || []).map((address) => {
-    return trpc.Customer.getDistricts.useQuery(
+    return trpc.City.getDistrictsByRegencyCode.useQuery(
       { regencyCode: address?.regencyCode || "" },
       {
         enabled: !!address?.regencyCode && address?.countryCode === "ID",
@@ -544,24 +545,6 @@ export function CustomerForm({
         onSubmit={form.handleSubmit(onSubmitCustomer)}
         className="space-y-6"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              {mode === "create" ? "Tambah Customer" : "Edit Customer"}
-            </h1>
-            <p className="text-muted-foreground">
-              {mode === "create"
-                ? "Buat customer baru dengan informasi lengkap"
-                : "Perbarui informasi customer"}
-            </p>
-          </div>
-          <Button type="button" variant="outline" onClick={handleCancel}>
-            <X className="mr-2 h-4 w-4" />
-            Batal
-          </Button>
-        </div>
-
         {/* Customer Information */}
         <Card>
           <CardHeader>
@@ -765,41 +748,43 @@ export function CustomerForm({
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="npwpAddress"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Alamat NPWP</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Alamat sesuai NPWP..."
-                      className="resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid gap-4 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="npwpAddress"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Alamat NPWP</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Alamat sesuai NPWP..."
+                        className="resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="npwpDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tanggal NPWP</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="date"
-                      max={new Date().toISOString().split("T")[0]}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="npwpDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tanggal NPWP</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="date"
+                        max={new Date().toISOString().split("T")[0]}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </CardContent>
         </Card>
 

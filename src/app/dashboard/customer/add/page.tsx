@@ -1,5 +1,5 @@
-import { CustomerForm } from "@/components/Featured/Dashboard/Customer/CustomerForm";
+import { CustomerAddPage } from "@/components/Featured/Dashboard/Customer/CustomerAddPage";
 
 export default function Home() {
-  return <CustomerForm mode="create" />;
+  return <CustomerAddPage />;
 }

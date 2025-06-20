@@ -1,4 +1,6 @@
+import { id } from "date-fns/locale";
 import { CustomerColumnsProps } from "./Columns";
+import { format } from "date-fns";
 
 // Type guard untuk memastikan data adalah CustomerColumnsProps
 export function isCustomerData(data: unknown): data is CustomerColumnsProps {
@@ -39,18 +41,26 @@ export function getCustomerCode<T>(row: { original: T }): string | null {
 
 // Export utility untuk CSV
 export function exportCustomersToCSV(customers: CustomerColumnsProps[]): void {
-  const headers = ["Code", "Name", "Type", "Status", "NPWP"];
+  const headers = ["Code", "Name", "Type", "Status", "Tgl Aktif", "NPWP"];
   const csvContent = [
     headers.join(","),
-    ...customers.map((customer) =>
-      [
+    ...customers.map((customer) => {
+      // Pastikan activeDate ada dan valid sebelum diformat
+      const formattedActiveDate = customer.activeDate
+        ? format(new Date(customer.activeDate), "dd MMMM yyyy", { locale: id })
+        : "";
+
+      const customerName = `"${customer.name.replace(/"/g, '""')}"`; // Ganti kutipan ganda dengan dua kutipan ganda
+
+      return [
         customer.code,
-        `"${customer.name}"`, // Escape quotes for names with commas
+        customerName,
         customer.customerType,
         customer.statusActive,
+        formattedActiveDate,
         customer.npwpNumber || "",
-      ].join(",")
-    ),
+      ].join(",");
+    }),
   ].join("\n");
 
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });

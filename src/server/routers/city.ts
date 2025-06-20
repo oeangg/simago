@@ -146,6 +146,13 @@ export const cityRouter = router({
       }
     }),
 
+  // Get Countries
+  getCountries: publicProcedure.query(async ({ ctx }) => {
+    return await ctx.db.country.findMany({
+      orderBy: { name: "asc" },
+    });
+  }),
+
   getProvinces: publicProcedure.query(async ({ ctx }) => {
     try {
       const provinces = await ctx.db.province.findMany({

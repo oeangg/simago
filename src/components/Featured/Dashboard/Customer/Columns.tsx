@@ -246,7 +246,7 @@ export const customerColumns = (
       ].filter(Boolean);
 
       return (
-        <div className="flex items-start gap-2 max-w-[300px]">
+        <div className="flex items-start gap-2 max-w-[200px]">
           <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
           <div className="text-sm min-w-0">
             <div className="flex items-center gap-1 mb-1">
@@ -290,7 +290,7 @@ export const customerColumns = (
       }
 
       return (
-        <div className="space-y-2 min-w-[200px]">
+        <div className="space-y-2 min-w-[180px]">
           <div className="flex items-center gap-1 mb-1">
             <Badge variant="outline" className="text-xs px-1 py-0">
               {getContactTypeLabel(primaryContact.contactType)}

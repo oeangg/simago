@@ -3,7 +3,7 @@
 import { trpc } from "@/app/_trpcClient/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
 import { CustomerForm } from "./CustomerForm";
@@ -87,23 +87,23 @@ export const CustomerEditPage = ({ id }: customerEditPageProps) => {
     );
   }
   return (
-    <div className="container mx-auto  space-y-6">
+    <div className="container  max-w-4xl mx-auto  space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Button variant="outline" size="sm" onClick={handleCancel}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Kembali
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">Edit Karyawan</h1>
-            <p className="text-gray-600 mt-1">
-              Ubah data Customer: {dataCustomer.name}
-            </p>
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Edit Customer :{" "}
+            <span className="text-xl text-muted-foreground uppercase  font-medium">
+              {dataCustomer.name}
+            </span>
+          </h1>
+          <p className="text-muted-foreground">Perbarui informasi customer</p>
         </div>
+        <Button type="button" variant="outline" onClick={handleCancel}>
+          <X className="mr-2 h-4 w-4" />
+          Batal
+        </Button>
       </div>
-
       {/* Form */}
       <CustomerForm
         customer={dataCustomer}
