@@ -22,11 +22,14 @@ model Customer {
   customerType CustomerType
   statusActive StatusActive      @default(ACTIVE)
   notes        String?
+  npwpNumber   String?
+  npwpName     String?
+  npwpAddress  String?
+  npwpDate     DateTime?
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
   addresses    CustomerAddress[]
   contacts     CustomerContact[]
-  npwpInfo     CustomerNpwp?
 
   @@index([name])
 }
@@ -39,15 +42,15 @@ model CustomerAddress {
   zipcode          String?
   isPrimaryAddress Boolean
   customerId       String
-  countryId        String
-  provinceCode       String? //optional domestic/international
-  regencyCode           String? //optional domestic/international
-  districtCode           String? //optional domestic/international
+  countryCode      String
+  provinceCode     String? //optional domestic/international
+  regencyCode      String? //optional domestic/international
+  districtCode     String? //optional domestic/international
   customer         Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  country          Country     @relation(fields: [countryId], references: [id])
+  country          Country     @relation(fields: [countryCode], references: [code])
   province         Province?   @relation(fields: [provinceCode], references: [code])
-  regency             Regency?       @relation(fields: [regencyCode], references: [code])
-  district             District?       @relation(fields: [districtCode], references: [code])
+  regency          Regency?    @relation(fields: [regencyCode], references: [code])
+  district         District?   @relation(fields: [districtCode], references: [code])
 
   @@unique([customerId, isPrimaryAddress], name: "OnePrimaryAddressPerCustomer")
   @@unique([customerId, addressType], name: "OneAddressTypePerCustomer")
@@ -67,21 +70,11 @@ model CustomerContact {
   @@unique([customerId, contactType], name: "OneContactTypePerCustomer")
 }
 
-model CustomerNpwp {
-  id          String   @id @default(cuid())
-  npwpNumber  String   @unique
-  npwpName    String
-  npwpAddress String
-  npwpDate    DateTime
-  customerId  String   @unique
-  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-}
-
 model Country {
-  id              String            @id @default(cuid())
-  code            String            @unique
+  code            String            @id
   name            String
   customerAddress CustomerAddress[]
+
   @@index([name])
 }
 
@@ -89,26 +82,29 @@ model Province {
   code            String            @id
   name            String
   customerAddress CustomerAddress[]
-  regencies          Regency[]
+  regencies       Regency[]
+
   @@index([name])
 }
 
 model Regency {
   code            String            @id
   name            String
-  provinceCode  String
+  provinceCode    String
   customerAddress CustomerAddress[]
-  province        Province          @relation(fields:[provinceCode], references: [code])
-  district          District[]
+  province        Province          @relation(fields: [provinceCode], references: [code])
+  district        District[]
+
   @@index([name])
 }
 
 model District {
   code            String            @id
   name            String
-  regencyCode      String
+  regencyCode     String
   customerAddress CustomerAddress[]
-  regency        Regency          @relation(fields:[regencyCode], references: [code])
+  regency         Regency           @relation(fields: [regencyCode], references: [code])
+
   @@index([name])
 }
 
@@ -150,9 +146,9 @@ model Position {
 }
 
 model Session {
-  id       String   @id @default(cuid())
-  userId   String   @unique
-  user     User     @relation(fields: [userId], references: [id])
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -169,8 +165,6 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   session   Session?
-
-  
 }
 
 //enum

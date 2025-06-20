@@ -1,0 +1,419 @@
+"use client";
+
+import { ColumnDef } from "@tanstack/react-table";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  Eye,
+  Phone,
+  Mail,
+  MapPin,
+  FileText,
+  ArrowUpDown,
+  Home,
+  Globe,
+} from "lucide-react";
+import { format } from "date-fns";
+import { id } from "date-fns/locale";
+import {
+  AddressType,
+  ContactType,
+  CustomerType,
+  StatusActive,
+} from "@prisma/client";
+
+interface CustomerAddress {
+  id: string;
+  addressType: AddressType;
+  addressLine1: string;
+  addressLine2?: string | null;
+  zipcode?: string | null;
+  isPrimaryAddress: boolean;
+  country?: {
+    name: string;
+  } | null;
+  province?: {
+    name: string;
+  } | null;
+  regency?: {
+    name: string;
+  } | null;
+  district?: {
+    name: string;
+  } | null;
+}
+
+interface CustomerContact {
+  id: string;
+  contactType: ContactType;
+  name: string;
+  phoneNumber: string;
+  email?: string | null;
+  isPrimaryContact: boolean;
+}
+
+export interface CustomerColumnsProps {
+  id?: string;
+  code: string;
+  name: string;
+  customerType: CustomerType;
+  statusActive: StatusActive;
+  npwpNumber?: string | null;
+  addresses: CustomerAddress[];
+  contacts: CustomerContact[];
+  createdAt?: Date;
+}
+
+interface ColumnActions {
+  onView: (customer: CustomerColumnsProps) => void;
+  onEdit: (customer: CustomerColumnsProps) => void;
+  onDelete: (customer: CustomerColumnsProps) => void;
+}
+
+// Helper functions
+const getAddressTypeLabel = (type: AddressType): string => {
+  const labels: Record<AddressType, string> = {
+    HEAD_OFFICE: "Kantor Pusat",
+    BRANCH: "Cabang",
+    WAREHOUSE: "Gudang",
+    BILLING: "Penagihan",
+    SHIPPING: "Pengiriman",
+  };
+  return labels[type] || type;
+};
+
+const getContactTypeLabel = (type: ContactType): string => {
+  const labels: Record<ContactType, string> = {
+    PRIMARY: "Utama",
+    BILLING: "Penagihan",
+    SHIPPING: "Pengiriman",
+    EMERGENCY: "Darurat",
+    TECHNICAL: "Teknis",
+  };
+  return labels[type] || type;
+};
+
+const getStatusBadge = (status: StatusActive) => {
+  const variants = {
+    ACTIVE: {
+      variant: "default" as const,
+      label: "Aktif",
+      className: "bg-green-500 hover:bg-green-600",
+    },
+    NOACTIVE: {
+      variant: "secondary" as const,
+      label: "Tidak Aktif",
+      className: "",
+    },
+    SUSPENDED: {
+      variant: "destructive" as const,
+      label: "Ditangguhkan",
+      className: "",
+    },
+  };
+
+  const config = variants[status] || variants.NOACTIVE;
+
+  return (
+    <Badge variant={config.variant} className={config.className}>
+      {config.label}
+    </Badge>
+  );
+};
+
+export const customerColumns = (
+  actions: ColumnActions
+): ColumnDef<CustomerColumnsProps>[] => [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate")
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Pilih semua"
+        className="translate-y-[2px]"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Pilih baris"
+        className="translate-y-[2px]"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: "code",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="h-8 px-2 lg:px-3"
+        >
+          Kode
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => (
+      <div className="font-mono text-sm font-medium">
+        {row.getValue("code")}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "name",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="h-8 px-2 lg:px-3"
+        >
+          Nama Customer
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const customer = row.original;
+      return (
+        <div className="flex items-center gap-2 min-w-[200px]">
+          {customer.customerType === "INTERNATIONAL" ? (
+            <Globe className="h-4 w-4 text-blue-500 flex-shrink-0" />
+          ) : (
+            <Home className="h-4 w-4 text-green-500 flex-shrink-0" />
+          )}
+          <div className="flex flex-col">
+            <span className="font-medium">{customer.name}</span>
+            <span className="text-xs text-muted-foreground">
+              {customer.customerType === "INTERNATIONAL"
+                ? "International"
+                : "Domestik"}
+            </span>
+          </div>
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "customerType",
+    header: "Tipe",
+    cell: ({ row }) => {
+      const type = row.getValue("customerType") as CustomerType;
+      return (
+        <Badge variant={type === "INTERNATIONAL" ? "default" : "secondary"}>
+          {type === "INTERNATIONAL" ? "International" : "Domestik"}
+        </Badge>
+      );
+    },
+  },
+  {
+    id: "primaryAddress",
+    header: "Alamat Utama",
+    cell: ({ row }) => {
+      const primaryAddress = row.original.addresses.find(
+        (addr) => addr.isPrimaryAddress
+      );
+
+      if (!primaryAddress) {
+        return <span className="text-muted-foreground text-sm">-</span>;
+      }
+
+      const locationParts = [
+        primaryAddress.district?.name,
+        primaryAddress.regency?.name,
+        primaryAddress.province?.name,
+      ].filter(Boolean);
+
+      return (
+        <div className="flex items-start gap-2 max-w-[300px]">
+          <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+          <div className="text-sm min-w-0">
+            <div className="flex items-center gap-1 mb-1">
+              <Badge variant="outline" className="text-xs px-1 py-0">
+                {getAddressTypeLabel(primaryAddress.addressType)}
+              </Badge>
+            </div>
+            <p className="line-clamp-1 font-medium">
+              {primaryAddress.addressLine1}
+            </p>
+            {primaryAddress.addressLine2 && (
+              <p className="line-clamp-1 text-muted-foreground text-xs">
+                {primaryAddress.addressLine2}
+              </p>
+            )}
+            {locationParts.length > 0 && (
+              <p className="text-muted-foreground text-xs">
+                {locationParts.join(", ")}
+              </p>
+            )}
+            {primaryAddress.zipcode && (
+              <p className="text-muted-foreground text-xs">
+                {primaryAddress.zipcode}
+              </p>
+            )}
+          </div>
+        </div>
+      );
+    },
+  },
+  {
+    id: "primaryContact",
+    header: "Kontak Utama",
+    cell: ({ row }) => {
+      const primaryContact = row.original.contacts.find(
+        (cont) => cont.isPrimaryContact
+      );
+
+      if (!primaryContact) {
+        return <span className="text-muted-foreground text-sm">-</span>;
+      }
+
+      return (
+        <div className="space-y-2 min-w-[200px]">
+          <div className="flex items-center gap-1 mb-1">
+            <Badge variant="outline" className="text-xs px-1 py-0">
+              {getContactTypeLabel(primaryContact.contactType)}
+            </Badge>
+          </div>
+          <div className="text-sm">
+            <p className="font-medium">{primaryContact.name}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Phone className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+            <span className="text-sm font-mono">
+              {primaryContact.phoneNumber}
+            </span>
+          </div>
+          {primaryContact.email && (
+            <div className="flex items-center gap-2">
+              <Mail className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+              <span className="text-sm text-muted-foreground truncate">
+                {primaryContact.email}
+              </span>
+            </div>
+          )}
+        </div>
+      );
+    },
+  },
+  {
+    id: "npwp",
+    header: "NPWP",
+    cell: ({ row }) => {
+      const npwp = row.original.npwpNumber;
+
+      if (!npwp) {
+        return <span className="text-muted-foreground text-sm">-</span>;
+      }
+
+      return (
+        <div className="flex items-center gap-2">
+          <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+          <span className="text-sm font-mono">{npwp}</span>
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "statusActive",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="h-8 px-2 lg:px-3"
+        >
+          Status
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const status = row.getValue("statusActive") as StatusActive;
+      return getStatusBadge(status);
+    },
+  },
+  {
+    accessorKey: "createdAt",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="h-8 px-2 lg:px-3"
+        >
+          Dibuat
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const date = row.getValue("createdAt") as Date;
+      if (!date) return <span className="text-muted-foreground">-</span>;
+
+      return (
+        <span className="text-sm text-muted-foreground">
+          {format(new Date(date), "dd MMM yyyy", { locale: id })}
+        </span>
+      );
+    },
+  },
+  {
+    id: "actions",
+    header: "Aksi",
+    cell: ({ row }) => {
+      const customer = row.original;
+
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Buka menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-[160px]">
+            <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => actions.onView(customer)}>
+              <Eye className="mr-2 h-4 w-4" />
+              Lihat Detail
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => actions.onEdit(customer)}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => actions.onDelete(customer)}
+              className="text-red-600 focus:text-red-600"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Hapus
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    },
+  },
+];

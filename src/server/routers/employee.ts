@@ -231,9 +231,6 @@ export const employeeRouter = router({
                 if (!isNaN(tempDate.getTime())) {
                   endDateObj = tempDate;
                 } else {
-                  console.warn(
-                    `Peringatan: endDate tidak valid di backend untuk input: ${emp.endDate}`
-                  );
                   throw new TRPCError({
                     code: "BAD_REQUEST",
                     message: `endDate wajib diisi dan dalam format yang benar.`,
@@ -242,10 +239,10 @@ export const employeeRouter = router({
               }
 
               return {
-                startDate: startDateObj, // Gunakan objek Date yang sudah dikonversi
-                endDate: endDateObj, // Gunakan objek Date yang sudah dikonversi (atau null)
+                startDate: startDateObj,
+                endDate: endDateObj,
                 positionId: emp.positionId,
-                employeeId: employee.id, // Gunakan ID karyawan yang baru dibuat
+                employeeId: employee.id,
               };
             });
 
