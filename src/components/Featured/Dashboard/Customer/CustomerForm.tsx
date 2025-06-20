@@ -53,6 +53,7 @@ import {
   FileText,
   Home,
   Mail,
+  CalendarIcon,
 } from "lucide-react";
 import {
   AddressType,
@@ -60,6 +61,8 @@ import {
   CustomerType,
   StatusActive,
 } from "@prisma/client";
+import { id } from "date-fns/locale";
+import { format } from "date-fns";
 
 interface CustomerFormProps {
   customer?: {
@@ -68,6 +71,7 @@ interface CustomerFormProps {
     name: string;
     customerType: CustomerType;
     statusActive: StatusActive;
+    activeDate: string | null;
     notes?: string | null;
     npwpNumber?: string | null;
     npwpName?: string | null;
@@ -174,6 +178,7 @@ export function CustomerForm({
         name: customerData.name,
         customerType: customerData.customerType,
         statusActive: customerData.statusActive,
+        activeDate: customerData.activeDate,
         notes: customerData.notes || "",
         npwpNumber: customerData.npwpNumber || "",
         npwpName: customerData.npwpName || "",
@@ -382,6 +387,7 @@ export function CustomerForm({
       name: data.name,
       customerType: data.customerType,
       statusActive: data.statusActive,
+      activeDate: data.activeDate,
       notes: emptyToUndefined(data.notes),
       npwpNumber: emptyToUndefined(data.npwpNumber),
       npwpName: emptyToUndefined(data.npwpName),
@@ -636,37 +642,64 @@ export function CustomerForm({
               />
 
               {mode === "edit" && (
-                <FormField
-                  control={form.control}
-                  name="statusActive"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
+                <div className="grid grid-cols-2 gap-2">
+                  <FormField
+                    control={form.control}
+                    name="statusActive"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Pilih status" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="ACTIVE">
+                              <Badge className="bg-green-500">Active</Badge>
+                            </SelectItem>
+                            <SelectItem value="NOACTIVE">
+                              <Badge variant="secondary">No Active</Badge>
+                            </SelectItem>
+                            <SelectItem value="SUSPENDED">
+                              <Badge variant="destructive">Suspended</Badge>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="activeDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tanggal Aktif</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Pilih status" />
-                          </SelectTrigger>
+                          <div className="flex items-center px-3 py-2 border border-input bg-background rounded-md">
+                            <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">
+                              {field.value
+                                ? format(
+                                    new Date(field.value),
+                                    "dd MMMM yyyy",
+                                    { locale: id }
+                                  )
+                                : "Tanggal belum diset"}
+                            </span>
+                          </div>
                         </FormControl>
-                        <SelectContent>
-                          <SelectItem value="ACTIVE">
-                            <Badge className="bg-green-500">Active</Badge>
-                          </SelectItem>
-                          <SelectItem value="NOACTIVE">
-                            <Badge variant="secondary">No Active</Badge>
-                          </SelectItem>
-                          <SelectItem value="SUSPENDED">
-                            <Badge variant="destructive">Suspended</Badge>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               )}
             </div>
 

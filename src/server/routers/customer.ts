@@ -453,6 +453,7 @@ export const customerRouter = router({
             where,
             skip: (input.page - 1) * input.limit,
             take: input.limit,
+
             include: {
               addresses: {
                 where: { isPrimaryAddress: true },
@@ -472,6 +473,7 @@ export const customerRouter = router({
           ctx.db.customer.count({ where }),
         ]);
 
+        console.log(customers);
         return {
           data: customers,
           total,

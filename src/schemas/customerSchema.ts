@@ -74,6 +74,7 @@ export const customerSchema = z.object({
   name: z.string().min(1, "Nama tidak boleh kosong"),
   customerType: customerTypeSchema,
   statusActive: statusActiveSchema,
+  activeDate: z.string().optional(),
   notes: z.string().optional(),
   npwpNumber: z.string().optional(),
   npwpName: z.string().optional(),

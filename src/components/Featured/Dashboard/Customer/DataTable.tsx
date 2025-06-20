@@ -82,7 +82,7 @@ export function CustomerDataTable<TData extends CustomerColumnsProps, TValue>({
     },
     initialState: {
       pagination: {
-        pageSize: 10,
+        pageSize: 5,
       },
     },
     // Global filter function using utility
@@ -164,7 +164,7 @@ export function CustomerDataTable<TData extends CustomerColumnsProps, TValue>({
                       {column.id === "primaryContact" && "Kontak"}
                       {column.id === "npwp" && "NPWP"}
                       {column.id === "statusActive" && "Status"}
-                      {column.id === "createdAt" && "Dibuat"}
+                      {column.id === "activeDate" && "TglAktif"}
                     </DropdownMenuCheckboxItem>
                   );
                 })}

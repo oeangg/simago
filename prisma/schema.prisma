@@ -21,6 +21,7 @@ model Customer {
   name         String
   customerType CustomerType
   statusActive StatusActive      @default(ACTIVE)
+  activeDate  DateTime  @default(now()) 
   notes        String?
   npwpNumber   String?
   npwpName     String?

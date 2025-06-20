@@ -70,10 +70,10 @@ export interface CustomerColumnsProps {
   name: string;
   customerType: CustomerType;
   statusActive: StatusActive;
+  activeDate?: Date;
   npwpNumber?: string | null;
   addresses: CustomerAddress[];
   contacts: CustomerContact[];
-  createdAt?: Date;
 }
 
 interface ColumnActions {
@@ -355,7 +355,7 @@ export const customerColumns = (
     },
   },
   {
-    accessorKey: "createdAt",
+    accessorKey: "activeDate",
     header: ({ column }) => {
       return (
         <Button
@@ -363,13 +363,14 @@ export const customerColumns = (
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="h-8 px-2 lg:px-3"
         >
-          Dibuat
+          Tgl Aktif
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
     cell: ({ row }) => {
-      const date = row.getValue("createdAt") as Date;
+      // const date = row.getValue("activeDate") as Date;
+      const date = row.getValue("activeDate") as Date;
       if (!date) return <span className="text-muted-foreground">-</span>;
 
       return (

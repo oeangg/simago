@@ -161,9 +161,10 @@ export const CustomerUpdateDataTable = () => {
               customerType: customer.customerType,
               statusActive: customer.statusActive,
               npwpNumber: customer.npwpNumber || "",
-              createdAt: customer.createdAt
-                ? new Date(customer.createdAt)
-                : undefined,
+              activeDate: customer ? new Date(customer.activeDate) : undefined,
+              // createdAt: customer.createdAt
+              //   ? new Date(customer.createdAt)
+              //   : undefined,
 
               // Transform addresses - karena hanya primary yang diambil
               addresses: primaryAddress
