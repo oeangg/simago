@@ -149,7 +149,6 @@ model Position {
   employments Employment[]
 }
 
-//new
 model Supplier {
   id           String            @id @default(cuid())
   code         String            @unique
@@ -204,8 +203,6 @@ model SupplierContact {
   @@unique([supplierId, isPrimaryContact], name: "OnePrimaryContactPerSupplier")
   @@unique([supplierId, contactType], name: "OneContactTypePerSupplier")
 }
-//
-
 model Session {
   id        String   @id @default(cuid())
   userId    String   @unique
