@@ -54,7 +54,7 @@ export const inputSupplierContactSchema = z
       .regex(phoneRegex, "Invalid format phone!"),
     email: z.string().optional(),
     isPrimaryContact: z.boolean(),
-    customerId: z.string().optional(),
+    supplierId: z.string().optional(),
   })
   .refine(
     (data) =>

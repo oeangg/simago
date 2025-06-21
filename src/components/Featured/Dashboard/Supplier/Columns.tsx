@@ -22,19 +22,19 @@ import {
   MapPin,
   FileText,
   ArrowUpDown,
-  Home,
-  Globe,
+  HandCoins,
+  Warehouse,
 } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import {
   AddressType,
   ContactType,
-  CustomerType,
   StatusActive,
+  SupplierType,
 } from "@prisma/client";
 
-interface CustomerAddress {
+interface SupplierAddress {
   id: string;
   addressType: AddressType;
   addressLine1: string;
@@ -55,7 +55,7 @@ interface CustomerAddress {
   } | null;
 }
 
-interface CustomerContact {
+interface SupplierContact {
   id: string;
   contactType: ContactType;
   name: string;
@@ -64,22 +64,22 @@ interface CustomerContact {
   isPrimaryContact: boolean;
 }
 
-export interface CustomerColumnsProps {
+export interface SupplierColumnsProps {
   id?: string;
   code: string;
   name: string;
-  customerType: CustomerType;
+  supplierType: SupplierType;
   statusActive: StatusActive;
   activeDate?: Date;
   npwpNumber?: string | null;
-  addresses: CustomerAddress[];
-  contacts: CustomerContact[];
+  addresses: SupplierAddress[];
+  contacts: SupplierContact[];
 }
 
 interface ColumnActions {
-  onView: (customer: CustomerColumnsProps) => void;
-  onEdit: (customer: CustomerColumnsProps) => void;
-  onDelete: (customer: CustomerColumnsProps) => void;
+  onView: (supplier: SupplierColumnsProps) => void;
+  onEdit: (supplier: SupplierColumnsProps) => void;
+  onDelete: (supplier: SupplierColumnsProps) => void;
 }
 
 // Helper functions
@@ -113,14 +113,14 @@ const getStatusBadge = (status: StatusActive) => {
       className: "bg-green-500 hover:bg-green-600",
     },
     NOACTIVE: {
-      variant: "secondary" as const,
+      variant: "destructive" as const,
       label: "Tidak Aktif",
       className: "",
     },
     SUSPENDED: {
-      variant: "destructive" as const,
+      variant: "secondary" as const,
       label: "Ditangguhkan",
-      className: "",
+      className: "bg-yellow-400 hover:bg-yellow-500",
     },
   };
 
@@ -133,9 +133,9 @@ const getStatusBadge = (status: StatusActive) => {
   );
 };
 
-export const customerColumns = (
+export const supplierColumns = (
   actions: ColumnActions
-): ColumnDef<CustomerColumnsProps>[] => [
+): ColumnDef<SupplierColumnsProps>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -189,26 +189,24 @@ export const customerColumns = (
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="h-8 px-2 lg:px-3"
         >
-          Nama Customer
+          Nama Supplier
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
     cell: ({ row }) => {
-      const customer = row.original;
+      const supplier = row.original;
       return (
         <div className="flex items-center gap-2 min-w-[200px]">
-          {customer.customerType === "INTERNATIONAL" ? (
-            <Globe className="h-4 w-4 text-blue-500 flex-shrink-0" />
+          {supplier.supplierType === "LOGISTIC" ? (
+            <Warehouse className="h-4 w-4 text-blue-500 flex-shrink-0" />
           ) : (
-            <Home className="h-4 w-4 text-green-500 flex-shrink-0" />
+            <HandCoins className="h-4 w-4 text-green-500 flex-shrink-0" />
           )}
           <div className="flex flex-col">
-            <span className="font-medium">{customer.name}</span>
+            <span className="font-medium">{supplier.name}</span>
             <span className="text-xs text-muted-foreground">
-              {customer.customerType === "INTERNATIONAL"
-                ? "International"
-                : "Domestik"}
+              {supplier.supplierType === "LOGISTIC" ? "Logistic" : "Services"}
             </span>
           </div>
         </div>
@@ -216,13 +214,13 @@ export const customerColumns = (
     },
   },
   {
-    accessorKey: "customerType",
+    accessorKey: "supplierType",
     header: "Tipe",
     cell: ({ row }) => {
-      const type = row.getValue("customerType") as CustomerType;
+      const type = row.getValue("supplierType") as SupplierType;
       return (
-        <Badge variant={type === "INTERNATIONAL" ? "default" : "secondary"}>
-          {type === "INTERNATIONAL" ? "International" : "Domestik"}
+        <Badge variant={type === "LOGISTIC" ? "default" : "secondary"}>
+          {type === "LOGISTIC" ? "Logistic" : "Services"}
         </Badge>
       );
     },
@@ -384,7 +382,7 @@ export const customerColumns = (
     id: "actions",
     header: "Aksi",
     cell: ({ row }) => {
-      const customer = row.original;
+      const supplier = row.original;
 
       return (
         <DropdownMenu>
@@ -396,17 +394,17 @@ export const customerColumns = (
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-[160px]">
             <DropdownMenuLabel>Aksi</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => actions.onView(customer)}>
+            <DropdownMenuItem onClick={() => actions.onView(supplier)}>
               <Eye className="mr-2 h-4 w-4" />
               Lihat Detail
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => actions.onEdit(customer)}>
+            <DropdownMenuItem onClick={() => actions.onEdit(supplier)}>
               <Edit className="mr-2 h-4 w-4" />
               Edit
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => actions.onDelete(customer)}
+              onClick={() => actions.onDelete(supplier)}
               className="text-red-600 focus:text-red-600"
             >
               <Trash2 className="mr-2 h-4 w-4" />

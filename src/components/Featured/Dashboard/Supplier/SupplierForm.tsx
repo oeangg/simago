@@ -6,12 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { trpc } from "@/app/_trpcClient/client";
-import {
-  customerSchema,
-  CustomerTypeSchema,
-  customerUpdateSchema,
-  CustomerUpdateTypeSchema,
-} from "@/schemas/customerSchema";
+
 import {
   Form,
   FormControl,
@@ -45,30 +40,36 @@ import {
   Plus,
   Trash2,
   Save,
-  Building2,
   User,
   MapPin,
   Phone,
   FileText,
-  Home,
   Mail,
   CalendarIcon,
+  Warehouse,
+  HandCoins,
 } from "lucide-react";
 import {
   AddressType,
   ContactType,
-  CustomerType,
   StatusActive,
+  SupplierType,
 } from "@prisma/client";
 import { id } from "date-fns/locale";
 import { format } from "date-fns";
+import {
+  supplierSchema,
+  SupplierTypeSchema,
+  supplierUpdateSchema,
+  SupplierUpdateTypeSchema,
+} from "@/schemas/supplierSchema";
 
-interface CustomerFormProps {
-  customer?: {
+interface SupplierFormProps {
+  supplier?: {
     id: string;
     code: string;
     name: string;
-    customerType: CustomerType;
+    supplierType: SupplierType;
     statusActive: StatusActive;
     activeDate: string | null;
     notes?: string | null;
@@ -95,7 +96,7 @@ interface CustomerFormProps {
       phoneNumber: string;
       email?: string | null;
       isPrimaryContact: boolean;
-      customerId: string;
+      supplierId: string;
     }>;
   };
   mode: "create" | "edit";
@@ -143,51 +144,49 @@ const defaultContact = {
   isPrimaryContact: true,
 };
 
-export function CustomerForm({
-  customer,
+export function SupplierForm({
+  supplier,
   mode,
   onSuccess,
   onCancel,
-}: CustomerFormProps) {
+}: SupplierFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch customer data if in edit mode
+  // Fetch supplier data if in edit mode
   const {
-    data: customerData,
-    isLoading: isLoadingCustomer,
-    isPending: isPendingCustomer,
-  } = trpc.Customer.getCustomer.useQuery(
-    { id: customer?.id || "" },
-    { enabled: mode === "edit" && !!customer?.id }
+    data: supplierData,
+    isLoading: isLoadingSupplier,
+    isPending: isPendingSupplier,
+  } = trpc.Supplier.getSupplier.useQuery(
+    { id: supplier?.id || "" },
+    { enabled: mode === "edit" && !!supplier?.id }
   );
 
   // Fetch countries
-  // const { data: countries = [] } = trpc.Customer.getCountries.useQuery();
   const { data: countries = [] } = trpc.City.getCountries.useQuery();
 
   // Fetch provinces
-  // const { data: provinces = [] } = trpc.Customer.getProvinces.useQuery();
   const { data: provinces = [] } = trpc.City.getProvinces.useQuery();
 
   // Initialize form default values
   const getDefaultValues = useCallback(() => {
-    if (mode === "edit" && customerData) {
+    if (mode === "edit" && supplierData) {
       return {
-        id: customerData.id,
-        code: customerData.code,
-        name: customerData.name,
-        customerType: customerData.customerType,
-        statusActive: customerData.statusActive,
-        activeDate: customerData.activeDate,
-        notes: customerData.notes || "",
-        npwpNumber: customerData.npwpNumber || "",
-        npwpName: customerData.npwpName || "",
-        npwpAddress: customerData.npwpAddress || "",
-        npwpDate: customerData.npwpDate
-          ? customerData.npwpDate.slice(0, 10)
+        id: supplierData.id,
+        code: supplierData.code,
+        name: supplierData.name,
+        supplierType: supplierData.supplierType,
+        statusActive: supplierData.statusActive,
+        activeDate: supplierData.activeDate,
+        notes: supplierData.notes || "",
+        npwpNumber: supplierData.npwpNumber || "",
+        npwpName: supplierData.npwpName || "",
+        npwpAddress: supplierData.npwpAddress || "",
+        npwpDate: supplierData.npwpDate
+          ? supplierData.npwpDate.slice(0, 10)
           : "",
-        addresses: customerData.addresses.map((addr) => ({
+        addresses: supplierData.addresses.map((addr) => ({
           id: addr.id,
           addressType: addr.addressType,
           addressLine1: addr.addressLine1,
@@ -199,14 +198,14 @@ export function CustomerForm({
           regencyCode: addr.regencyCode || "",
           districtCode: addr.districtCode || "",
         })),
-        contacts: customerData.contacts.map((ctc) => ({
+        contacts: supplierData.contacts.map((ctc) => ({
           id: ctc.id,
           contactType: ctc.contactType,
           name: ctc.name,
           phoneNumber: ctc.phoneNumber,
           email: ctc.email || "",
           isPrimaryContact: ctc.isPrimaryContact,
-          customerId: ctc.customerId,
+          supplierId: ctc.supplierId,
         })),
       };
     }
@@ -214,7 +213,7 @@ export function CustomerForm({
     return {
       code: "",
       name: "",
-      customerType: "DOMESTIC" as CustomerType,
+      supplierType: "DOMESTIC" as SupplierType,
       statusActive: "ACTIVE" as StatusActive,
       notes: "",
       npwpNumber: "",
@@ -224,24 +223,24 @@ export function CustomerForm({
       addresses: [{ ...defaultAddress }],
       contacts: [{ ...defaultContact }],
     };
-  }, [customerData, mode]);
+  }, [supplierData, mode]);
 
-  // Initialize form - key: re-initialize when customerData changes
-  const form = useForm<CustomerTypeSchema>({
+  // Initialize form
+  const form = useForm<SupplierTypeSchema>({
     resolver: zodResolver(
-      mode === "create" ? customerSchema : customerUpdateSchema
+      mode === "create" ? supplierSchema : supplierUpdateSchema
     ),
     defaultValues: getDefaultValues(),
     mode: "onChange",
   });
 
-  // Re-initialize form when customerData changes (edit mode)
+  // Re-initialize form (edit mode)
   useEffect(() => {
-    if (mode === "edit" && customerData && !isPendingCustomer) {
+    if (mode === "edit" && supplierData && !isPendingSupplier) {
       const newDefaultValues = getDefaultValues();
       form.reset(newDefaultValues);
     }
-  }, [customerData, mode, isPendingCustomer, form, getDefaultValues]);
+  }, [supplierData, mode, isPendingSupplier, form, getDefaultValues]);
 
   // Get form state
   const { isDirty, isValid } = form.formState;
@@ -265,11 +264,10 @@ export function CustomerForm({
     name: "contacts",
   });
 
-  // Watch customer type and address values for conditional rendering
-  const customerType = form.watch("customerType");
+  // Watch supplier type and address  for conditional rendering
   const watchedAddresses = form.watch("addresses");
 
-  // Dynamic regency queries based on province selection
+  // Dynamic regency queries berdasarkan province code
   const regencyQueries = (watchedAddresses || []).map((address) => {
     return trpc.City.getRegenciesByProvinceCode.useQuery(
       { provinceCode: address?.provinceCode || "" },
@@ -280,7 +278,7 @@ export function CustomerForm({
     );
   });
 
-  // Dynamic district queries based on regency selection
+  // Dynamic district queries berdasarkan district code
   const districtQueries = (watchedAddresses || []).map((address) => {
     return trpc.City.getDistrictsByRegencyCode.useQuery(
       { regencyCode: address?.regencyCode || "" },
@@ -291,7 +289,7 @@ export function CustomerForm({
     );
   });
 
-  // Helper functions to get query data
+  // get query data untuk select value
   const getRegencyQuery = useCallback(
     (index: number) => {
       return regencyQueries[index] || { data: [], isLoading: false };
@@ -306,45 +304,44 @@ export function CustomerForm({
     [districtQueries]
   );
 
-  // Mutations
+  // Mutations invalidation manggil func untuk invalidate data
   const utils = trpc.useUtils();
 
-  const createMutation = trpc.Customer.createAllCustomer.useMutation({
+  const createMutation = trpc.Supplier.createAllSupplier.useMutation({
     onSuccess: () => {
-      toast.success("Customer berhasil dibuat");
-      utils.Customer.getAllCustomers.invalidate();
+      toast.success("Data Supplier berhasil dibuat");
+      utils.Supplier.getAllSuppliers.invalidate();
       if (onSuccess) {
         onSuccess();
       } else {
-        router.push("/dashboard/customer");
+        router.push("/dashboard/supplier");
       }
     },
     onError: (error) => {
-      console.error("Create customer error:", error);
-      toast.error(error.message || "Gagal membuat customer");
+      console.error("Create Supplier error:", error);
+      toast.error(error.message || "Gagal membuat data supplier");
     },
   });
 
-  const updateMutation = trpc.Customer.updateAllCustomer.useMutation({
+  const updateMutation = trpc.Supplier.updateAllSupplier.useMutation({
     onSuccess: () => {
-      toast.success("Customer berhasil diperbarui");
-      utils.Customer.getAllCustomers.invalidate();
+      toast.success("Supplier berhasil diperbarui");
+      utils.Supplier.getAllSuppliers.invalidate();
       if (onSuccess) {
         onSuccess();
       } else {
-        router.push("/dashboard/customer");
+        router.push("/dashboard/supplier");
       }
     },
     onError: (error) => {
-      console.error("Update customer error:", error);
-      toast.error(error.message || "Gagal memperbarui customer");
+      console.error("Update data supplier error:", error);
+      toast.error(error.message || "Gagal memperbarui data supplier");
     },
   });
 
-  // Load customer data for edit mode - REMOVE COMPLEX LOGIC
-  // useEffect sudah di-handle di atas dengan isPending check
+  // Load supplier data for edit mode -
 
-  // Handle province change - reset dependent fields
+  // Handle province change - reset regencycode
   const handleProvinceChange = useCallback(
     (value: string, index: number) => {
       form.setValue(`addresses.${index}.provinceCode`, value);
@@ -354,7 +351,7 @@ export function CustomerForm({
     [form]
   );
 
-  // Handle regency change - reset dependent fields
+  // Handle regency change - reset district code
   const handleRegencyChange = useCallback(
     (value: string, index: number) => {
       form.setValue(`addresses.${index}.regencyCode`, value);
@@ -363,10 +360,12 @@ export function CustomerForm({
     [form]
   );
 
-  // Handle country change - reset dependent fields
+  // Handle country change - reset city code
   const handleCountryChange = useCallback(
     (value: string, index: number) => {
       form.setValue(`addresses.${index}.countryCode`, value);
+
+      //jika country ID
       if (value !== "ID") {
         form.setValue(`addresses.${index}.provinceCode`, "");
         form.setValue(`addresses.${index}.regencyCode`, "");
@@ -377,7 +376,7 @@ export function CustomerForm({
   );
 
   // Helper function to clean form data
-  const cleanFormData = useCallback((data: CustomerTypeSchema) => {
+  const cleanFormData = useCallback((data: SupplierTypeSchema) => {
     // Helper untuk convert empty string ke undefined
     const emptyToUndefined = (value: string | undefined) => {
       return value && value.trim() !== "" ? value : undefined;
@@ -386,7 +385,7 @@ export function CustomerForm({
     return {
       code: data.code,
       name: data.name,
-      customerType: data.customerType,
+      supplierType: data.supplierType,
       statusActive: data.statusActive,
       activeDate: data.activeDate,
       notes: emptyToUndefined(data.notes),
@@ -404,15 +403,15 @@ export function CustomerForm({
         countryCode: address.countryCode,
         // Location fields - undefined untuk International
         provinceCode:
-          data.customerType === "INTERNATIONAL"
+          address.countryCode !== "ID"
             ? undefined
             : emptyToUndefined(address.provinceCode),
         regencyCode:
-          data.customerType === "INTERNATIONAL"
+          address.countryCode !== "ID"
             ? undefined
             : emptyToUndefined(address.regencyCode),
         districtCode:
-          data.customerType === "INTERNATIONAL"
+          address.countryCode !== "ID"
             ? undefined
             : emptyToUndefined(address.districtCode),
       })),
@@ -423,14 +422,14 @@ export function CustomerForm({
         phoneNumber: contact.phoneNumber,
         email: emptyToUndefined(contact.email),
         isPrimaryContact: contact.isPrimaryContact,
-        ...(contact.customerId && { customerId: contact.customerId }), // Only include customerId if exists
+        ...(contact.supplierId && { supplierId: contact.supplierId }), // Only include supplierID if exists
       })),
     };
   }, []);
 
   // Submit handler
-  const onSubmitCustomer = useCallback(
-    async (data: CustomerTypeSchema) => {
+  const onSubmitSupplier = useCallback(
+    async (data: SupplierTypeSchema) => {
       setIsLoading(true);
       try {
         const cleanedData = cleanFormData(data);
@@ -441,8 +440,8 @@ export function CustomerForm({
         } else {
           await updateMutation.mutateAsync({
             ...cleanedData,
-            id: customer?.id,
-          } as CustomerUpdateTypeSchema);
+            id: supplier?.id,
+          } as SupplierUpdateTypeSchema);
         }
       } catch (error) {
         console.error("Submit error:", error);
@@ -451,7 +450,7 @@ export function CustomerForm({
         setIsLoading(false);
       }
     },
-    [mode, createMutation, updateMutation, customer?.id, cleanFormData]
+    [mode, createMutation, updateMutation, supplier?.id, cleanFormData]
   );
 
   // Handle primary selection
@@ -478,7 +477,7 @@ export function CustomerForm({
     if (onCancel) {
       onCancel();
     } else {
-      router.push("/dashboard/customer");
+      router.push("/dashboard/supplier");
     }
   }, [onCancel, router]);
 
@@ -500,7 +499,7 @@ export function CustomerForm({
       const addressToRemove = currentAddresses[index];
       removeAddress(index);
 
-      // If removing primary address, set first remaining address as primary
+      // jika remmove primary address, set first remaining address as primary
       if (addressToRemove?.isPrimaryAddress) {
         const newPrimaryIndex = index === 0 ? 0 : 0;
         setTimeout(() => {
@@ -531,7 +530,7 @@ export function CustomerForm({
     [form, removeContact]
   );
 
-  if (mode === "edit" && (isLoadingCustomer || isPendingCustomer)) {
+  if (mode === "edit" && (isLoadingSupplier || isPendingSupplier)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -542,17 +541,17 @@ export function CustomerForm({
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmitCustomer)}
+        onSubmit={form.handleSubmit(onSubmitSupplier)}
         className="space-y-6"
       >
-        {/* Customer Information */}
+        {/* Supplier Information */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
-              Informasi Customer
+              Informasi Supplier
             </CardTitle>
-            <CardDescription>Masukkan informasi dasar customer</CardDescription>
+            <CardDescription>Masukkan informasi dasar Supplier</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-6">
             <div className="grid gap-4 md:grid-cols-2">
@@ -562,10 +561,10 @@ export function CustomerForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Kode Customer <span className="text-red-500">*</span>
+                      Kode Supplier <span className="text-red-500">*</span>
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="CUST-001" {...field} />
+                      <Input placeholder="SUP-001" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -578,7 +577,7 @@ export function CustomerForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Nama Customer <span className="text-red-500">*</span>
+                      Nama Supplier <span className="text-red-500">*</span>
                     </FormLabel>
                     <FormControl>
                       <Input placeholder="PT. Example Indonesia" {...field} />
@@ -592,29 +591,29 @@ export function CustomerForm({
             <div className="grid gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
-                name="customerType"
+                name="supplierType"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Tipe Customer <span className="text-red-500">*</span>
+                      Tipe Supplier <span className="text-red-500">*</span>
                     </FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Pilih tipe customer" />
+                          <SelectValue placeholder="Pilih tipe Supplier" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="DOMESTIC">
+                        <SelectItem value="LOGISTIC">
                           <div className="flex items-center">
-                            <Home className="mr-2 h-4 w-4" />
-                            Domestic
+                            <Warehouse className="mr-2 h-4 w-4" />
+                            Logistic
                           </div>
                         </SelectItem>
-                        <SelectItem value="INTERNATIONAL">
+                        <SelectItem value="SERVICES">
                           <div className="flex items-center">
-                            <Building2 className="mr-2 h-4 w-4" />
-                            International
+                            <HandCoins className="mr-2 h-4 w-4" />
+                            Services
                           </div>
                         </SelectItem>
                       </SelectContent>
@@ -646,10 +645,10 @@ export function CustomerForm({
                               <Badge className="bg-green-500">Active</Badge>
                             </SelectItem>
                             <SelectItem value="NOACTIVE">
-                              <Badge variant="secondary">No Active</Badge>
+                              <Badge variant="destructive">No Active</Badge>
                             </SelectItem>
                             <SelectItem value="SUSPENDED">
-                              <Badge variant="destructive">Suspended</Badge>
+                              <Badge className="bg-yellow-400">Suspended</Badge>
                             </SelectItem>
                           </SelectContent>
                         </Select>
@@ -714,7 +713,7 @@ export function CustomerForm({
               Informasi NPWP
             </CardTitle>
             <CardDescription>
-              Tambahkan informasi NPWP customer (opsional)
+              Tambahkan informasi NPWP Supplier (opsional)
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -798,7 +797,7 @@ export function CustomerForm({
                   Alamat
                 </CardTitle>
                 <CardDescription>
-                  Tambahkan alamat customer (minimal 1 alamat)
+                  Tambahkan alamat supplier (minimal 1 alamat)
                   <span className="text-red-500">*</span>
                 </CardDescription>
               </div>
@@ -961,135 +960,131 @@ export function CustomerForm({
                 />
 
                 {/* Show province, regency, district only for domestic (ID) */}
-                {watchedAddresses?.[index]?.countryCode === "ID" &&
-                  customerType === "DOMESTIC" && (
-                    <div className="grid gap-4 md:grid-cols-3">
-                      <FormField
-                        control={form.control}
-                        name={`addresses.${index}.provinceCode`}
-                        render={({ field }) => (
+                {watchedAddresses?.[index]?.countryCode === "ID" && (
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <FormField
+                      control={form.control}
+                      name={`addresses.${index}.provinceCode`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Provinsi <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <Select
+                            onValueChange={(value) => {
+                              handleProvinceChange(value, index);
+                            }}
+                            value={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Pilih provinsi" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {provinces?.map((province: Province) => (
+                                <SelectItem
+                                  key={province.code}
+                                  value={province.code}
+                                >
+                                  {province.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name={`addresses.${index}.regencyCode`}
+                      render={({ field }) => {
+                        const regencyQuery = getRegencyQuery(index);
+                        return (
                           <FormItem>
                             <FormLabel>
-                              Provinsi <span className="text-red-500">*</span>
+                              Kabupaten/Kota{" "}
+                              <span className="text-red-500">*</span>
                             </FormLabel>
                             <Select
                               onValueChange={(value) => {
-                                handleProvinceChange(value, index);
+                                handleRegencyChange(value, index);
                               }}
                               value={field.value}
+                              disabled={!regencyQuery.data?.length}
                             >
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Pilih provinsi" />
+                                  <SelectValue placeholder="Pilih kabupaten/kota" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {provinces?.map((province: Province) => (
+                                {regencyQuery.data?.map((regency: Regency) => (
                                   <SelectItem
-                                    key={province.code}
-                                    value={province.code}
+                                    key={regency.code}
+                                    value={regency.code}
                                   >
-                                    {province.name}
+                                    {regency.name}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
                             <FormMessage />
                           </FormItem>
-                        )}
-                      />
+                        );
+                      }}
+                    />
 
-                      <FormField
-                        control={form.control}
-                        name={`addresses.${index}.regencyCode`}
-                        render={({ field }) => {
-                          const regencyQuery = getRegencyQuery(index);
-                          return (
-                            <FormItem>
-                              <FormLabel>
-                                Kabupaten/Kota{" "}
-                                <span className="text-red-500">*</span>
-                              </FormLabel>
-                              <Select
-                                onValueChange={(value) => {
-                                  handleRegencyChange(value, index);
-                                }}
-                                value={field.value}
-                                disabled={!regencyQuery.data?.length}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Pilih kabupaten/kota" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {regencyQuery.data?.map(
-                                    (regency: Regency) => (
-                                      <SelectItem
-                                        key={regency.code}
-                                        value={regency.code}
-                                      >
-                                        {regency.name}
-                                      </SelectItem>
-                                    )
-                                  )}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          );
-                        }}
-                      />
+                    <FormField
+                      control={form.control}
+                      name={`addresses.${index}.districtCode`}
+                      render={({ field }) => {
+                        const districtQuery = getDistrictQuery(index);
+                        return (
+                          <FormItem>
+                            <FormLabel>
+                              Kecamatan <span className="text-red-500">*</span>
+                            </FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              value={field.value}
+                              disabled={!districtQuery.data?.length}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Pilih kecamatan" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {districtQuery.data?.map(
+                                  (district: District) => (
+                                    <SelectItem
+                                      key={district.code}
+                                      value={district.code}
+                                    >
+                                      {district.name}
+                                    </SelectItem>
+                                  )
+                                )}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      }}
+                    />
+                  </div>
+                )}
 
-                      <FormField
-                        control={form.control}
-                        name={`addresses.${index}.districtCode`}
-                        render={({ field }) => {
-                          const districtQuery = getDistrictQuery(index);
-                          return (
-                            <FormItem>
-                              <FormLabel>
-                                Kecamatan{" "}
-                                <span className="text-red-500">*</span>
-                              </FormLabel>
-                              <Select
-                                onValueChange={field.onChange}
-                                value={field.value}
-                                disabled={!districtQuery.data?.length}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Pilih kecamatan" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {districtQuery.data?.map(
-                                    (district: District) => (
-                                      <SelectItem
-                                        key={district.code}
-                                        value={district.code}
-                                      >
-                                        {district.name}
-                                      </SelectItem>
-                                    )
-                                  )}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          );
-                        }}
-                      />
-                    </div>
-                  )}
-
-                {/* Show message for International customers */}
-                {customerType === "INTERNATIONAL" && (
+                {/* Show message for Supplier non ID */}
+                {watchedAddresses?.[index]?.countryCode !== "ID" && (
                   <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-sm text-blue-700">
-                      <strong>Catatan:</strong> Untuk customer International,
-                      cukup isi alamat lengkap di field &rdquo;Alamat Baris
-                      1&rdquo; dan &rdquo;Alamat Baris 2&rdquo;.
+                      <strong>Catatan:</strong> Untuk Supplier Luar Indonesia
+                      (ID), cukup isi alamat lengkap di field &rdquo;Alamat
+                      Baris 1&rdquo; dan &rdquo;Alamat Baris 2&rdquo;.
                     </p>
                   </div>
                 )}
@@ -1122,7 +1117,7 @@ export function CustomerForm({
                   Kontak
                 </CardTitle>
                 <CardDescription>
-                  Tambahkan kontak customer (minimal 1 kontak)
+                  Tambahkan kontak supplier (minimal 1 kontak)
                   <span className="text-red-500">*</span>
                 </CardDescription>
               </div>
@@ -1338,7 +1333,7 @@ export function CustomerForm({
             ) : (
               <>
                 <Save className="mr-2 h-4 w-4" />
-                {mode === "create" ? "Simpan Customer" : "Update Customer"}
+                {mode === "create" ? "Simpan Supplier" : "Update Supplier"}
               </>
             )}
           </Button>

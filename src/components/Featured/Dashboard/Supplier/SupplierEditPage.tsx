@@ -6,29 +6,29 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, Loader2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
-import { CustomerForm } from "./CustomerForm";
+import { SupplierForm } from "./SupplierForm";
 
-interface customerEditPageProps {
+interface supplierEditPageProps {
   id: string;
 }
 
-export const CustomerEditPage = ({ id }: customerEditPageProps) => {
+export const SupplierEditPage = ({ id }: supplierEditPageProps) => {
   const router = useRouter();
-  const customerId = id;
+  const supplierId = id;
 
   const {
-    data: dataCustomer,
+    data: dataSupplier,
     isLoading,
-    refetch: refetchDataCustomer,
+    refetch: refetchDataSupplier,
     error,
-  } = trpc.Customer.getCustomer.useQuery({ id: customerId });
+  } = trpc.Supplier.getSupplier.useQuery({ id: supplierId });
 
   const handleSuccess = () => {
-    router.push("/dashboard/customer");
+    router.push("/dashboard/supplier");
   };
 
   const handleCancel = () => {
-    router.push("/dashboard/customer");
+    router.push("/dashboard/supplier");
   };
 
   if (isLoading) {
@@ -38,7 +38,7 @@ export const CustomerEditPage = ({ id }: customerEditPageProps) => {
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto" />
             <p className="mt-2 text-sm text-gray-600">
-              Memuat data Customer...
+              Memuat data supplier...
             </p>
           </div>
         </div>
@@ -47,7 +47,7 @@ export const CustomerEditPage = ({ id }: customerEditPageProps) => {
   }
 
   if (error) {
-    console.error("Customer fetch error:", error);
+    console.error("Supplier fetch error:", error);
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Card className="p-6 text-center max-w-md">
@@ -57,7 +57,7 @@ export const CustomerEditPage = ({ id }: customerEditPageProps) => {
           </p>
           <div className="space-y-2">
             <button
-              onClick={() => refetchDataCustomer()}
+              onClick={() => refetchDataSupplier()}
               className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
             >
               Coba Lagi
@@ -68,17 +68,16 @@ export const CustomerEditPage = ({ id }: customerEditPageProps) => {
     );
   }
 
-  // Employee not found
-  if (!dataCustomer) {
+  if (!dataSupplier) {
     return (
       <div className="container mx-auto ">
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-gray-600 mb-4">Customer tidak ditemukan</p>
+              <p className="text-gray-600 mb-4">Supplier tidak ditemukan</p>
               <Button onClick={handleCancel}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Kembali ke Daftar Customer
+                Kembali ke Daftar Supplier
               </Button>
             </div>
           </CardContent>
@@ -92,12 +91,12 @@ export const CustomerEditPage = ({ id }: customerEditPageProps) => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Edit Customer :{" "}
+            Edit Supplier :{" "}
             <span className="text-xl text-muted-foreground uppercase  font-medium">
-              {dataCustomer.name}
+              {dataSupplier.name}
             </span>
           </h1>
-          <p className="text-muted-foreground">Perbarui informasi customer</p>
+          <p className="text-muted-foreground">Perbarui informasi Supplier</p>
         </div>
         <Button type="button" variant="outline" onClick={handleCancel}>
           <X className="mr-2 h-4 w-4" />
@@ -105,8 +104,8 @@ export const CustomerEditPage = ({ id }: customerEditPageProps) => {
         </Button>
       </div>
       {/* Form */}
-      <CustomerForm
-        customer={dataCustomer}
+      <SupplierForm
+        supplier={dataSupplier}
         mode="edit"
         onSuccess={handleSuccess}
         onCancel={handleCancel}

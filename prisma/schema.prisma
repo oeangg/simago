@@ -243,8 +243,8 @@ enum CustomerType {
 }
 
 enum SupplierType {
-  SERVICES
   LOGISTIC
+  SERVICES
 }
 
 
