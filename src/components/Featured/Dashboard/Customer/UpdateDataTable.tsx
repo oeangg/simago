@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { CustomerType, StatusActive } from "@prisma/client";
 import { useRouter } from "next/navigation";
+import ViewCustomer from "./CustomerView";
 
 // Skeleton component untuk loading state
 const CustomerTableSkeleton = () => {
@@ -83,6 +84,9 @@ export interface CustomerFilters {
 export const CustomerUpdateDataTable = () => {
   const [dataCustomer, setDataCustomer] = useState<CustomerColumnsProps[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(
+    null
+  );
 
   const router = useRouter();
 
@@ -122,9 +126,7 @@ export const CustomerUpdateDataTable = () => {
 
   // Handle actions
   const handleViewCustomer = (customer: CustomerColumnsProps) => {
-    console.log("View customer:", customer);
-    // TODO: Implement view customer logic
-    // router.push(`/dashboard/customer/${customer.code}`);
+    setSelectedCustomerId(customer.id!);
   };
 
   const handleEditCustomer = (customer: CustomerColumnsProps) => {
@@ -275,6 +277,18 @@ export const CustomerUpdateDataTable = () => {
             </span>
           )}
         </div>
+      )}
+
+      {selectedCustomerId && (
+        <ViewCustomer
+          customerId={selectedCustomerId}
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelectedCustomerId(null);
+            }
+          }}
+        />
       )}
 
       <CustomerDataTable
