@@ -1,503 +1,427 @@
 "use client";
 
-import { ColumnDef, RowData } from "@tanstack/react-table";
-import {
-  Ellipsis,
-  Loader2,
-  Pencil,
-  Trash2,
-  User,
-  Phone,
-  Hash,
-  Filter,
-  CheckCircle,
-  XCircle,
-  Briefcase,
-} from "lucide-react";
-import Link from "next/link";
-
-import { Gender } from "@prisma/client";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { cn } from "@/lib/cn";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ColumnDef } from "@tanstack/react-table";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  MoreHorizontal,
+  Eye,
+  Trash2,
+  Calendar,
+  MapPin,
+  Phone,
+  Edit,
+  Briefcase,
+  Venus,
+  Mars,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useEffect, useRef, useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Gender } from "@prisma/client";
+import { DataTableColumnHeaderSort } from "./DataTableColumnHeaderSort";
 
-declare module "@tanstack/react-table" {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  interface TableMeta<TData extends RowData> {
-    onDeleteEmployee?: (id: string) => void;
-    deletingId?: string | null;
-  }
-}
-
-export interface employeeColumnProps {
+// Type definition based on your router response
+export type EmployeeColumns = {
   id: string;
-  isActive: boolean;
   nik: string;
   name: string;
+  isActive: boolean;
+  activeDate: string;
   gender: Gender;
+  address: string;
+  city: string;
+  zipcode: string;
   phoneNumber: string;
-  employment: {
-    position: string;
-  };
+  photo?: string | null;
+  ttdDigital?: string | null;
+  resignDate?: string | null;
+  employments: {
+    id: string;
+    startDate: string;
+    endDate?: string | null;
+    position: {
+      id: string;
+      name: string;
+    };
+    division: {
+      id: string;
+      name: string;
+    };
+  }[];
+};
+
+interface ColumnActions {
+  onView: (employee: EmployeeColumns) => void;
+  onEdit: (employee: EmployeeColumns) => void;
+  onDelete: (employee: EmployeeColumns) => void;
 }
 
-const GenderOpt = [
-  { value: "MALE", label: "Pria", icon: "👨" },
-  { value: "FEMALE", label: "Wanita", icon: "👩" },
-] as const;
+const getStatusBadge = (status: boolean) => {
+  const config = {
+    variant: status ? ("default" as const) : ("destructive" as const),
+    label: status ? "Aktif" : "Tidak Aktif",
+    className: status ? "bg-green-500 hover:bg-green-600 text-white" : "",
+  };
 
-const SkeletonCell = ({ width = "w-24" }: { width?: string }) => (
-  <div className="flex items-center space-x-2">
-    <Skeleton className={`h-4 ${width} rounded-md`} />
-  </div>
-);
+  return (
+    <Badge variant={config.variant} className={config.className}>
+      <div
+        className={`w-2 h-2 rounded-full mr-2 ${
+          status ? "bg-white" : "bg-red-100"
+        }`}
+      />
+      {config.label}
+    </Badge>
+  );
+};
 
-export const baseColumns: ColumnDef<employeeColumnProps>[] = [
+const getDivisionBadgeConfig = (division: string) => {
+  const upperDiv = division.toUpperCase();
+  switch (upperDiv) {
+    case "MARKETING":
+      return { variant: "default" as const, color: "bg-blue-500 text-white" };
+    case "IT":
+      return {
+        variant: "secondary" as const,
+        color: "bg-purple-500 text-white",
+      };
+    case "FINANCE":
+      return { variant: "outline" as const, color: "bg-green-500 text-white" };
+    case "HR":
+      return {
+        variant: "destructive" as const,
+        color: "bg-orange-500 text-white",
+      };
+    case "OPERATIONS":
+      return { variant: "default" as const, color: "bg-indigo-500 text-white" };
+    default:
+      return { variant: "outline" as const, color: "bg-gray-500 text-white" };
+  }
+};
+
+export const employeeColumns = (
+  actions: ColumnActions
+): ColumnDef<EmployeeColumns>[] => [
   {
-    accessorKey: "rowIndex",
-    header: () => (
-      <div className="flex items-center space-x-2 font-semibold text-gray-700">
-        <Hash className="h-4 w-4" />
-        <span>No.</span>
-      </div>
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate")
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Pilih semua"
+        className="translate-y-[2px]"
+      />
     ),
-    cell: ({ row, table }) => {
-      const filteredRows = table.getFilteredRowModel().rows;
-      const currentRowIndex = filteredRows.findIndex(
-        (filteredRows) => filteredRows.id === row.id
-      );
-      return (
-        <div className="flex items-center justify-center w-8 h-8 bg-gray-100 rounded-full text-sm font-medium text-gray-600">
-          {currentRowIndex + 1}
-        </div>
-      );
-    },
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Pilih baris"
+        className="translate-y-[2px]"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
   },
   {
     accessorKey: "nik",
-    header: () => (
-      <div className="flex items-center space-x-2 font-semibold text-gray-700">
-        <Hash className="h-4 w-4" />
-        <span>NIK</span>
-      </div>
-    ),
-    cell: ({ row }) => {
-      if (row.original.id.startsWith("skeleton-")) {
-        return <SkeletonCell width="w-32" />;
-      }
-      return (
-        <div className="font-mono text-sm bg-gray-50 px-3 py-1 rounded-md border">
+    header: ({ column }) => {
+      return <DataTableColumnHeaderSort column={column} title="N.I.K" />;
+    },
+    cell: ({ row }) => (
+      <div className="flex items-center gap-2">
+        <div className="font-mono text-sm font-medium text-gray-900 bg-gray-50 px-2 py-1 rounded">
           {row.original.nik}
         </div>
-      );
-    },
+      </div>
+    ),
   },
   {
     accessorKey: "name",
-    header: () => (
-      <div className="flex items-center space-x-2 font-semibold text-gray-700">
-        <User className="h-4 w-4" />
-        <span>Nama</span>
-      </div>
-    ),
-    cell: ({ row }) => {
-      if (row.original.id.startsWith("skeleton-")) {
-        return <SkeletonCell width="w-36" />;
-      }
+    header: ({ column }) => {
       return (
-        <div className="flex items-center space-x-3">
-          <div className="h-8 w-8 bg-gradient-to-r from-indigo-500 to-purple-500 shadow-lg  rounded-full flex items-center justify-center text-white font-semibold text-sm">
-            {row.original.name.charAt(0).toUpperCase()}
-          </div>
-          <span className="font-medium text-gray-900">{row.original.name}</span>
-        </div>
+        <DataTableColumnHeaderSort column={column} title="Nama Karyawan" />
       );
     },
-  },
-
-  {
-    accessorKey: "employment.position",
-    header: () => (
-      <div className="flex items-center space-x-2 font-semibold text-gray-700">
-        <Briefcase className="h-4 w-4" />
-        <span>Jabatan</span>
-      </div>
-    ),
     cell: ({ row }) => {
-      if (row.original.id.startsWith("skeleton-")) {
-        return <SkeletonCell width="w-32" />;
-      }
-      return (
-        <div className="flex items-center space-x-2">
-          <div className="h-6 w-6 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-md flex items-center justify-center">
-            <Briefcase className="h-3 w-3 text-white" />
-          </div>
-          <Badge
-            variant="outline"
-            className="bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 px-3 py-1 font-medium"
-          >
-            {row.original.employment?.position || "Tidak Ada Jabatan"}
-          </Badge>
-        </div>
-      );
-    },
-  },
+      const employee = row.original;
+      const latestEmployment = employee.employments[0];
 
-  {
-    accessorKey: "gender",
-    header: ({ table, column }) => {
-      const filterValue = table.getColumn("gender")?.getFilterValue() as
-        | string
-        | undefined;
+      // Format tanggal helper
+      const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        const months = [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "Mei",
+          "Jun",
+          "Jul",
+          "Agt",
+          "Sep",
+          "Okt",
+          "Nov",
+          "Des",
+        ];
+        return `${date.getDate()} ${
+          months[date.getMonth()]
+        } ${date.getFullYear()}`;
+      };
 
-      const handleFilterChange = (value: string) => {
-        if (value === "All") {
-          table.getColumn(column.id)?.setFilterValue(undefined);
-        } else {
-          table.getColumn(column.id)?.setFilterValue(value);
-        }
+      // Get initials for avatar
+      const getInitials = (name: string) => {
+        return name
+          .split(" ")
+          .map((n) => n[0])
+          .join("")
+          .toUpperCase()
+          .slice(0, 2);
       };
 
       return (
-        <div className="flex items-center space-x-2">
-          <Filter className="h-4 w-4 text-gray-500" />
-          <Select
-            value={filterValue === undefined ? "All" : filterValue}
-            onValueChange={handleFilterChange}
-          >
-            <SelectTrigger className="w-[160px] h-9 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
-              <SelectValue placeholder="Filter Gender" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="All" className="font-medium">
-                <div className="flex items-center space-x-2">
-                  <span>🔄</span>
-                  <span>Semua Gender</span>
+        <div className="flex items-center gap-3 min-w-[220px]">
+          <Avatar className="h-8 w-8">
+            <AvatarImage
+              src={employee.photo || undefined}
+              alt={employee.name}
+            />
+            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-sm font-semibold">
+              {getInitials(employee.name)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col">
+            <p className="font-semibold text-gray-900">{employee.name}</p>
+            {latestEmployment && (
+              <div className="flex flex-col gap-0.5">
+                <div className="flex items-center gap-1 text-sm text-gray-600">
+                  <Briefcase className="w-3 h-3" />
+                  {latestEmployment.position.name}
                 </div>
-              </SelectItem>
-              {GenderOpt.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  <div className="flex items-center space-x-2">
-                    <span>{opt.icon}</span>
-                    <span>{opt.label}</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      );
-    },
-
-    filterFn: (row, id, value) => {
-      if (!value) return true; // Show all if no filter
-      return row.getValue(id) === value;
-    },
-
-    cell: ({ row }) => {
-      if (row.original.id.startsWith("skeleton-")) {
-        return <SkeletonCell width="w-20" />;
-      }
-      const genderOption = GenderOpt.find(
-        (opt) => opt.value === row.original.gender
-      );
-      return (
-        <Badge
-          variant="secondary"
-          className={cn(
-            "flex items-center space-x-1 w-[185px] px-3 py-1",
-            row.original.gender === "MALE"
-              ? "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-300"
-              : "bg-pink-100 text-pink-800 border-pink-200 hover:bg-pink-200"
-          )}
-        >
-          <span>{genderOption?.icon}</span>
-          <span>{genderOption?.label}</span>
-        </Badge>
-      );
-    },
-  },
-  {
-    accessorKey: "phoneNumber",
-    header: () => (
-      <div className="flex items-center space-x-2 font-semibold text-gray-700">
-        <Phone className="h-4 w-4" />
-        <span>No. Telepon</span>
-      </div>
-    ),
-    cell: ({ row }) => {
-      if (row.original.id.startsWith("skeleton-")) {
-        return <SkeletonCell width="w-28" />;
-      }
-      return (
-        <div className="flex items-center space-x-2">
-          <Phone className="h-4 w-4 text-gray-400" />
-          <span className="font-mono text-sm">{row.original.phoneNumber}</span>
+                <div className="flex items-center gap-1 text-xs text-gray-500">
+                  <Calendar className="w-3 h-3" />
+                  Mulai {formatDate(latestEmployment.startDate)}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       );
     },
   },
   {
-    accessorKey: "isActive",
-    header: ({ table, column }) => {
-      const filterValue = table.getColumn("isActive")?.getFilterValue() as
-        | string
-        | undefined;
+    id: "gender",
+    header: "Kelamin",
+    cell: ({ row }) => {
+      const gender = row.original.gender as Gender;
 
-      const handleFilterChange = (value: string) => {
-        if (value === "All") {
-          table.getColumn(column.id)?.setFilterValue(undefined);
-        } else {
-          table.getColumn(column.id)?.setFilterValue(value === "true");
-        }
+      const genderConfig = {
+        MALE: {
+          icon: <Mars className="w-4 h-4 text-blue-600" />,
+          label: "Pria",
+          bgColor: "bg-blue-50",
+          borderColor: "border-blue-200",
+          textColor: "text-blue-700",
+          dotColor: "bg-blue-500",
+        },
+        FEMALE: {
+          icon: <Venus className="w-4 h-4 text-pink-600" />,
+          label: "Wanita",
+          bgColor: "bg-pink-50",
+          borderColor: "border-pink-200",
+          textColor: "text-pink-700",
+          dotColor: "bg-pink-500",
+        },
       };
 
-      return (
-        <div className="flex items-center space-x-2">
-          <Filter className="h-4 w-4 text-gray-500" />
+      const config = genderConfig[gender] || genderConfig.MALE;
 
-          <Select
-            value={filterValue === undefined ? "All" : String(filterValue)}
-            onValueChange={handleFilterChange}
+      return (
+        <div className="flex items-center gap-2 min-w-[90px]">
+          <div
+            className={`
+          flex items-center gap-2 px-3 py-1.5 rounded-full border
+          ${config.bgColor} ${config.borderColor} ${config.textColor}
+          transition-all duration-200 hover:shadow-sm
+        `}
           >
-            <SelectTrigger className="w-[160px] border-2 border-slate-200 hover:border-blue-400 transition-colors duration-300 rounded-xl">
-              <SelectValue placeholder="🔄 Status Aktif" />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl border-2 shadow-xl">
-              <SelectItem
-                value="All"
-                className="rounded-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50"
-              >
-                📊 Semua Status
-              </SelectItem>
-              <SelectItem
-                value="true"
-                className="rounded-lg hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50"
-              >
-                ✅ Aktif
-              </SelectItem>
-              <SelectItem
-                value="false"
-                className="rounded-lg hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50"
-              >
-                ❌ Tidak Aktif
-              </SelectItem>
-            </SelectContent>
-          </Select>
+            <div className={`w-2 h-2 rounded-full ${config.dotColor}`} />
+            {config.icon}
+            <span className="text-sm font-medium">{config.label}</span>
+          </div>
         </div>
       );
     },
+  },
+  {
+    id: "division",
+    accessorFn: (row) => row.employments[0]?.division.name || "-",
+    header: "Divisi",
+    cell: ({ row }) => {
+      const employee = row.original;
+      const latestEmployment = employee.employments[0];
 
-    filterFn: (row, id, value) => {
-      if (value === undefined) return true;
-      return row.getValue(id) === value;
+      if (!latestEmployment) {
+        return <span className="text-muted-foreground">-</span>;
+      }
+
+      const divisionName = latestEmployment.division.name;
+      const config = getDivisionBadgeConfig(divisionName);
+
+      return (
+        <Badge variant={config.variant} className={config.color}>
+          {divisionName}
+        </Badge>
+      );
+    },
+  },
+  {
+    id: "city",
+    header: "Alamat",
+    cell: ({ row }) => {
+      const city = row.original.city;
+      const address = row.original.address;
+      const zipcode = row.original.zipcode;
+
+      return (
+        <div className="flex flex-col gap-1 max-w-[200px]">
+          <div className="flex items-center gap-1.5">
+            <MapPin className="h-4 w-4 text-blue-500 flex-shrink-0" />
+            <span className="font-medium text-gray-900">{city}</span>
+            {zipcode && (
+              <span className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                {zipcode}
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-gray-600 line-clamp-2">{address}</p>
+        </div>
+      );
+    },
+  },
+  {
+    id: "phone",
+    header: "Kontak",
+    cell: ({ row }) => {
+      const phoneNumber = row.original.phoneNumber;
+
+      return (
+        <div className="flex flex-col gap-2 min-w-[160px]">
+          <div className="flex items-center gap-2">
+            <Phone className="h-4 w-4 text-green-500 flex-shrink-0" />
+            <span className="text-sm font-mono font-medium">{phoneNumber}</span>
+          </div>
+        </div>
+      );
+    },
+  },
+  {
+    id: "isActive",
+    header: "Status",
+    cell: ({ row }) => {
+      const status = row.original.isActive as boolean;
+      return getStatusBadge(status);
+    },
+  },
+  {
+    id: "activeDate",
+    accessorFn: (row) => row.employments[0]?.startDate || null,
+    header: ({ column }) => {
+      return (
+        <DataTableColumnHeaderSort column={column} title="Tgl Bergabung" />
+      );
     },
     cell: ({ row }) => {
-      const status = row.original.isActive;
-      if (row.original.id.startsWith("skeleton-")) {
-        return <SkeletonCell width="w-20" />;
+      const date = row.getValue("activeDate") as string | null;
+
+      const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        const months = [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "Mei",
+          "Jun",
+          "Jul",
+          "Agt",
+          "Sep",
+          "Okt",
+          "Nov",
+          "Des",
+        ];
+        return `${date.getDate()} ${
+          months[date.getMonth()]
+        } ${date.getFullYear()}`;
+      };
+
+      if (!date) {
+        return <span className="text-muted-foreground">-</span>;
       }
+
       return (
-        <Badge
-          variant={status ? "default" : "destructive"}
-          className={cn(
-            "flex items-center w-[190px] space-x-1 px-3 py-1 font-medium",
-            status
-              ? "bg-green-100 text-green-800 border-green-200 hover:bg-green-200"
-              : "bg-red-100 text-red-800 border-red-200 hover:bg-red-200"
-          )}
-        >
-          {status ? (
-            <CheckCircle className="h-3 w-3" />
-          ) : (
-            <XCircle className="h-3 w-3" />
-          )}
-          <span>{status ? "Aktif" : "Tidak Aktif"}</span>
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-blue-500" />
+          <span className="text-sm font-medium">{formatDate(date)}</span>
+        </div>
+      );
+    },
+  },
+  {
+    id: "actions",
+    header: "Aksi",
+    cell: ({ row }) => {
+      const employee = row.original;
+
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-gray-100">
+              <span className="sr-only">Buka menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-[160px]">
+            <DropdownMenuLabel className="font-semibold">
+              Aksi
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => actions.onView(employee)}
+              className="hover:bg-blue-50 hover:text-blue-700"
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              Lihat Detail
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => actions.onEdit(employee)}
+              className="hover:bg-green-50 hover:text-green-700"
+            >
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => actions.onDelete(employee)}
+              className="text-red-600 focus:text-red-700 hover:bg-red-50"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Hapus
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       );
     },
   },
 ];
-
-export const actionColumn: ColumnDef<employeeColumnProps> = {
-  id: "actions",
-  header: () => (
-    <div className="flex justify-center">
-      <span className="font-semibold text-gray-700">Aksi</span>
-    </div>
-  ),
-  cell: ({ row, table }) => {
-    const onDeleteEmployee = table.options.meta?.onDeleteEmployee;
-    const deletingId = table.options.meta?.deletingId;
-
-    return (
-      <div className="flex justify-center">
-        <ActionCell
-          rowId={row.original.id}
-          deletingId={deletingId}
-          onDeleteEmployee={onDeleteEmployee}
-          employee={row.original}
-        />
-      </div>
-    );
-  },
-};
-
-const ActionCell = ({
-  rowId,
-  employee,
-  onDeleteEmployee,
-  deletingId,
-}: {
-  rowId: string;
-  employee: employeeColumnProps;
-  onDeleteEmployee?: (id: string) => void;
-  deletingId?: string | null;
-}) => {
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isDropDownOpen, setIsDropDownOpen] = useState(false);
-  const prevDeletingIdRef = useRef<string | undefined>(null);
-
-  useEffect(() => {
-    if (
-      prevDeletingIdRef.current === employee.id &&
-      deletingId === null &&
-      isDropDownOpen
-    ) {
-      setIsDropDownOpen(false);
-    }
-    prevDeletingIdRef.current = deletingId;
-  }, [deletingId, employee.id, isDropDownOpen]);
-
-  if (employee.id.startsWith("skeleton-")) {
-    return (
-      <div className="flex items-center space-x-2">
-        <Skeleton className="h-8 w-8 rounded-md" />
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <DropdownMenu open={isDropDownOpen} onOpenChange={setIsDropDownOpen}>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <Ellipsis className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-36">
-          <DropdownMenuLabel className="font-semibold text-gray-700">
-            {/* Aksi untuk [{employee.name}] */}
-            Aksi
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuGroup>
-            <DropdownMenuItem className="cursor-pointer  hover:bg-blue-50 focus:bg-blue-50">
-              <Link
-                href={`/dashboard/karyawan/edit/${rowId}`}
-                className="flex items-center px-4 space-x-2 w-full"
-              >
-                <Pencil className="h-3.5 w-3.5 text-blue-600" />
-                <span className="text-blue-600 text-xs font-medium">
-                  Edit Data
-                </span>
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="cursor-pointer hover:bg-red-50  focus:bg-red-50"
-              disabled={deletingId === employee.id}
-              onClick={(e) => {
-                e.preventDefault();
-                setIsDeleteDialogOpen(true);
-              }}
-            >
-              <div className="flex items-center px-4 space-x-2 w-full">
-                {deletingId === employee.id ? (
-                  <Loader2 className="h-3.5 w-3.5 text-red-600 animate-spin" />
-                ) : (
-                  <Trash2 className="h-3.5 w-3.5 text-red-600" />
-                )}
-                <span className="text-red-600 text-xs font-medium">
-                  {deletingId === employee.id ? "Menghapus..." : "Hapus Data"}
-                </span>
-              </div>
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <AlertDialog
-        open={isDeleteDialogOpen}
-        onOpenChange={(open) => {
-          setIsDeleteDialogOpen(open);
-          if (!open) {
-            setIsDropDownOpen(false);
-          }
-        }}
-      >
-        <AlertDialogContent className="max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center space-x-2">
-              <Trash2 className="h-5 w-5 text-red-600" />
-              <span>Konfirmasi Penghapusan</span>
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-gray-600">
-              Apakah Anda yakin ingin menghapus data karyawan{" "}
-              <span className="font-semibold text-gray-900">
-                {employee.name}
-              </span>
-              ?
-              <br />
-              <span className="text-sm text-red-600 mt-2 block">
-                ⚠️ Tindakan ini tidak dapat dibatalkan.
-              </span>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="hover:bg-gray-100">
-              Batal
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => onDeleteEmployee?.(employee.id)}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-500"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Hapus Data
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
-  );
-};

@@ -17,6 +17,7 @@ import { CardAuthWrapper } from "./AuthWrapper";
 import { trpc } from "@/app/_trpcClient/client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 export const LoginForm = () => {
   const form = useForm<authLoginTypeSchema>({
@@ -98,7 +99,13 @@ export const LoginForm = () => {
             className="w-full disabled:opacity-30"
             disabled={isPendingLogin}
           >
-            {isPendingLogin ? "Login..." : "Login"}
+            {isPendingLogin ? (
+              <div className="flex gap-1.5 justify-center items-center">
+                <Loader2 className=" animate-pulse" /> Login...
+              </div>
+            ) : (
+              "Login"
+            )}
           </Button>
         </form>
       </Form>

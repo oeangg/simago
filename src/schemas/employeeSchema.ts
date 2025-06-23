@@ -11,6 +11,7 @@ export const employmentSchema = z.object({
   startDate: z.string().min(1, "Tanggal mulai harus diisi"),
   endDate: z.string().optional(),
   positionId: z.string().min(1, "Posisi harus dipilih"),
+  divisionId: z.string().min(1, "Divisi harus dipilih"),
   employeeId: z.string().optional(),
 });
 
@@ -21,6 +22,8 @@ export const employeeSchema = z.object({
     .max(12, { message: "NIK terlalu panjang" }),
   name: z.string().min(1, { message: "Nama tidak boleh kosong" }),
   isActive: z.boolean(),
+  activeDate: z.string().min(1, "Tanggal Aktif harus diisi"),
+  resignDate: z.string().optional(),
   gender: z.nativeEnum(Gender),
   address: z.string().min(1, { message: "Alamat tidak boleh kosong" }),
   city: z.string().min(1, { message: "Kota tidak boleh kosong" }),
@@ -29,13 +32,18 @@ export const employeeSchema = z.object({
     .min(1, { message: "Kode pos tidak boleh kosong" })
     .max(5, { message: "Kode pos max 5 karakter" }),
   photo: z.string().optional(),
+  ttdDigital: z.string().optional(),
 
   phoneNumber: z
     .string()
     .min(10, "Phonenumber harus terdiri minimal 10 karakter")
     .max(14, "Phonenumber harus terdiri maksimal 14 karakter")
     .regex(phoneRegex, "Invalid format phone!"),
-  employments: z.array(employmentSchema).optional(),
+  // Membuat employments wajib dan minimal 1 item
+  employments: z
+    .array(employmentSchema)
+    .min(1, "Minimal harus ada 1 riwayat pekerjaan")
+    .nonempty("Riwayat pekerjaan tidak boleh kosong"),
 });
 
 export type employeeTypeSchema = z.infer<typeof employeeSchema>;
@@ -50,4 +58,10 @@ export const positionSchema = z.object({
   name: z.string().min(1, "Nama posisi harus diisi"),
 });
 
+export const divisonSchema = z.object({
+  // id: z.string(),
+  name: z.string().min(1, "Nama division harus diisi").toUpperCase(),
+});
+
 export type positionTypeSchema = z.infer<typeof positionSchema>;
+export type DivisionTypeSchema = z.infer<typeof divisonSchema>;

@@ -21,7 +21,6 @@ import {
   Mail,
   MapPin,
   FileText,
-  ArrowUpDown,
   HandCoins,
   Warehouse,
 } from "lucide-react";
@@ -33,6 +32,7 @@ import {
   StatusActive,
   SupplierType,
 } from "@prisma/client";
+import { DataTableColumnHeaderSort } from "./DataTableColumnHeaderSort";
 
 interface SupplierAddress {
   id: string;
@@ -163,16 +163,7 @@ export const supplierColumns = (
   {
     accessorKey: "code",
     header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="h-8 px-2 lg:px-3"
-        >
-          Kode
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
+      return <DataTableColumnHeaderSort column={column} title="Kode" />;
     },
     cell: ({ row }) => (
       <div className="font-mono text-sm font-medium">
@@ -184,14 +175,7 @@ export const supplierColumns = (
     accessorKey: "name",
     header: ({ column }) => {
       return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="h-8 px-2 lg:px-3"
-        >
-          Nama Supplier
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
+        <DataTableColumnHeaderSort column={column} title="Nama Supplier" />
       );
     },
     cell: ({ row }) => {
@@ -335,18 +319,7 @@ export const supplierColumns = (
   },
   {
     accessorKey: "statusActive",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="h-8 px-2 lg:px-3"
-        >
-          Status
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
+    header: "Status Aktif",
     cell: ({ row }) => {
       const status = row.getValue("statusActive") as StatusActive;
       return getStatusBadge(status);
@@ -355,16 +328,7 @@ export const supplierColumns = (
   {
     accessorKey: "activeDate",
     header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="h-8 px-2 lg:px-3"
-        >
-          Tgl Aktif
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
+      return <DataTableColumnHeaderSort column={column} title="Tgl Aktif" />;
     },
     cell: ({ row }) => {
       // const date = row.getValue("activeDate") as Date;

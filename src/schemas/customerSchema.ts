@@ -1,14 +1,8 @@
 import { z } from "zod";
-import {
-  AddressType,
-  ContactType,
-  CustomerType,
-  StatusActive,
-} from "@prisma/client";
+import { AddressType, ContactType, StatusActive } from "@prisma/client";
 
 export const addressTypeSchema = z.nativeEnum(AddressType);
 export const contactTypeSchema = z.nativeEnum(ContactType);
-export const customerTypeSchema = z.nativeEnum(CustomerType);
 export const statusActiveSchema = z.nativeEnum(StatusActive);
 
 const phoneRegex = new RegExp(
@@ -70,9 +64,8 @@ export const inputContactSchema = z
 
 // Skema gabungan untuk CREATE Full Customer
 export const customerSchema = z.object({
-  code: z.string().min(1, "Kode tidak boleh kosong"),
+  code: z.string().min(1, "Kode tidak boleh kosong").toUpperCase(),
   name: z.string().min(1, "Nama tidak boleh kosong"),
-  customerType: customerTypeSchema,
   statusActive: statusActiveSchema,
   activeDate: z.string().optional(),
   notes: z.string().optional(),

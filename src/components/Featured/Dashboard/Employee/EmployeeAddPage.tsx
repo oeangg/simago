@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { X } from "lucide-react";
 import { EmployeeForm } from "./EmployeeForm";
 
 export default function EmployeeAddPage() {
@@ -18,21 +18,20 @@ export default function EmployeeAddPage() {
   };
 
   return (
-    <div className="container mx-auto  space-y-6">
+    <div className="container mx-auto max-w-4xl  space-y-6">
       {/* Header */}
+
       <div className="flex items-center justify-between">
-        <div className="flex  items-center  space-x-4">
-          <Button variant="outline" size="sm" onClick={handleCancel}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Kembali
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">Tambah Karyawan</h1>
-            <p className="text-gray-600 mt-1">
-              Tambah data karyawan baru ke sistem
-            </p>
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Add Karyawan</h1>
+          <p className="text-muted-foreground">
+            Tambah data karyawan baru ke sistem
+          </p>
         </div>
+        <Button type="button" variant="outline" onClick={handleCancel}>
+          <X className="mr-2 h-4 w-4" />
+          Batal
+        </Button>
       </div>
 
       {/* Form */}

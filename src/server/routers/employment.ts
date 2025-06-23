@@ -44,6 +44,7 @@ export const employmentRouter = router({
             startDate: input.startDate,
             endDate: input.endDate || null,
             positionId: input.positionId,
+            divisionId: input.divisionId,
             employeeId: input.employeeId!, // Pastikan employeeId ada saat membuat employment
           },
         });

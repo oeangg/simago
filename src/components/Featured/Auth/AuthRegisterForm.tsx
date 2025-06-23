@@ -22,6 +22,7 @@ import { useForm } from "react-hook-form";
 import { trpc } from "@/app/_trpcClient/client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 export const RegisterForm = () => {
   const form = useForm<authRegisterTypeSchema>({
@@ -148,7 +149,13 @@ export const RegisterForm = () => {
             className="w-full disabled:opacity-40"
             disabled={isPendingRegister}
           >
-            {isPendingRegister ? "Registering.." : "Register"}
+            {isPendingRegister ? (
+              <div className="flex gap-1.5 justify-center items-center">
+                <Loader2 className="animate-pulse" /> Regitering...
+              </div>
+            ) : (
+              "Register"
+            )}
           </Button>
         </form>
       </Form>

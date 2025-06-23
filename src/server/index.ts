@@ -1,6 +1,7 @@
 import { authRouter } from "./routers/auth";
 import { cityRouter } from "./routers/city";
 import { customerRouter } from "./routers/customer";
+import { divisionRouter } from "./routers/division";
 import { employeeRouter } from "./routers/employee";
 import { employmentRouter } from "./routers/employment";
 import { positionRouter } from "./routers/position";
@@ -16,6 +17,7 @@ export const appRouter = router({
   Employee: employeeRouter,
   Employment: employmentRouter,
   Position: positionRouter,
+  Division: divisionRouter,
   Supplier: supplierRouter,
 });
 

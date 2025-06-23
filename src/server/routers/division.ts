@@ -1,84 +1,83 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../trpc";
-import { positionSchema } from "@/schemas/employeeSchema"; // Sesuaikan path jika berbeda
+import { divisonSchema } from "@/schemas/employeeSchema"; // Sesuaikan path jika berbeda
 import { TRPCError } from "@trpc/server";
 
-export const positionRouter = router({
-  // Mendapatkan semua data posisi
-  getAllPositions: protectedProcedure.query(async ({ ctx }) => {
-    return await ctx.db.position.findMany({
+export const divisionRouter = router({
+  // Mendapatkan semua data divisi
+  getAllDivision: protectedProcedure.query(async ({ ctx }) => {
+    return await ctx.db.division.findMany({
       orderBy: {
         name: "asc",
       },
     });
   }),
 
-  // Mendapatkan data posisi berdasarkan ID
-  getPositionById: protectedProcedure
+  // Mendapatkan data divsi berdasarkan ID
+  getDivisionById: protectedProcedure
     .input(
       z.object({
         id: z.string(),
       })
     )
     .query(async ({ ctx, input }) => {
-      return await ctx.db.position.findUnique({
+      return await ctx.db.division.findUnique({
         where: { id: input.id },
       });
     }),
 
   // Membuat data posisi baru
-  createPosition: protectedProcedure
-    .input(positionSchema)
+  createDivision: protectedProcedure
+    .input(divisonSchema)
     .mutation(async ({ ctx, input }) => {
       try {
-        const existingPosition = await ctx.db.position.findUnique({
-          where: { name: input.name },
+        const existingDivison = await ctx.db.division.findUnique({
+          where: { name: input.name.toUpperCase() },
         });
 
-        if (existingPosition) {
+        if (existingDivison) {
           throw new TRPCError({
             code: "CONFLICT",
-            message: "Nama posisi sudah terdaftar!",
+            message: "Nama divisi sudah terdaftar!",
           });
         }
 
-        const newPosition = await ctx.db.position.create({
+        const newDivision = await ctx.db.division.create({
           data: {
-            name: input.name,
+            name: input.name.toUpperCase(),
           },
         });
         return {
-          message: "Posisi berhasil ditambahkan",
-          data: newPosition,
+          message: "Divisi berhasil ditambahkan",
+          data: newDivision,
         };
       } catch (error) {
         if (error instanceof TRPCError) throw error;
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Gagal menambahkan posisi",
+          message: "Gagal menambahkan divisi",
         });
       }
     }),
 
-  // Mengupdate data posisi
-  updatePosition: protectedProcedure
-    .input(positionSchema.extend({ id: z.string() })) // Menambahkan ID untuk update
+  updateDivision: protectedProcedure
+    .input(divisonSchema.extend({ id: z.string() })) // Menambahkan ID untuk update
     .mutation(async ({ ctx, input }) => {
       try {
-        const existingPosition = await ctx.db.position.findUnique({
+        const existingDivision = await ctx.db.division.findUnique({
           where: { id: input.id },
         });
 
-        if (!existingPosition) {
+        if (!existingDivision) {
           throw new TRPCError({
             code: "NOT_FOUND",
-            message: "Posisi tidak ditemukan",
+            message: "Divisi tidak ditemukan",
           });
         }
 
         // Check if position name is being changed and already exists
-        if (input.name !== existingPosition.name) {
-          const nameExists = await ctx.db.position.findUnique({
+        if (input.name !== existingDivision.name) {
+          const nameExists = await ctx.db.division.findUnique({
             where: { name: input.name },
           });
 
@@ -90,7 +89,7 @@ export const positionRouter = router({
           }
         }
 
-        const updatedPosition = await ctx.db.position.update({
+        const updatedDivision = await ctx.db.division.update({
           where: { id: input.id },
           data: {
             name: input.name,
@@ -100,59 +99,59 @@ export const positionRouter = router({
         return {
           success: true,
           message: "Posisi berhasil diupdate",
-          data: updatedPosition,
+          data: updatedDivision,
         };
       } catch (error) {
         if (error instanceof TRPCError) throw error;
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Gagal mengupdate posisi",
+          message: "Gagal mengupdate divisi",
         });
       }
     }),
 
-  // Menghapus data posisi
-  deletePosition: protectedProcedure
+  // Menghapus data divisi
+  deleteDivision: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
       try {
-        const position = await ctx.db.position.findUnique({
+        const division = await ctx.db.division.findUnique({
           where: { id: input.id },
         });
 
-        if (!position) {
+        if (!division) {
           throw new TRPCError({
             code: "NOT_FOUND",
-            message: "Posisi tidak ditemukan",
+            message: "Divisi tidak ditemukan",
           });
         }
 
         // Check if there are any employments associated with this position
         const relatedEmployments = await ctx.db.employment.count({
-          where: { positionId: input.id },
+          where: { divisionId: input.id },
         });
 
         if (relatedEmployments > 0) {
           throw new TRPCError({
             code: "BAD_REQUEST",
             message:
-              "Tidak dapat menghapus posisi yang masih memiliki data employment terkait.",
+              "Tidak dapat menghapus divisi yang masih memiliki data employment terkait.",
           });
         }
 
-        await ctx.db.position.delete({
+        await ctx.db.division.delete({
           where: { id: input.id },
         });
 
         return {
           success: true,
-          message: "Posisi berhasil dihapus",
+          message: "Divisi berhasil dihapus",
         };
       } catch (error) {
         if (error instanceof TRPCError) throw error;
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Gagal menghapus posisi",
+          message: "Gagal menghapus divisi",
         });
       }
     }),

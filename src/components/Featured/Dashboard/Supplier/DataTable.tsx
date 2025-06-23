@@ -22,7 +22,7 @@ import {
 } from "@tanstack/react-table";
 import React from "react";
 
-import { Plus, Download, Filter } from "lucide-react";
+import { Plus, Download, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -30,6 +30,8 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -141,11 +143,13 @@ export function SupplierDataTable<TData extends SupplierColumnsProps, TValue>({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
-                <Filter className="mr-2 h-4 w-4" />
+                <Settings2 className="mr-2 h-4 w-4" />
                 Kolom
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-[150px]">
+              <DropdownMenuLabel>Toggle kolom</DropdownMenuLabel>
+              <DropdownMenuSeparator />
               {table
                 .getAllColumns()
                 .filter((column) => column.getCanHide())
@@ -167,6 +171,7 @@ export function SupplierDataTable<TData extends SupplierColumnsProps, TValue>({
                       {column.id === "npwp" && "NPWP"}
                       {column.id === "statusActive" && "Status"}
                       {column.id === "activeDate" && "TglAktif"}
+                      {column.id === "actions" && "Aksi"}
                     </DropdownMenuCheckboxItem>
                   );
                 })}

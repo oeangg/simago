@@ -1,4 +1,4 @@
-import { UpdateDataTable } from "@/components/Featured/Dashboard/Employee/UpdateDataTable";
+import { EmployeeUpdateDataTable } from "@/components/Featured/Dashboard/Employee/UpdateDataTable";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function Home() {
-  return <UpdateDataTable />;
+  return <EmployeeUpdateDataTable />;
 }

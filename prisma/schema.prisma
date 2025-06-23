@@ -19,7 +19,6 @@ model Customer {
   id           String            @id @default(cuid())
   code         String            @unique
   name         String
-  customerType CustomerType
   statusActive StatusActive      @default(ACTIVE)
   activeDate  DateTime  @default(now()) 
   notes        String?
@@ -79,6 +78,44 @@ model Country {
   @@index([name])
 }
 
+//
+model Driver {
+  id  String @id @default(cuid())
+  code String @unique
+  name String
+  gender Gender
+  addressLine1  String
+  addressLine2  String?
+  city  String
+  phoneNumber String
+  isActive  Boolean @default(true)
+  activeDate  DateTime
+  vehicleId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime @updatedAt
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
+}
+
+model Vehicle {
+  id  String @id  @default(cuid())
+  vehicleNumber String  @unique
+  vehicleType VehicleType
+  vehicleMake String
+  vehicleYear String  
+  createdAt DateTime  @default(now())
+  updatedAt DateTime @updatedAt
+
+  driver Driver[]
+}
+//
+
+enum VehicleType {
+  CAR
+  SEDAN
+  TRUCK
+  MOTORCYCLE
+}
+
 model Province {
   code            String            @id
   name            String
@@ -117,11 +154,14 @@ model Employee {
   nik         String       @unique
   name        String
   isActive    Boolean      @default(true)
+  activeDate  DateTime
+  resignDate  DateTime?
   gender      Gender
   address     String
   city        String
   zipcode     String
   photo       String?
+  ttdDigital  String?
   phoneNumber String
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -136,18 +176,63 @@ model Employment {
   startDate  DateTime
   endDate    DateTime?
   positionId String
+  divisionId String
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   position   Position  @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  division   Division  @relation(fields: [divisionId], references: [id], onDelete: Cascade)
   employeeId String
   employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 }
 
+//
+model Material {
+  id  String @id  @default(cuid())
+  code  String  @unique
+  name  String
+  description String?
+  category  CategoryMaterial
+  unit UnitOfMeasure
+  brand String?
+  specification  String?
+  minStock  Int @default(1)
+  maxStock  Int @default(1)
+  unitPrice Int
+  isActive  Boolean @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  stock Stock?
+
+  @@index([name])
+}
+
+model Stock {
+  id String @id @default(cuid())
+  materialId String @unique
+  quantity  Int @default(1)
+  updatebyUserId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime @updatedAt 
+  
+  user  User  @relation(fields: [updatebyUserId], references: [id])
+  material Material @relation(fields: [materialId], references: [id])
+
+  @@index([quantity])
+}
+//
 model Position {
   id          String       @id @default(cuid())
   name        String       @unique
   employments Employment[]
 }
+
+model Division {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  employments Employment[]
+}
+
 
 model Supplier {
   id           String            @id @default(cuid())
@@ -223,9 +308,42 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   session   Session?
+  stock Stock[]
 }
 
 //enum
+
+enum AddressType {
+  HEAD_OFFICE
+  BRANCH
+  WAREHOUSE
+  BILLING
+  SHIPPING
+}
+
+enum CustomerType {
+  DOMESTIC
+  INTERNATIONAL
+}
+
+enum CategoryMaterial {
+  CONSUMABLE
+  FINISHED_GOODS
+  PACKAGING
+  RAW_MATERIAL
+  SPARE_PART
+}
+
+
+enum ContactType {
+  PRIMARY
+  BILLING
+  SHIPPING
+  EMERGENCY
+  TECHNICAL
+}
+
+
 enum Gender {
   MALE
   FEMALE
@@ -237,31 +355,25 @@ enum StatusActive {
   SUSPENDED
 }
 
-enum CustomerType {
-  DOMESTIC
-  INTERNATIONAL
-}
-
 enum SupplierType {
   LOGISTIC
   SERVICES
 }
 
-
-enum AddressType {
-  HEAD_OFFICE
-  BRANCH
-  WAREHOUSE
-  BILLING
-  SHIPPING
-}
-
-enum ContactType {
-  PRIMARY
-  BILLING
-  SHIPPING
-  EMERGENCY
-  TECHNICAL
+enum UnitOfMeasure {
+  CM
+  METER
+  ONS
+  GRAM
+  KG
+  TON
+  LITER
+  PCS
+  BOX
+  PACK
+  SHEET
+  ROLL
+  SET
 }
 
 enum Role {

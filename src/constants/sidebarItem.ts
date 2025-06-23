@@ -53,8 +53,12 @@ export const data: sidebarData = {
           url: "/dashboard/karyawan",
         },
         {
-          title: "Daftar Kegiatan",
-          url: "/dashboard/kegiatan",
+          title: "Daftar Vendor",
+          url: "/dashboard/vendor",
+        },
+        {
+          title: "Daftar Driver",
+          url: "/dashboard/driver",
         },
       ],
     },
@@ -162,7 +166,11 @@ export const data: sidebarData = {
       roles: ["SUPER_ADMIN", "ADMIN"],
       items: [
         {
-          title: "Data wilayah",
+          title: "Data Negara",
+          url: "/dashboard/negara",
+        },
+        {
+          title: "Data Wilayah kota",
           url: "/dashboard/wilayah",
         },
       ],

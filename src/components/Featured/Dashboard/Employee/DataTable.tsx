@@ -18,77 +18,238 @@ import {
   getSortedRowModel,
   useReactTable,
   getPaginationRowModel,
+  VisibilityState,
 } from "@tanstack/react-table";
 import React from "react";
-import { EmployeeDataPagination } from "./Pagination";
-import { EmployeeFilterInput } from "./FilterInput";
-import { Plus } from "lucide-react";
+
+import { Plus, Download, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-interface DataTableProps<TData, TValue> {
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { EmployeeColumns } from "./Columns";
+import {
+  getEmployeeFromRow,
+  getEmployeeNIK,
+  searchEmployee,
+} from "./DataTableUtils";
+import { exportToCSV } from "./exportToCSV";
+import { EmployeeDataPagination } from "./Pagination";
+
+interface DataTableProps<TData extends EmployeeColumns, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  onDeleteEmployee?: (id: string) => void;
+  onDeleteEmployee?: (employee: TData) => void;
   deletingId?: string | null;
 }
 
-export function EmployeeDataTable<TData, TValue>({
+export function EmployeeDataTable<TData extends EmployeeColumns, TValue>({
   columns,
   data,
   deletingId,
-  onDeleteEmployee,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = React.useState({});
+  const [globalFilter, setGlobalFilter] = React.useState("");
 
   const table = useReactTable({
     data,
     columns,
     onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    state: { sorting, columnFilters },
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+      globalFilter,
+    },
     initialState: {
       pagination: {
-        pageSize: 6,
+        pageSize: 10, // Increased default page size
       },
     },
-    meta: {
-      onDeleteEmployee,
-      deletingId,
+    // Global filter function using utility
+    globalFilterFn: (row, columnId, value) => {
+      try {
+        const employee = getEmployeeFromRow(row);
+        return searchEmployee(employee, value);
+      } catch (error) {
+        console.error("Global filter error:", error);
+        return false;
+      }
     },
   });
 
+  // Export selected rows using utility
+  const exportSelectedRows = () => {
+    const selectedRows = table.getFilteredSelectedRowModel().rows;
+    const employees = selectedRows
+      .map((row) => {
+        try {
+          return getEmployeeFromRow(row);
+        } catch (error) {
+          console.error("Error getting employee from row:", error);
+          return null;
+        }
+      })
+      .filter((employee): employee is EmployeeColumns => employee !== null);
+
+    if (employees.length > 0) {
+      const csvData = employees.map((emp) => ({
+        NIK: emp.nik,
+        Nama: emp.name,
+        Jabatan: emp.employments[0]?.position.name || "-",
+        Divisi: emp.employments[0]?.division.name || "-",
+        Kota: emp.city,
+        Alamat: emp.address,
+        Gender: emp.gender === "MALE" ? "Laki-laki" : "Perempuan",
+        "No. Telepon": emp.phoneNumber,
+        Status: emp.isActive ? "Aktif" : "Non-Aktif",
+        TanggalAktif: emp.activeDate,
+      }));
+
+      exportToCSV(csvData, "data-karyawan");
+    }
+  };
+
+  const selectedCount = Object.keys(rowSelection).length;
+
   return (
     <div className="space-y-4">
-      <div className="  flex flex-row items-center  gap-3">
-        <div className="w-full max-w-xl">
-          <EmployeeFilterInput
-            placeholder="cari berdasarkan nama..."
-            column={table.getColumn("name")}
+      {/* Toolbar */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+        {/* Search */}
+        <div className="flex-1 w-full sm:w-auto">
+          <Input
+            placeholder="Cari karyawan (nama, NIK, divisi, jabatan, alamat, telepon)..."
+            value={globalFilter}
+            onChange={(e) => setGlobalFilter(e.target.value)}
+            className="max-w-md"
           />
         </div>
-        <Button asChild>
-          <Link href="/dashboard/karyawan/add">
-            <Plus /> Karyawan
-          </Link>
-        </Button>
+
+        {/* Actions */}
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Settings2 className="mr-2 h-4 w-4" />
+                Kolom
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[180px]">
+              <DropdownMenuLabel>Toggle kolom</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {table
+                .getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => {
+                  // Get proper column titles
+                  const getColumnTitle = (id: string) => {
+                    switch (id) {
+                      case "nik":
+                        return "NIK";
+                      case "name":
+                        return "Nama Karyawan";
+                      case "gender":
+                        return "Kelamin";
+                      case "division":
+                        return "Divisi";
+                      case "city":
+                        return "Alamat Kota";
+                      case "phone":
+                        return "No Handphone";
+                      case "isActive":
+                        return "Status Aktif";
+                      case "activeDate":
+                        return "Tgl Bergabung";
+                      case "actions":
+                        return "Aksi";
+                      default:
+                        return id;
+                    }
+                  };
+
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      className="capitalize"
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(value) =>
+                        column.toggleVisibility(!!value)
+                      }
+                    >
+                      {getColumnTitle(column.id)}
+                    </DropdownMenuCheckboxItem>
+                  );
+                })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Export selected */}
+          {selectedCount > 0 && (
+            <Button variant="outline" size="sm" onClick={exportSelectedRows}>
+              <Download className="mr-2 h-4 w-4" />
+              Export ({selectedCount})
+            </Button>
+          )}
+
+          {/* Add Employee */}
+          <Button asChild>
+            <Link href="/dashboard/karyawan/add">
+              <Plus className="mr-2 h-4 w-4" />
+              Tambah Karyawan
+            </Link>
+          </Button>
+        </div>
       </div>
 
-      <div className="rounded-md border">
+      {/* Selected info */}
+      {selectedCount > 0 && (
+        <div className="flex items-center justify-between p-3 bg-muted rounded-md">
+          <span className="text-sm text-muted-foreground">
+            {selectedCount} karyawan dipilih
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setRowSelection({})}
+          >
+            Batal Pilih
+          </Button>
+        </div>
+      )}
+
+      {/* Table */}
+      <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead key={header.id} className="whitespace-nowrap">
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -107,9 +268,14 @@ export function EmployeeDataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  className={
+                    deletingId === getEmployeeNIK(row)
+                      ? "opacity-50 pointer-events-none"
+                      : ""
+                  }
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id} className="py-3">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
@@ -124,13 +290,17 @@ export function EmployeeDataTable<TData, TValue>({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  Tidak ada data..
+                  {globalFilter || table.getState().columnFilters.length > 0
+                    ? "Tidak ada karyawan yang sesuai dengan pencarian"
+                    : "Belum ada data karyawan"}
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination */}
       <EmployeeDataPagination table={table} />
     </div>
   );
