@@ -96,12 +96,12 @@ export const LoginForm = () => {
 
           <Button
             type="submit"
-            className="w-full disabled:opacity-30"
+            className="w-full disabled:opacity-60"
             disabled={isPendingLogin}
           >
             {isPendingLogin ? (
               <div className="flex gap-1.5 justify-center items-center">
-                <Loader2 className=" animate-pulse" /> Login...
+                <Loader2 className=" animate-pulse" /> Sedang Login...
               </div>
             ) : (
               "Login"
