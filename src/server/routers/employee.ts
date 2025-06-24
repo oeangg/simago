@@ -195,7 +195,6 @@ export const employeeRouter = router({
           input.activeDate,
           "Tanggal aktif"
         );
-        console.log(`TGL AKTIF : ${activeDate}`);
 
         const result = await ctx.db.$transaction(async (prisma) => {
           // Create employee

@@ -9,7 +9,6 @@ export function isCustomerData(data: unknown): data is CustomerColumnsProps {
     data !== null &&
     "code" in data &&
     "name" in data &&
-    "customerType" in data &&
     "statusActive" in data &&
     "contacts" in data &&
     "addresses" in data
@@ -41,7 +40,7 @@ export function getCustomerCode<T>(row: { original: T }): string | null {
 
 // Export utility untuk CSV
 export function exportCustomersToCSV(customers: CustomerColumnsProps[]): void {
-  const headers = ["Code", "Name", "Type", "Status", "Tgl Aktif", "NPWP"];
+  const headers = ["Code", "Name", "Lokasi", "Status", "Tgl Aktif", "NPWP"];
   const csvContent = [
     headers.join(","),
     ...customers.map((customer) => {
@@ -55,7 +54,7 @@ export function exportCustomersToCSV(customers: CustomerColumnsProps[]): void {
       return [
         customer.code,
         customerName,
-        customer.customerType,
+        customer.addresses[0].country?.name,
         customer.statusActive,
         formattedActiveDate,
         customer.npwpNumber || "",

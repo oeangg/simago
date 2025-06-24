@@ -23,12 +23,7 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
-import {
-  AddressType,
-  ContactType,
-  CustomerType,
-  StatusActive,
-} from "@prisma/client";
+import { AddressType, ContactType, StatusActive } from "@prisma/client";
 import { trpc } from "@/app/_trpcClient/client";
 
 import { format } from "date-fns";
@@ -93,17 +88,6 @@ export default function ViewCustomer({
         return "Ditangguhkan";
       default:
         return status;
-    }
-  };
-
-  const getCustomerTypeLabel = (type: CustomerType) => {
-    switch (type) {
-      case CustomerType.DOMESTIC:
-        return "Domestic";
-      case CustomerType.INTERNATIONAL:
-        return "International";
-      default:
-        return type;
     }
   };
 
@@ -252,12 +236,6 @@ export default function ViewCustomer({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm font-medium">Tipe Customer</p>
-                <p className="text-sm text-muted-foreground">
-                  {getCustomerTypeLabel(dataCustomer.customerType)}
-                </p>
-              </div>
               <div className="flex items-center gap-3">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <div>
@@ -461,12 +439,12 @@ export default function ViewCustomer({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Building className="h-5 w-5" />
-            Detail Supplier
+            Detail Customer
           </DialogTitle>
           <DialogDescription>
             {dataCustomer
               ? `Informasi lengkap mengenai Customer ${dataCustomer.name}`
-              : "Memuat informasi supplier..."}
+              : "Memuat informasi customer..."}
           </DialogDescription>
         </DialogHeader>
 

@@ -27,12 +27,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import {
-  AddressType,
-  ContactType,
-  CustomerType,
-  StatusActive,
-} from "@prisma/client";
+import { AddressType, ContactType, StatusActive } from "@prisma/client";
 
 interface CustomerAddress {
   id: string;
@@ -41,7 +36,7 @@ interface CustomerAddress {
   addressLine2?: string | null;
   zipcode?: string | null;
   isPrimaryAddress: boolean;
-  country?: {
+  country: {
     name: string;
   } | null;
   province?: {
@@ -68,7 +63,6 @@ export interface CustomerColumnsProps {
   id?: string;
   code: string;
   name: string;
-  customerType: CustomerType;
   statusActive: StatusActive;
   activeDate?: Date;
   npwpNumber?: string | null;
@@ -196,39 +190,32 @@ export const customerColumns = (
     },
     cell: ({ row }) => {
       const customer = row.original;
+      const primaryAddress = row.original.addresses.find(
+        (addr) => addr.isPrimaryAddress
+      );
+
+      if (!primaryAddress) {
+        return <span className="text-muted-foreground text-sm">-</span>;
+      }
+
+      const country = primaryAddress.country?.name;
       return (
         <div className="flex items-center gap-2 min-w-[200px]">
-          {customer.customerType === "INTERNATIONAL" ? (
-            <Globe className="h-4 w-4 text-blue-500 flex-shrink-0" />
+          {country === "INDONESIA" ? (
+            <Home className="h-4 w-4 text-blue-500 flex-shrink-0" />
           ) : (
-            <Home className="h-4 w-4 text-green-500 flex-shrink-0" />
+            <Globe className="h-4 w-4 text-green-500 flex-shrink-0" />
           )}
           <div className="flex flex-col">
             <span className="font-medium">{customer.name}</span>
-            <span className="text-xs text-muted-foreground">
-              {customer.customerType === "INTERNATIONAL"
-                ? "International"
-                : "Domestik"}
-            </span>
+            <span className="text-xs text-muted-foreground">{country}</span>
           </div>
         </div>
       );
     },
   },
   {
-    accessorKey: "customerType",
-    header: "Tipe",
-    cell: ({ row }) => {
-      const type = row.getValue("customerType") as CustomerType;
-      return (
-        <Badge variant={type === "INTERNATIONAL" ? "default" : "secondary"}>
-          {type === "INTERNATIONAL" ? "International" : "Domestik"}
-        </Badge>
-      );
-    },
-  },
-  {
-    id: "primaryAddress",
+    id: "isPrimaryAddress",
     header: "Alamat Utama",
     cell: ({ row }) => {
       const primaryAddress = row.original.addresses.find(
@@ -278,7 +265,7 @@ export const customerColumns = (
     },
   },
   {
-    id: "primaryContact",
+    id: "isPrimaryContact",
     header: "Kontak Utama",
     cell: ({ row }) => {
       const primaryContact = row.original.contacts.find(
@@ -363,7 +350,7 @@ export const customerColumns = (
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="h-8 px-2 lg:px-3"
         >
-          Tgl Aktif
+          Tgl Bergabung
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );

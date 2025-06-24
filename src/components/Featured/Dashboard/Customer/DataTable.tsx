@@ -22,7 +22,7 @@ import {
 } from "@tanstack/react-table";
 import React from "react";
 import { CustomerDataPagination } from "./Pagination";
-import { Plus, Download, Filter } from "lucide-react";
+import { Plus, Download, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { CustomerColumnsProps } from "./Columns";
@@ -139,7 +139,7 @@ export function CustomerDataTable<TData extends CustomerColumnsProps, TValue>({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
-                <Filter className="mr-2 h-4 w-4" />
+                <Settings2 className="mr-2 h-4 w-4" />
                 Kolom
               </Button>
             </DropdownMenuTrigger>
@@ -159,12 +159,12 @@ export function CustomerDataTable<TData extends CustomerColumnsProps, TValue>({
                     >
                       {column.id === "code" && "Kode"}
                       {column.id === "name" && "Nama"}
-                      {column.id === "customerType" && "Tipe"}
-                      {column.id === "primaryAddress" && "Alamat"}
-                      {column.id === "primaryContact" && "Kontak"}
+                      {column.id === "isPrimaryAddress" && "Alamat"}
+                      {column.id === "isPrimaryContact" && "Kontak"}
                       {column.id === "npwp" && "NPWP"}
                       {column.id === "statusActive" && "Status"}
-                      {column.id === "activeDate" && "TglAktif"}
+                      {column.id === "activeDate" && "Tgl Bergabung"}
+                      {column.id === "actions" && "Aksi"}
                     </DropdownMenuCheckboxItem>
                   );
                 })}

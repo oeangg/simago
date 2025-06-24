@@ -8,7 +8,8 @@ import {
   InputAddressTypeSchema,
   InputContactTypeSchema,
 } from "@/schemas/customerSchema";
-import { CustomerType, StatusActive } from "@prisma/client";
+import { StatusActive } from "@prisma/client";
+import { validateOptionalDate } from "../validateDate";
 
 export const customerRouter = router({
   // Create Customer dengan atomic transaction
@@ -18,8 +19,6 @@ export const customerRouter = router({
       try {
         const result = await ctx.db.$transaction(async (tx) => {
           // 1. Check if customer code already exists
-
-          let npwpDateObj: Date | null = null;
 
           const existingCustomer = await tx.customer.findUnique({
             where: { code: input.code },
@@ -33,26 +32,13 @@ export const customerRouter = router({
           }
 
           //cek type npwpDate
-          if (input.npwpDate) {
-            if (typeof input.npwpDate === "string" && input.npwpDate) {
-              const tempDate = new Date(input.npwpDate);
-              if (!isNaN(tempDate.getTime())) {
-                npwpDateObj = tempDate;
-              } else {
-                throw new TRPCError({
-                  code: "BAD_REQUEST",
-                  message: `npwpDate wajib diisi dan dalam format yang benar.`,
-                });
-              }
-            }
-          }
+          const npwpDateObj = validateOptionalDate(input.npwpDate);
 
           // 2. Create customer
           const customer = await tx.customer.create({
             data: {
               code: input.code,
               name: input.name,
-              customerType: input.customerType,
               notes: input.notes,
               npwpNumber: input.npwpNumber,
               npwpName: input.npwpName,
@@ -122,8 +108,6 @@ export const customerRouter = router({
         const result = await ctx.db.$transaction(async (tx) => {
           // 1. Check if customer exists
 
-          let npwpDateObj: Date | null = null;
-
           const existingCustomer = await tx.customer.findUnique({
             where: { id: input.id },
             include: {
@@ -154,19 +138,7 @@ export const customerRouter = router({
           }
 
           //cek type npwpDate
-          if (input.npwpDate) {
-            if (typeof input.npwpDate === "string" && input.npwpDate) {
-              const tempDate = new Date(input.npwpDate);
-              if (!isNaN(tempDate.getTime())) {
-                npwpDateObj = tempDate;
-              } else {
-                throw new TRPCError({
-                  code: "BAD_REQUEST",
-                  message: `npwpDate wajib diisi dan dalam format yang benar.`,
-                });
-              }
-            }
-          }
+          const npwpDateObj = validateOptionalDate(input.npwpDate);
 
           // Update customer basic info
           await tx.customer.update({
@@ -174,7 +146,6 @@ export const customerRouter = router({
             data: {
               code: input.code,
               name: input.name,
-              customerType: input.customerType,
               statusActive: input.statusActive,
               notes: input.notes,
               npwpNumber: input.npwpNumber,
@@ -417,7 +388,6 @@ export const customerRouter = router({
         page: z.number().default(1),
         limit: z.number().default(10),
         search: z.string().optional(),
-        customerType: z.nativeEnum(CustomerType).optional(),
         statusActive: z.nativeEnum(StatusActive).optional(),
       })
     )
@@ -443,7 +413,6 @@ export const customerRouter = router({
                   ],
                 }
               : {},
-            input.customerType ? { customerType: input.customerType } : {},
             input.statusActive ? { statusActive: input.statusActive } : {},
           ],
         };

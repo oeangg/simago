@@ -144,6 +144,8 @@ const defaultContact = {
   isPrimaryContact: true,
 };
 
+const MAX_ADDRESSES = 10;
+
 export function SupplierForm({
   supplier,
   mode,
@@ -237,8 +239,7 @@ export function SupplierForm({
   // Re-initialize form (edit mode)
   useEffect(() => {
     if (mode === "edit" && supplierData && !isPendingSupplier) {
-      const newDefaultValues = getDefaultValues();
-      form.reset(newDefaultValues);
+      form.reset(getDefaultValues());
     }
   }, [supplierData, mode, isPendingSupplier, form, getDefaultValues]);
 
@@ -264,49 +265,43 @@ export function SupplierForm({
     name: "contacts",
   });
 
-  // Watch supplier type and address  for conditional rendering
+  // Watch supplier type and address for conditional rendering
   const watchedAddresses = form.watch("addresses");
 
-  // Dynamic regency queries berdasarkan province code
-  const regencyQueries = (watchedAddresses || []).map((address) => {
+  // tRPC utils
+  const utils = trpc.useUtils();
+
+  // Function untuk fetch regencies distict
+
+  const regencyQueries = Array.from({ length: MAX_ADDRESSES }, (_, index) => {
+    const address = watchedAddresses?.[index];
     return trpc.City.getRegenciesByProvinceCode.useQuery(
       { provinceCode: address?.provinceCode || "" },
       {
-        enabled: !!address?.provinceCode && address?.countryCode === "ID",
-        staleTime: 5 * 60 * 1000, // 5 minutes cache
+        enabled:
+          !!address?.provinceCode &&
+          address?.countryCode === "ID" &&
+          index < addressFields.length,
+        staleTime: 5 * 60 * 1000,
       }
     );
   });
 
-  // Dynamic district queries berdasarkan district code
-  const districtQueries = (watchedAddresses || []).map((address) => {
+  const districtQueries = Array.from({ length: MAX_ADDRESSES }, (_, index) => {
+    const address = watchedAddresses?.[index];
     return trpc.City.getDistrictsByRegencyCode.useQuery(
       { regencyCode: address?.regencyCode || "" },
       {
-        enabled: !!address?.regencyCode && address?.countryCode === "ID",
-        staleTime: 5 * 60 * 1000, // 5 minutes cache
+        enabled:
+          !!address?.regencyCode &&
+          address?.countryCode === "ID" &&
+          index < addressFields.length,
+        staleTime: 5 * 60 * 1000,
       }
     );
   });
 
-  // get query data untuk select value
-  const getRegencyQuery = useCallback(
-    (index: number) => {
-      return regencyQueries[index] || { data: [], isLoading: false };
-    },
-    [regencyQueries]
-  );
-
-  const getDistrictQuery = useCallback(
-    (index: number) => {
-      return districtQueries[index] || { data: [], isLoading: false };
-    },
-    [districtQueries]
-  );
-
-  // Mutations invalidation manggil func untuk invalidate data
-  const utils = trpc.useUtils();
-
+  // Mutations
   const createMutation = trpc.Supplier.createAllSupplier.useMutation({
     onSuccess: () => {
       toast.success("Data Supplier berhasil dibuat");
@@ -339,8 +334,6 @@ export function SupplierForm({
     },
   });
 
-  // Load supplier data for edit mode -
-
   // Handle province change - reset regencycode
   const handleProvinceChange = useCallback(
     (value: string, index: number) => {
@@ -365,7 +358,7 @@ export function SupplierForm({
     (value: string, index: number) => {
       form.setValue(`addresses.${index}.countryCode`, value);
 
-      //jika country ID
+      // Jika country ID
       if (value !== "ID") {
         form.setValue(`addresses.${index}.provinceCode`, "");
         form.setValue(`addresses.${index}.regencyCode`, "");
@@ -433,7 +426,6 @@ export function SupplierForm({
       setIsLoading(true);
       try {
         const cleanedData = cleanFormData(data);
-        console.log("Submitting data:", cleanedData);
 
         if (mode === "create") {
           await createMutation.mutateAsync(cleanedData);
@@ -499,7 +491,7 @@ export function SupplierForm({
       const addressToRemove = currentAddresses[index];
       removeAddress(index);
 
-      // jika remmove primary address, set first remaining address as primary
+      // If remove primary address, set first remaining address as primary
       if (addressToRemove?.isPrimaryAddress) {
         const newPrimaryIndex = index === 0 ? 0 : 0;
         setTimeout(() => {
@@ -564,7 +556,12 @@ export function SupplierForm({
                       Kode Supplier <span className="text-red-500">*</span>
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="SUP-001" {...field} />
+                      <Input
+                        placeholder="ex : SUPP-001"
+                        {...field}
+                        disabled={mode === "edit"}
+                        className="uppercase"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -580,7 +577,7 @@ export function SupplierForm({
                       Nama Supplier <span className="text-red-500">*</span>
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="PT. Example Indonesia" {...field} />
+                      <Input placeholder="Masukkan nama Supplier" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -693,7 +690,7 @@ export function SupplierForm({
                   <FormLabel>Catatan</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Catatan tambahan..."
+                      placeholder="Masukkan catatan..."
                       className="resize-none"
                       {...field}
                     />
@@ -725,7 +722,7 @@ export function SupplierForm({
                   <FormItem>
                     <FormLabel>Nomor NPWP</FormLabel>
                     <FormControl>
-                      <Input placeholder="12.345.678.9-012.345" {...field} />
+                      <Input placeholder="Masukkan Nomor NPWP" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -739,7 +736,10 @@ export function SupplierForm({
                   <FormItem>
                     <FormLabel>Nama NPWP</FormLabel>
                     <FormControl>
-                      <Input placeholder="PT. Example Indonesia" {...field} />
+                      <Input
+                        placeholder="Masukkan nama sesuai NPWP"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -756,7 +756,7 @@ export function SupplierForm({
                     <FormLabel>Alamat NPWP</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Alamat sesuai NPWP..."
+                        placeholder="Masukkan Alamat sesuai NPWP..."
                         className="resize-none"
                         {...field}
                       />
@@ -787,7 +787,7 @@ export function SupplierForm({
           </CardContent>
         </Card>
 
-        {/* Addresses */}
+        {/* Add Addresses */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -812,184 +812,86 @@ export function SupplierForm({
               </Button>
             </div>
           </CardHeader>
+          {/* Address */}
           <CardContent className="space-y-4">
-            {addressFields.map((field, index) => (
-              <div
-                key={field.id}
-                className="rounded-lg border p-4 space-y-4 relative"
-              >
-                {addressFields.length > 1 && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-2 top-2"
-                    onClick={() => handleRemoveAddress(index)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
+            {addressFields.map((field, index) => {
+              // Get data for this specific index
+              const regencies = regencyQueries[index]?.data || [];
+              const districts = districtQueries[index]?.data || [];
 
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Alamat {index + 1}</span>
-
-                  <FormField
-                    control={form.control}
-                    name={`addresses.${index}.isPrimaryAddress`}
-                    render={({ field }) => (
-                      <FormItem className="flex items-center space-x-2">
-                        <FormControl>
-                          <RadioGroup
-                            value={field.value ? "true" : "false"}
-                            onValueChange={() => handlePrimaryAddress(index)}
-                          >
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="true" />
-                              <Label className="text-sm font-normal cursor-pointer">
-                                Alamat Utama
-                              </Label>
-                            </div>
-                          </RadioGroup>
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name={`addresses.${index}.addressType`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>
-                          Tipe Alamat <span className="text-red-500">*</span>
-                        </FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Pilih tipe alamat" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="HEAD_OFFICE">
-                              Kantor Pusat
-                            </SelectItem>
-                            <SelectItem value="BRANCH">Cabang</SelectItem>
-                            <SelectItem value="WAREHOUSE">Gudang</SelectItem>
-                            <SelectItem value="BILLING">
-                              Alamat Penagihan
-                            </SelectItem>
-                            <SelectItem value="SHIPPING">
-                              Alamat Pengiriman
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name={`addresses.${index}.countryCode`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>
-                          Negara <span className="text-red-500">*</span>
-                        </FormLabel>
-                        <Select
-                          onValueChange={(value) => {
-                            handleCountryChange(value, index);
-                          }}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Pilih negara" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {countries.map((country: Country) => (
-                              <SelectItem
-                                key={country.code}
-                                value={country.code}
-                              >
-                                {country.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name={`addresses.${index}.addressLine1`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Alamat Baris 1 <span className="text-red-500">*</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Input placeholder="Jl. Contoh No. 123" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+              return (
+                <div
+                  key={field.id}
+                  className="rounded-lg border p-4 space-y-4 relative"
+                >
+                  {addressFields.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-2 top-2"
+                      onClick={() => handleRemoveAddress(index)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   )}
-                />
 
-                <FormField
-                  control={form.control}
-                  name={`addresses.${index}.addressLine2`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Alamat Baris 2</FormLabel>
-                      <FormControl>
-                        <Input placeholder="RT/RW, Kelurahan" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Alamat {index + 1}</span>
 
-                {/* Show province, regency, district only for domestic (ID) */}
-                {watchedAddresses?.[index]?.countryCode === "ID" && (
-                  <div className="grid gap-4 md:grid-cols-3">
                     <FormField
                       control={form.control}
-                      name={`addresses.${index}.provinceCode`}
+                      name={`addresses.${index}.isPrimaryAddress`}
+                      render={({ field }) => (
+                        <FormItem className="flex items-center space-x-2">
+                          <FormControl>
+                            <RadioGroup
+                              value={field.value ? "true" : "false"}
+                              onValueChange={() => handlePrimaryAddress(index)}
+                            >
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="true" />
+                                <Label className="text-sm font-normal cursor-pointer">
+                                  Alamat Utama
+                                </Label>
+                              </div>
+                            </RadioGroup>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name={`addresses.${index}.addressType`}
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
-                            Provinsi <span className="text-red-500">*</span>
+                            Tipe Alamat <span className="text-red-500">*</span>
                           </FormLabel>
                           <Select
-                            onValueChange={(value) => {
-                              handleProvinceChange(value, index);
-                            }}
+                            onValueChange={field.onChange}
                             value={field.value}
                           >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Pilih provinsi" />
+                                <SelectValue placeholder="Pilih tipe alamat" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {provinces?.map((province: Province) => (
-                                <SelectItem
-                                  key={province.code}
-                                  value={province.code}
-                                >
-                                  {province.name}
-                                </SelectItem>
-                              ))}
+                              <SelectItem value="HEAD_OFFICE">
+                                Kantor Pusat
+                              </SelectItem>
+                              <SelectItem value="BRANCH">Cabang</SelectItem>
+                              <SelectItem value="WAREHOUSE">Gudang</SelectItem>
+                              <SelectItem value="BILLING">
+                                Alamat Penagihan
+                              </SelectItem>
+                              <SelectItem value="SHIPPING">
+                                Alamat Pengiriman
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -999,10 +901,118 @@ export function SupplierForm({
 
                     <FormField
                       control={form.control}
-                      name={`addresses.${index}.regencyCode`}
-                      render={({ field }) => {
-                        const regencyQuery = getRegencyQuery(index);
-                        return (
+                      name={`addresses.${index}.countryCode`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Negara <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <Select
+                            onValueChange={(value) => {
+                              handleCountryChange(value, index);
+                            }}
+                            value={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Pilih negara" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {countries.map((country: Country) => (
+                                <SelectItem
+                                  key={country.code}
+                                  value={country.code}
+                                >
+                                  {country.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name={`addresses.${index}.addressLine1`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Alamat Baris 1 <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Masukkan Alamat baris ke-1"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`addresses.${index}.addressLine2`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Alamat Baris 2</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Masukkan Alamat baris ke-2"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Show province, regency, district only for domestic (ID) */}
+                  {watchedAddresses?.[index]?.countryCode === "ID" && (
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <FormField
+                        control={form.control}
+                        name={`addresses.${index}.provinceCode`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              Provinsi <span className="text-red-500">*</span>
+                            </FormLabel>
+                            <Select
+                              onValueChange={(value) => {
+                                handleProvinceChange(value, index);
+                              }}
+                              value={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Pilih provinsi" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {provinces?.map((province: Province) => (
+                                  <SelectItem
+                                    key={province.code}
+                                    value={province.code}
+                                  >
+                                    {province.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name={`addresses.${index}.regencyCode`}
+                        render={({ field }) => (
                           <FormItem>
                             <FormLabel>
                               Kabupaten/Kota{" "}
@@ -1013,7 +1023,7 @@ export function SupplierForm({
                                 handleRegencyChange(value, index);
                               }}
                               value={field.value}
-                              disabled={!regencyQuery.data?.length}
+                              disabled={!regencies.length}
                             >
                               <FormControl>
                                 <SelectTrigger>
@@ -1021,7 +1031,7 @@ export function SupplierForm({
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {regencyQuery.data?.map((regency: Regency) => (
+                                {regencies.map((regency: Regency) => (
                                   <SelectItem
                                     key={regency.code}
                                     value={regency.code}
@@ -1033,16 +1043,13 @@ export function SupplierForm({
                             </Select>
                             <FormMessage />
                           </FormItem>
-                        );
-                      }}
-                    />
+                        )}
+                      />
 
-                    <FormField
-                      control={form.control}
-                      name={`addresses.${index}.districtCode`}
-                      render={({ field }) => {
-                        const districtQuery = getDistrictQuery(index);
-                        return (
+                      <FormField
+                        control={form.control}
+                        name={`addresses.${index}.districtCode`}
+                        render={({ field }) => (
                           <FormItem>
                             <FormLabel>
                               Kecamatan <span className="text-red-500">*</span>
@@ -1050,7 +1057,7 @@ export function SupplierForm({
                             <Select
                               onValueChange={field.onChange}
                               value={field.value}
-                              disabled={!districtQuery.data?.length}
+                              disabled={!districts.length}
                             >
                               <FormControl>
                                 <SelectTrigger>
@@ -1058,52 +1065,50 @@ export function SupplierForm({
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {districtQuery.data?.map(
-                                  (district: District) => (
-                                    <SelectItem
-                                      key={district.code}
-                                      value={district.code}
-                                    >
-                                      {district.name}
-                                    </SelectItem>
-                                  )
-                                )}
+                                {districts.map((district: District) => (
+                                  <SelectItem
+                                    key={district.code}
+                                    value={district.code}
+                                  >
+                                    {district.name}
+                                  </SelectItem>
+                                ))}
                               </SelectContent>
                             </Select>
                             <FormMessage />
                           </FormItem>
-                        );
-                      }}
-                    />
-                  </div>
-                )}
-
-                {/* Show message for Supplier non ID */}
-                {watchedAddresses?.[index]?.countryCode !== "ID" && (
-                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p className="text-sm text-blue-700">
-                      <strong>Catatan:</strong> Untuk Supplier Luar Indonesia
-                      (ID), cukup isi alamat lengkap di field &rdquo;Alamat
-                      Baris 1&rdquo; dan &rdquo;Alamat Baris 2&rdquo;.
-                    </p>
-                  </div>
-                )}
-
-                <FormField
-                  control={form.control}
-                  name={`addresses.${index}.zipcode`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Kode Pos</FormLabel>
-                      <FormControl>
-                        <Input placeholder="12345" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                        )}
+                      />
+                    </div>
                   )}
-                />
-              </div>
-            ))}
+
+                  {/* Show message for Supplier non ID */}
+                  {watchedAddresses?.[index]?.countryCode !== "ID" && (
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-sm text-blue-700">
+                        <strong>Catatan:</strong> Untuk Supplier Luar Indonesia
+                        (ID), cukup isi alamat lengkap di field &rdquo;Alamat
+                        Baris 1&rdquo; dan &rdquo;Alamat Baris 2&rdquo;.
+                      </p>
+                    </div>
+                  )}
+
+                  <FormField
+                    control={form.control}
+                    name={`addresses.${index}.zipcode`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Kode Pos</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Masukkan kodepos" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              );
+            })}
           </CardContent>
         </Card>
 
@@ -1226,7 +1231,10 @@ export function SupplierForm({
                           Nama Kontak <span className="text-red-500">*</span>
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="John Doe" {...field} />
+                          <Input
+                            placeholder="Masukkan nama Kontak"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -1244,7 +1252,10 @@ export function SupplierForm({
                           Nomor Telepon <span className="text-red-500">*</span>
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="081234567890" {...field} />
+                          <Input
+                            placeholder="Masukkan nomor telpon"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -1261,7 +1272,7 @@ export function SupplierForm({
                           <div className="relative">
                             <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                             <Input
-                              placeholder="email@example.com"
+                              placeholder="Contoh : email@gmail.com"
                               className="pl-10"
                               {...field}
                             />

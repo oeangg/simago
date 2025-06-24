@@ -4,7 +4,6 @@
 import { useState, useCallback } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQueryClient } from "@tanstack/react-query";
 import { trpc } from "@/app/_trpcClient/client";
 import { toast } from "sonner";
 
@@ -320,7 +319,6 @@ export function EmployeeForm({
   onSuccess,
   onCancel,
 }: EmployeeFormProps) {
-  const queryClient = useQueryClient();
   const isEdit = !!employee;
   const [photoPreview, setPhotoPreview] = useState<string | null>(
     employee?.photo || null
@@ -456,7 +454,9 @@ export function EmployeeForm({
     [remove, fields.length]
   );
 
-  const onSubmit = useCallback(
+  const utils = trpc.useUtils();
+
+  const onSubmitEmployee = useCallback(
     async (data: employeeTypeSchema) => {
       try {
         const processedData = {
@@ -484,9 +484,10 @@ export function EmployeeForm({
 
         toast.success(result.message);
 
+        utils.Employee.invalidate();
         // Invalidate queries
-        queryClient.invalidateQueries({ queryKey: ["Employee"] });
-        queryClient.invalidateQueries({ queryKey: ["Employment"] });
+        // queryClient.invalidateQueries({ queryKey: ["Employee"] });
+        // queryClient.invalidateQueries({ queryKey: ["Employment"] });
 
         onSuccess?.();
       } catch (error: unknown) {
@@ -507,8 +508,8 @@ export function EmployeeForm({
       createEmployee,
       updateEmployee,
       form,
-      queryClient,
       onSuccess,
+      utils.Employee,
     ]
   );
 
@@ -538,7 +539,7 @@ export function EmployeeForm({
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+          <form onSubmit={handleSubmit(onSubmitEmployee)} className="space-y-8">
             {/* Basic Employee Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Informasi Dasar</h3>
@@ -553,7 +554,7 @@ export function EmployeeForm({
                       </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="NIK-1122"
+                          placeholder="Ex : NIK-1122"
                           {...field}
                           disabled={isEdit ? true : isSubmitting}
                           className=" uppercase"

@@ -21,8 +21,8 @@ import {
   Mail,
   MapPin,
   FileText,
-  HandCoins,
-  Warehouse,
+  Globe,
+  Home,
 } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
@@ -180,17 +180,25 @@ export const supplierColumns = (
     },
     cell: ({ row }) => {
       const supplier = row.original;
+      const primaryAddress = row.original.addresses.find(
+        (addr) => addr.isPrimaryAddress
+      );
+
+      if (!primaryAddress) {
+        return <span className="text-muted-foreground text-sm">-</span>;
+      }
+
       return (
         <div className="flex items-center gap-2 min-w-[200px]">
-          {supplier.supplierType === "LOGISTIC" ? (
-            <Warehouse className="h-4 w-4 text-blue-500 flex-shrink-0" />
+          {primaryAddress.country?.name === "INDONESIA" ? (
+            <Home className="h-4 w-4 text-blue-500 flex-shrink-0" />
           ) : (
-            <HandCoins className="h-4 w-4 text-green-500 flex-shrink-0" />
+            <Globe className="h-4 w-4 text-green-500 flex-shrink-0" />
           )}
           <div className="flex flex-col">
-            <span className="font-medium">{supplier.name}</span>
+            <span className="font-medium line-clamp-1">{supplier.name}</span>
             <span className="text-xs text-muted-foreground">
-              {supplier.supplierType === "LOGISTIC" ? "Logistic" : "Services"}
+              {primaryAddress.country?.name}
             </span>
           </div>
         </div>

@@ -160,7 +160,6 @@ export const CustomerUpdateDataTable = () => {
               id: customer.id,
               code: customer.code,
               name: customer.name,
-              customerType: customer.customerType,
               statusActive: customer.statusActive,
               npwpNumber: customer.npwpNumber || "",
               activeDate: customer ? new Date(customer.activeDate) : undefined,
