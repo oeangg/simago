@@ -36,25 +36,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { SupplierColumnsProps } from "./Columns";
-import {
-  exportSuppliersToCSV,
-  getSupplierCode,
-  getSupplierFromRow,
-  searchSupplier,
-} from "./DataTableUtils";
+import { getSupplierFromRow, searchSupplier } from "./DataTableUtils";
 import { SupplierDataPagination } from "./Pagination";
+import { exportToCSV } from "@/tools/exportToCSV";
 
 interface DataTableProps<TData extends SupplierColumnsProps, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  onDeleteSupplier?: (supplier: TData) => void;
-  deletingId?: string | null;
 }
 
 export function SupplierDataTable<TData extends SupplierColumnsProps, TValue>({
   columns,
   data,
-  deletingId,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -117,7 +110,16 @@ export function SupplierDataTable<TData extends SupplierColumnsProps, TValue>({
       );
 
     if (suppliers.length > 0) {
-      exportSuppliersToCSV(suppliers);
+      const csvData = suppliers.map((supp) => ({
+        Code: supp.code,
+        Nama: supp.name,
+        Alamat: supp.addresses[0]?.addressLine1 || "-",
+        Kontak: supp.contacts[0]?.name || "-",
+        Status: supp.statusActive ? "Aktif" : "Non-Aktif",
+        TanggalAktif: supp.activeDate,
+      }));
+
+      exportToCSV(csvData, "data-suppliers");
     }
   };
 
@@ -170,7 +172,7 @@ export function SupplierDataTable<TData extends SupplierColumnsProps, TValue>({
                       {column.id === "primaryContact" && "Kontak"}
                       {column.id === "npwp" && "NPWP"}
                       {column.id === "statusActive" && "Status"}
-                      {column.id === "activeDate" && "TglAktif"}
+                      {column.id === "activeDate" && "TglBergabung"}
                       {column.id === "actions" && "Aksi"}
                     </DropdownMenuCheckboxItem>
                   );
@@ -239,11 +241,6 @@ export function SupplierDataTable<TData extends SupplierColumnsProps, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  className={
-                    deletingId === getSupplierCode(row)
-                      ? "opacity-50 pointer-events-none"
-                      : ""
-                  }
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>

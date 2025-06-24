@@ -26,12 +26,7 @@ import { Plus, Download, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { CustomerColumnsProps } from "./Columns";
-import {
-  getCustomerFromRow,
-  getCustomerCode,
-  exportCustomersToCSV,
-  searchCustomer,
-} from "./DataTableUtils";
+import { getCustomerFromRow, searchCustomer } from "./DataTableUtils";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -39,18 +34,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { exportToCSV } from "@/tools/exportToCSV";
 
 interface DataTableProps<TData extends CustomerColumnsProps, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  onDeleteCustomer?: (customer: TData) => void;
-  deletingId?: string | null;
 }
 
 export function CustomerDataTable<TData extends CustomerColumnsProps, TValue>({
   columns,
   data,
-  deletingId,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -113,7 +106,16 @@ export function CustomerDataTable<TData extends CustomerColumnsProps, TValue>({
       );
 
     if (customers.length > 0) {
-      exportCustomersToCSV(customers);
+      const csvData = customers.map((emp) => ({
+        Code: emp.code,
+        Nama: emp.name,
+        Alamat: emp.addresses[0]?.addressLine1 || "-",
+        Kontak: emp.contacts[0]?.name || "-",
+        Status: emp.statusActive ? "Aktif" : "Non-Aktif",
+        TanggalAktif: emp.activeDate,
+      }));
+
+      exportToCSV(csvData, "data-customers");
     }
   };
 
@@ -232,11 +234,6 @@ export function CustomerDataTable<TData extends CustomerColumnsProps, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  className={
-                    deletingId === getCustomerCode(row)
-                      ? "opacity-50 pointer-events-none"
-                      : ""
-                  }
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>

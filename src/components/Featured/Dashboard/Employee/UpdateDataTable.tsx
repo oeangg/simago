@@ -85,7 +85,6 @@ export interface EmployeeFilters {
 
 export const EmployeeUpdateDataTable = () => {
   const [dataEmployee, setDataEmployee] = useState<EmployeeColumns[]>([]);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(
     null
   );
@@ -111,9 +110,6 @@ export const EmployeeUpdateDataTable = () => {
   });
 
   const deleteEmployee = trpc.Employee.deleteEmployee.useMutation({
-    onMutate: (data) => {
-      setDeletingId(data.id);
-    },
     onSuccess: (data) => {
       toast.success(data.message);
       refetchDataEmployee();
@@ -122,7 +118,7 @@ export const EmployeeUpdateDataTable = () => {
       toast.error(error.message || "Gagal menghapus data karyawan");
     },
     onSettled: () => {
-      setDeletingId(null);
+      // setDeletingId(null);
     },
   });
 
@@ -264,12 +260,7 @@ export const EmployeeUpdateDataTable = () => {
         />
       )}
 
-      <EmployeeDataTable
-        columns={columnsWithActions}
-        data={dataEmployee}
-        deletingId={deletingId}
-        onDeleteEmployee={handleDeleteEmployee}
-      />
+      <EmployeeDataTable columns={columnsWithActions} data={dataEmployee} />
 
       {/* Load more button */}
       {dataEmployeeTrpc &&

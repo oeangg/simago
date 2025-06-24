@@ -27,15 +27,15 @@ export function getEmployeeFromRow<T>(row: { original: T }): EmployeeColumns {
   return employee;
 }
 
-export function getEmployeeNIK<T>(row: { original: T }): string | null {
-  try {
-    const employee = getEmployeeFromRow(row);
-    return employee.nik;
-  } catch (error) {
-    console.error("Error getting employee NIK:", error);
-    return null;
-  }
-}
+// export function getEmployeeNIK<T>(row: { original: T }): string | null {
+//   try {
+//     const employee = getEmployeeFromRow(row);
+//     return employee.nik;
+//   } catch (error) {
+//     console.error("Error getting employee NIK:", error);
+//     return null;
+//   }
+// }
 
 // Search utility function with better error handling
 export function searchEmployee(

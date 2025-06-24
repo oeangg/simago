@@ -36,25 +36,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { EmployeeColumns } from "./Columns";
-import {
-  getEmployeeFromRow,
-  getEmployeeNIK,
-  searchEmployee,
-} from "./DataTableUtils";
-import { exportToCSV } from "./exportToCSV";
+import { getEmployeeFromRow, searchEmployee } from "./DataTableUtils";
 import { EmployeeDataPagination } from "./Pagination";
+import { exportToCSV } from "@/tools/exportToCSV";
 
 interface DataTableProps<TData extends EmployeeColumns, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  onDeleteEmployee?: (employee: TData) => void;
-  deletingId?: string | null;
 }
 
 export function EmployeeDataTable<TData extends EmployeeColumns, TValue>({
   columns,
   data,
-  deletingId,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -173,7 +166,7 @@ export function EmployeeDataTable<TData extends EmployeeColumns, TValue>({
                       case "name":
                         return "Nama Karyawan";
                       case "gender":
-                        return "Kelamin";
+                        return "Gender";
                       case "division":
                         return "Divisi";
                       case "city":
@@ -268,11 +261,6 @@ export function EmployeeDataTable<TData extends EmployeeColumns, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  className={
-                    deletingId === getEmployeeNIK(row)
-                      ? "opacity-50 pointer-events-none"
-                      : ""
-                  }
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="py-3">

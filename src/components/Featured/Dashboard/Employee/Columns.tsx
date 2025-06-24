@@ -222,7 +222,7 @@ export const employeeColumns = (
   },
   {
     id: "gender",
-    header: "Kelamin",
+    header: "Gender",
     cell: ({ row }) => {
       const gender = row.original.gender as Gender;
 
@@ -298,7 +298,9 @@ export const employeeColumns = (
         <div className="flex flex-col gap-1 max-w-[200px]">
           <div className="flex items-center gap-1.5">
             <MapPin className="h-4 w-4 text-blue-500 flex-shrink-0" />
-            <span className="font-medium text-gray-900">{city}</span>
+            <span className="font-medium text-gray-900 line-clamp-1">
+              {city}
+            </span>
             {zipcode && (
               <span className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
                 {zipcode}

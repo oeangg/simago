@@ -83,7 +83,6 @@ export interface CustomerFilters {
 
 export const CustomerUpdateDataTable = () => {
   const [dataCustomer, setDataCustomer] = useState<CustomerColumnsProps[]>([]);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(
     null
   );
@@ -109,9 +108,6 @@ export const CustomerUpdateDataTable = () => {
   });
 
   const deleteCustomer = trpc.Customer.deleteCustomer.useMutation({
-    onMutate: (data) => {
-      setDeletingId(data.id);
-    },
     onSuccess: (data) => {
       toast.success(data.message || "Customer berhasil dihapus");
       refetchDataCustomer();
@@ -119,9 +115,7 @@ export const CustomerUpdateDataTable = () => {
     onError: (error) => {
       toast.error(error.message || "Gagal menghapus customer");
     },
-    onSettled: () => {
-      setDeletingId(null);
-    },
+    onSettled: () => {},
   });
 
   // Handle actions
@@ -290,12 +284,7 @@ export const CustomerUpdateDataTable = () => {
         />
       )}
 
-      <CustomerDataTable
-        columns={columnsWithActions}
-        data={dataCustomer}
-        deletingId={deletingId}
-        onDeleteCustomer={handleDeleteCustomer}
-      />
+      <CustomerDataTable columns={columnsWithActions} data={dataCustomer} />
 
       {/* Load more button jika ada data lebih banyak */}
       {dataCustomerTrpc &&

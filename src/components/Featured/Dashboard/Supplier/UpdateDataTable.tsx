@@ -85,7 +85,6 @@ export interface SupplierFilters {
 
 export const SupplierUpdateDataTable = () => {
   const [dataSupplier, setDataSupplier] = useState<SupplierColumnsProps[]>([]);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(
     null
   );
@@ -111,9 +110,6 @@ export const SupplierUpdateDataTable = () => {
   });
 
   const deleteSupplier = trpc.Supplier.deleteSupplier.useMutation({
-    onMutate: (data) => {
-      setDeletingId(data.id);
-    },
     onSuccess: (data) => {
       toast.success(data.message || "Supplier berhasil dihapus");
       refetchDataSupplier();
@@ -121,9 +117,7 @@ export const SupplierUpdateDataTable = () => {
     onError: (error) => {
       toast.error(error.message || "Gagal menghapus supplier");
     },
-    onSettled: () => {
-      setDeletingId(null);
-    },
+    onSettled: () => {},
   });
 
   // Handle actions
@@ -287,12 +281,7 @@ export const SupplierUpdateDataTable = () => {
         />
       )}
 
-      <SupplierDataTable
-        columns={columnsWithActions}
-        data={dataSupplier}
-        deletingId={deletingId}
-        onDeleteSupplier={handleDeleteSupplier}
-      />
+      <SupplierDataTable columns={columnsWithActions} data={dataSupplier} />
 
       {/* Load more button jika ada data lebih banyak */}
       {dataSupplierTrpc &&

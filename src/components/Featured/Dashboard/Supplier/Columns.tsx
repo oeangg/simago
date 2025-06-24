@@ -327,7 +327,7 @@ export const supplierColumns = (
   },
   {
     accessorKey: "statusActive",
-    header: "Status Aktif",
+    header: "Status",
     cell: ({ row }) => {
       const status = row.getValue("statusActive") as StatusActive;
       return getStatusBadge(status);
@@ -336,7 +336,9 @@ export const supplierColumns = (
   {
     accessorKey: "activeDate",
     header: ({ column }) => {
-      return <DataTableColumnHeaderSort column={column} title="Tgl Aktif" />;
+      return (
+        <DataTableColumnHeaderSort column={column} title="Tgl Bergabung" />
+      );
     },
     cell: ({ row }) => {
       // const date = row.getValue("activeDate") as Date;
