@@ -26,7 +26,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Gender } from "@prisma/client";
-import { DataTableColumnHeaderSort } from "./DataTableColumnHeaderSort";
+import { format } from "date-fns";
+import { id } from "date-fns/locale";
+import { DataTableColumnHeaderSort } from "../DataTableColumnHeaderSort";
 
 // Type definition based on your router response
 export type EmployeeColumns = {
@@ -222,7 +224,7 @@ export const employeeColumns = (
   },
   {
     id: "gender",
-    header: "Gender",
+    header: "Jenis Kelamin",
     cell: ({ row }) => {
       const gender = row.original.gender as Gender;
 
@@ -251,7 +253,7 @@ export const employeeColumns = (
         <div className="flex items-center gap-2 min-w-[90px]">
           <div
             className={`
-          flex items-center gap-2 px-3 py-1.5 rounded-full border
+          flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border
           ${config.bgColor} ${config.borderColor} ${config.textColor}
           transition-all duration-200 hover:shadow-sm
         `}
@@ -346,37 +348,12 @@ export const employeeColumns = (
     },
     cell: ({ row }) => {
       const date = row.getValue("activeDate") as string | null;
-
-      const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        const months = [
-          "Jan",
-          "Feb",
-          "Mar",
-          "Apr",
-          "Mei",
-          "Jun",
-          "Jul",
-          "Agt",
-          "Sep",
-          "Okt",
-          "Nov",
-          "Des",
-        ];
-        return `${date.getDate()} ${
-          months[date.getMonth()]
-        } ${date.getFullYear()}`;
-      };
-
-      if (!date) {
-        return <span className="text-muted-foreground">-</span>;
-      }
+      if (!date) return <span className="text-muted-foreground">-</span>;
 
       return (
-        <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-blue-500" />
-          <span className="text-sm font-medium">{formatDate(date)}</span>
-        </div>
+        <span className="text-sm font-medium text-muted-foreground">
+          {format(new Date(date), "dd MMM yyyy", { locale: id })}
+        </span>
       );
     },
   },

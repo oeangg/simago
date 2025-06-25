@@ -194,7 +194,7 @@ export const RegisterForm = () => {
           >
             {isPendingRegister ? (
               <div className="flex gap-1.5 justify-center items-center">
-                <Loader2 className="animate-pulse" /> Sedang Register...
+                <Loader2 className="animate-pulse" /> Register...
               </div>
             ) : (
               "Register"

@@ -178,7 +178,7 @@ export const employeeRouter = router({
   createFullEmployee: protectedProcedure
     .input(employeeSchema)
     .mutation(async ({ ctx, input }) => {
-      console.log("Input received:", JSON.stringify(input, null, 2));
+      // console.log("Input received:", JSON.stringify(input, null, 2));
       try {
         const existingEmployee = await ctx.db.employee.findUnique({
           where: { nik: input.nik.toUpperCase() },

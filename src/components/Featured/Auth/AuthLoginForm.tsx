@@ -101,7 +101,7 @@ export const LoginForm = () => {
           >
             {isPendingLogin ? (
               <div className="flex gap-1.5 justify-center items-center">
-                <Loader2 className=" animate-pulse" /> Sedang Login...
+                <Loader2 className=" animate-pulse" /> Login...
               </div>
             ) : (
               "Login"

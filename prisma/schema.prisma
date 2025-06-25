@@ -20,7 +20,7 @@ model Customer {
   code         String            @unique
   name         String
   statusActive StatusActive      @default(ACTIVE)
-  activeDate  DateTime  @default(now()) 
+  activeDate   DateTime          @default(now())
   notes        String?
   npwpNumber   String?
   npwpName     String?
@@ -70,50 +70,133 @@ model CustomerContact {
   @@unique([customerId, contactType], name: "OneContactTypePerCustomer")
 }
 
+//
+model Driver {
+  id           String   @id @default(cuid())
+  code         String   @unique
+  name         String
+  gender       Gender
+  addressLine1 String
+  addressLine2 String?
+  city         String
+  phoneNumber  String
+  statusActive Boolean  @default(true)
+  activeDate   DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([name])
+}
+
+model Vehicle {
+  id            String      @id @default(cuid())
+  vehicleNumber String      @unique
+  vehicleType   VehicleType
+  vehicleMake   String?
+  vehicleYear   String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+//
+
+enum VehicleType {
+  BOX
+  TRUCK
+  MOTORCYCLE
+}
+
+model Vendor {
+  id              String          @id @default(cuid())
+  code            String          @unique
+  name            String
+  statusActive    StatusActive    @default(ACTIVE)
+  activeDate      DateTime        @default(now())
+  faxNumber       String?
+  notes           String?
+  npwpNumber      String?
+  npwpName        String?
+  npwpAddress     String?
+  npwpDate        DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  vendorAddresses VendorAddress[]
+  vendorBankings  VendorBanking[]
+  vendorContacts  VendorContact[]
+
+  @@index([name])
+}
+
+model VendorAddress {
+  id               String      @id @default(cuid())
+  addressType      AddressType
+  addressLine1     String
+  addressLine2     String?
+  zipcode          String?
+  isPrimaryAddress Boolean
+  vendorId         String
+  countryCode      String
+  provinceCode     String? //optional domestic/international
+  regencyCode      String? //optional domestic/international
+  districtCode     String? //optional domestic/international
+  vendor           Vendor      @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  country          Country     @relation(fields: [countryCode], references: [code])
+  province         Province?   @relation(fields: [provinceCode], references: [code])
+  regency          Regency?    @relation(fields: [regencyCode], references: [code])
+  district         District?   @relation(fields: [districtCode], references: [code])
+
+  @@unique([vendorId, isPrimaryAddress], name: "OnePrimaryAddressPerVendor")
+  @@unique([vendorId, addressType], name: "OneAddressTypePerVendor")
+}
+
+model VendorContact {
+  id               String      @id @default(cuid())
+  contactType      ContactType
+  name             String
+  phoneNumber      String
+  email            String?
+  isPrimaryContact Boolean
+  vendorId         String
+  vendor           Vendor      @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@unique([vendorId, isPrimaryContact], name: "OnePrimaryContactPerVendor")
+  @@unique([vendorId, contactType], name: "OneContactTypePerVendor")
+}
+
+model VendorBanking {
+  id                     String      @id @default(cuid())
+  bankingNumber          String      @unique
+  bankingName            String
+  bankingBank            BankingBank
+  isPrimaryBankingNumber Boolean
+  vendorId               String
+  vendor                 Vendor      @relation(fields: [vendorId], references: [id])
+
+  @@unique([vendorId, isPrimaryBankingNumber], name: "OnePrimaryBankingNumberPerVendor")
+  @@index([bankingNumber])
+}
+
+enum BankingBank {
+  BRI
+  BCA
+  BNI
+  BNI_SYARIAH
+  DANAMON
+  JAGO
+  MANDIRI
+  AEON
+}
+
+//
+
 model Country {
   code            String            @id
   name            String
   customerAddress CustomerAddress[]
   supplierAddress SupplierAddress[]
+  vendorAddress   VendorAddress[]
+
   @@index([name])
-}
-
-//
-model Driver {
-  id  String @id @default(cuid())
-  code String @unique
-  name String
-  gender Gender
-  addressLine1  String
-  addressLine2  String?
-  city  String
-  phoneNumber String
-  isActive  Boolean @default(true)
-  activeDate  DateTime
-  vehicleId String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime @updatedAt
-  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
-}
-
-model Vehicle {
-  id  String @id  @default(cuid())
-  vehicleNumber String  @unique
-  vehicleType VehicleType
-  vehicleMake String
-  vehicleYear String  
-  createdAt DateTime  @default(now())
-  updatedAt DateTime @updatedAt
-
-  driver Driver[]
-}
-//
-
-enum VehicleType {
-  CAR
-  SEDAN
-  TRUCK
-  MOTORCYCLE
 }
 
 model Province {
@@ -121,6 +204,7 @@ model Province {
   name            String
   customerAddress CustomerAddress[]
   supplierAddress SupplierAddress[]
+  vendorAddress   VendorAddress[]
   regencies       Regency[]
 
   @@index([name])
@@ -132,6 +216,7 @@ model Regency {
   provinceCode    String
   customerAddress CustomerAddress[]
   supplierAddress SupplierAddress[]
+  vendorAddress   VendorAddress[]
   province        Province          @relation(fields: [provinceCode], references: [code])
   district        District[]
 
@@ -144,6 +229,7 @@ model District {
   regencyCode     String
   customerAddress CustomerAddress[]
   supplierAddress SupplierAddress[]
+  vendorAddress   VendorAddress[]
   regency         Regency           @relation(fields: [regencyCode], references: [code])
 
   @@index([name])
@@ -187,20 +273,20 @@ model Employment {
 
 //
 model Material {
-  id  String @id  @default(cuid())
-  code  String  @unique
-  name  String
-  description String?
-  category  CategoryMaterial
-  unit UnitOfMeasure
-  brand String?
-  specification  String?
-  minStock  Int @default(1)
-  maxStock  Int @default(1)
-  unitPrice Int
-  isActive  Boolean @default(true)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id            String           @id @default(cuid())
+  code          String           @unique
+  name          String
+  description   String?
+  category      CategoryMaterial
+  unit          UnitOfMeasure
+  brand         String?
+  specification String?
+  minStock      Int              @default(1)
+  maxStock      Int              @default(1)
+  unitPrice     Int              @default(1)
+  statusActive  Boolean          @default(true)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
 
   stock Stock?
 
@@ -208,18 +294,19 @@ model Material {
 }
 
 model Stock {
-  id String @id @default(cuid())
-  materialId String @unique
-  quantity  Int @default(1)
+  id             String   @id @default(cuid())
+  materialId     String   @unique
+  quantity       Int      @default(1)
   updatebyUserId String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime @updatedAt 
-  
-  user  User  @relation(fields: [updatebyUserId], references: [id])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user     User     @relation(fields: [updatebyUserId], references: [id])
   material Material @relation(fields: [materialId], references: [id])
 
   @@index([quantity])
 }
+
 //
 model Position {
   id          String       @id @default(cuid())
@@ -233,14 +320,13 @@ model Division {
   employments Employment[]
 }
 
-
 model Supplier {
   id           String            @id @default(cuid())
   code         String            @unique
   name         String
   supplierType SupplierType
   statusActive StatusActive      @default(ACTIVE)
-  activeDate  DateTime  @default(now()) 
+  activeDate   DateTime          @default(now())
   notes        String?
   npwpNumber   String?
   npwpName     String?
@@ -248,8 +334,9 @@ model Supplier {
   npwpDate     DateTime?
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
-  addresses SupplierAddress[]
-  contacts SupplierContact[]
+  addresses    SupplierAddress[]
+  contacts     SupplierContact[]
+
   @@index([name])
 }
 
@@ -265,7 +352,7 @@ model SupplierAddress {
   provinceCode     String? //optional domestic/international
   regencyCode      String? //optional domestic/international
   districtCode     String? //optional domestic/international
-  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  supplier         Supplier    @relation(fields: [supplierId], references: [id], onDelete: Cascade)
   country          Country     @relation(fields: [countryCode], references: [code])
   province         Province?   @relation(fields: [provinceCode], references: [code])
   regency          Regency?    @relation(fields: [regencyCode], references: [code])
@@ -283,11 +370,12 @@ model SupplierContact {
   email            String?
   isPrimaryContact Boolean
   supplierId       String
-  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  supplier         Supplier    @relation(fields: [supplierId], references: [id], onDelete: Cascade)
 
   @@unique([supplierId, isPrimaryContact], name: "OnePrimaryContactPerSupplier")
   @@unique([supplierId, contactType], name: "OneContactTypePerSupplier")
 }
+
 model Session {
   id        String   @id @default(cuid())
   userId    String   @unique
@@ -308,7 +396,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   session   Session?
-  stock Stock[]
+  stock     Stock[]
 }
 
 //enum
@@ -334,7 +422,6 @@ enum CategoryMaterial {
   SPARE_PART
 }
 
-
 enum ContactType {
   PRIMARY
   BILLING
@@ -342,7 +429,6 @@ enum ContactType {
   EMERGENCY
   TECHNICAL
 }
-
 
 enum Gender {
   MALE

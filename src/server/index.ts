@@ -2,6 +2,7 @@ import { authRouter } from "./routers/auth";
 import { cityRouter } from "./routers/city";
 import { customerRouter } from "./routers/customer";
 import { divisionRouter } from "./routers/division";
+import { driverRouter } from "./routers/driver";
 import { employeeRouter } from "./routers/employee";
 import { employmentRouter } from "./routers/employment";
 import { positionRouter } from "./routers/position";
@@ -19,6 +20,7 @@ export const appRouter = router({
   Position: positionRouter,
   Division: divisionRouter,
   Supplier: supplierRouter,
+  Driver: driverRouter,
 });
 
 export type AppRouter = typeof appRouter;

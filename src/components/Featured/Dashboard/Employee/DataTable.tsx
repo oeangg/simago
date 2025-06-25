@@ -166,7 +166,7 @@ export function EmployeeDataTable<TData extends EmployeeColumns, TValue>({
                       case "name":
                         return "Nama Karyawan";
                       case "gender":
-                        return "Gender";
+                        return "Jenis Kelamin";
                       case "division":
                         return "Divisi";
                       case "city":

@@ -32,7 +32,7 @@ import {
   StatusActive,
   SupplierType,
 } from "@prisma/client";
-import { DataTableColumnHeaderSort } from "./DataTableColumnHeaderSort";
+import { DataTableColumnHeaderSort } from "../DataTableColumnHeaderSort";
 
 interface SupplierAddress {
   id: string;
@@ -113,14 +113,14 @@ const getStatusBadge = (status: StatusActive) => {
       className: "bg-green-500 hover:bg-green-600",
     },
     NOACTIVE: {
-      variant: "destructive" as const,
+      variant: "secondary" as const,
       label: "Tidak Aktif",
       className: "",
     },
     SUSPENDED: {
-      variant: "secondary" as const,
+      variant: "destructive" as const,
       label: "Ditangguhkan",
-      className: "bg-yellow-400 hover:bg-yellow-500",
+      className: "",
     },
   };
 
@@ -128,6 +128,11 @@ const getStatusBadge = (status: StatusActive) => {
 
   return (
     <Badge variant={config.variant} className={config.className}>
+      <div
+        className={`w-2 h-2 rounded-full mr-2 ${
+          status ? "bg-white" : "bg-red-100"
+        }`}
+      />
       {config.label}
     </Badge>
   );
@@ -346,7 +351,7 @@ export const supplierColumns = (
       if (!date) return <span className="text-muted-foreground">-</span>;
 
       return (
-        <span className="text-sm text-muted-foreground">
+        <span className="text-sm font-medium text-muted-foreground">
           {format(new Date(date), "dd MMM yyyy", { locale: id })}
         </span>
       );

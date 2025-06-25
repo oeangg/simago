@@ -21,27 +21,32 @@ import {
   VisibilityState,
 } from "@tanstack/react-table";
 import React from "react";
-import { CustomerDataPagination } from "./Pagination";
+
 import { Plus, Download, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { CustomerColumnsProps } from "./Columns";
-import { getCustomerFromRow, searchCustomer } from "./DataTableUtils";
+
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { exportToCSV } from "@/tools/exportToCSV";
 
-interface DataTableProps<TData extends CustomerColumnsProps, TValue> {
+import { exportToCSV } from "@/tools/exportToCSV";
+import { DriverColumnsProps } from "./Columns";
+import { getDriverFromRow, searchDriver } from "./DataTableUtils";
+import { DriverDataPagination } from "./Pagination";
+
+interface DataTableProps<TData extends DriverColumnsProps, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
 }
 
-export function CustomerDataTable<TData extends CustomerColumnsProps, TValue>({
+export function DriverDataTable<TData extends DriverColumnsProps, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
@@ -75,15 +80,16 @@ export function CustomerDataTable<TData extends CustomerColumnsProps, TValue>({
     },
     initialState: {
       pagination: {
-        pageSize: 10,
+        pageSize: 10, // Increased default page size
       },
     },
     // Global filter function using utility
     globalFilterFn: (row, columnId, value) => {
       try {
-        const customer = getCustomerFromRow(row);
-        return searchCustomer(customer, value);
-      } catch {
+        const driver = getDriverFromRow(row);
+        return searchDriver(driver, value);
+      } catch (error) {
+        console.error("Global filter error:", error);
         return false;
       }
     },
@@ -92,30 +98,31 @@ export function CustomerDataTable<TData extends CustomerColumnsProps, TValue>({
   // Export selected rows using utility
   const exportSelectedRows = () => {
     const selectedRows = table.getFilteredSelectedRowModel().rows;
-    const customers = selectedRows
+    const drivers = selectedRows
       .map((row) => {
         try {
-          return getCustomerFromRow(row);
+          return getDriverFromRow(row);
         } catch (error) {
-          console.error("Error getting customer from row:", error);
+          console.error("Error getting employee from row:", error);
           return null;
         }
       })
-      .filter(
-        (customer): customer is CustomerColumnsProps => customer !== null
-      );
+      .filter((driver): driver is DriverColumnsProps => driver !== null);
 
-    if (customers.length > 0) {
-      const csvData = customers.map((emp) => ({
-        Code: emp.code,
-        Nama: emp.name,
-        Alamat: emp.addresses[0]?.addressLine1 || "-",
-        Kontak: emp.contacts[0]?.name || "-",
-        Status: emp.statusActive ? "Aktif" : "Non-Aktif",
-        TanggalAktif: emp.activeDate,
+    if (drivers.length > 0) {
+      const csvData = drivers.map((dt) => ({
+        Code: dt.code,
+        Nama: dt.name,
+        Kota: dt.city,
+        Alamat1: dt.addressLine1,
+        Alamat2: dt.addressLine2 || "",
+        Gender: dt.gender === "MALE" ? "Laki-laki" : "Perempuan",
+        "No. Telepon": dt.phoneNumber,
+        Status: dt.statusActive ? "Aktif" : "Non-Aktif",
+        TanggalAktif: dt.activeDate,
       }));
 
-      exportToCSV(csvData, "data-customers");
+      exportToCSV(csvData, "data-driver");
     }
   };
 
@@ -128,7 +135,7 @@ export function CustomerDataTable<TData extends CustomerColumnsProps, TValue>({
         {/* Search */}
         <div className="flex-1 w-full sm:w-auto">
           <Input
-            placeholder="Cari customer (nama, kode, NPWP, kontak, alamat)..."
+            placeholder="Cari karyawan (nama, NIK, divisi, jabatan, alamat, telepon)..."
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
             className="max-w-md"
@@ -137,7 +144,6 @@ export function CustomerDataTable<TData extends CustomerColumnsProps, TValue>({
 
         {/* Actions */}
         <div className="flex items-center gap-2">
-          {/* Column visibility */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
@@ -145,11 +151,37 @@ export function CustomerDataTable<TData extends CustomerColumnsProps, TValue>({
                 Kolom
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[150px]">
+            <DropdownMenuContent align="end" className="w-[180px]">
+              <DropdownMenuLabel>Toggle kolom</DropdownMenuLabel>
+              <DropdownMenuSeparator />
               {table
                 .getAllColumns()
                 .filter((column) => column.getCanHide())
                 .map((column) => {
+                  // Get proper column titles
+                  const getColumnTitle = (id: string) => {
+                    switch (id) {
+                      case "code":
+                        return "Code";
+                      case "name":
+                        return "Nama Karyawan";
+                      case "gender":
+                        return "Gender";
+                      case "city":
+                        return "Alamat Kota";
+                      case "phone":
+                        return "No Handphone";
+                      case "statusActive":
+                        return "Status Aktif";
+                      case "activeDate":
+                        return "Tgl Bergabung";
+                      case "actions":
+                        return "Aksi";
+                      default:
+                        return id;
+                    }
+                  };
+
                   return (
                     <DropdownMenuCheckboxItem
                       key={column.id}
@@ -159,14 +191,7 @@ export function CustomerDataTable<TData extends CustomerColumnsProps, TValue>({
                         column.toggleVisibility(!!value)
                       }
                     >
-                      {column.id === "code" && "Kode"}
-                      {column.id === "name" && "Nama"}
-                      {column.id === "isPrimaryAddress" && "Alamat"}
-                      {column.id === "isPrimaryContact" && "Kontak"}
-                      {column.id === "npwp" && "NPWP"}
-                      {column.id === "statusActive" && "Status"}
-                      {column.id === "activeDate" && "Tgl Bergabung"}
-                      {column.id === "actions" && "Aksi"}
+                      {getColumnTitle(column.id)}
                     </DropdownMenuCheckboxItem>
                   );
                 })}
@@ -181,11 +206,11 @@ export function CustomerDataTable<TData extends CustomerColumnsProps, TValue>({
             </Button>
           )}
 
-          {/* Add customer */}
+          {/* Add Employee */}
           <Button asChild>
-            <Link href="/dashboard/customer/add">
+            <Link href="/dashboard/driver/add">
               <Plus className="mr-2 h-4 w-4" />
-              Tambah Customer
+              Tambah Driver
             </Link>
           </Button>
         </div>
@@ -195,7 +220,7 @@ export function CustomerDataTable<TData extends CustomerColumnsProps, TValue>({
       {selectedCount > 0 && (
         <div className="flex items-center justify-between p-3 bg-muted rounded-md">
           <span className="text-sm text-muted-foreground">
-            {selectedCount} customer dipilih
+            {selectedCount} driver dipilih
           </span>
           <Button
             variant="outline"
@@ -208,14 +233,14 @@ export function CustomerDataTable<TData extends CustomerColumnsProps, TValue>({
       )}
 
       {/* Table */}
-      <div className="rounded-md border  overflow-x-auto ">
+      <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead key={header.id} className="whitespace-nowrap">
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -236,7 +261,7 @@ export function CustomerDataTable<TData extends CustomerColumnsProps, TValue>({
                   data-state={row.getIsSelected() && "selected"}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id} className="py-3">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
@@ -252,8 +277,8 @@ export function CustomerDataTable<TData extends CustomerColumnsProps, TValue>({
                   className="h-24 text-center"
                 >
                   {globalFilter || table.getState().columnFilters.length > 0
-                    ? "Tidak ada customer yang sesuai dengan pencarian"
-                    : "Belum ada data customer"}
+                    ? "Tidak ada driver yang sesuai dengan pencarian"
+                    : "Belum ada data driver"}
                 </TableCell>
               </TableRow>
             )}
@@ -262,7 +287,7 @@ export function CustomerDataTable<TData extends CustomerColumnsProps, TValue>({
       </div>
 
       {/* Pagination */}
-      <CustomerDataPagination table={table} />
+      <DriverDataPagination table={table} />
     </div>
   );
 }

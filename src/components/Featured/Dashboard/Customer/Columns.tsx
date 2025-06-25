@@ -21,13 +21,13 @@ import {
   Mail,
   MapPin,
   FileText,
-  ArrowUpDown,
   Home,
   Globe,
 } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { AddressType, ContactType, StatusActive } from "@prisma/client";
+import { DataTableColumnHeaderSort } from "../DataTableColumnHeaderSort";
 
 interface CustomerAddress {
   id: string;
@@ -122,6 +122,11 @@ const getStatusBadge = (status: StatusActive) => {
 
   return (
     <Badge variant={config.variant} className={config.className}>
+      <div
+        className={`w-2 h-2 rounded-full mr-2 ${
+          status ? "bg-white" : "bg-red-100"
+        }`}
+      />
       {config.label}
     </Badge>
   );
@@ -157,16 +162,7 @@ export const customerColumns = (
   {
     accessorKey: "code",
     header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="h-8 px-2 lg:px-3"
-        >
-          Kode
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
+      return <DataTableColumnHeaderSort column={column} title="Kode" />;
     },
     cell: ({ row }) => (
       <div className="font-mono text-sm font-medium">
@@ -178,14 +174,7 @@ export const customerColumns = (
     accessorKey: "name",
     header: ({ column }) => {
       return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="h-8 px-2 lg:px-3"
-        >
-          Nama Customer
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
+        <DataTableColumnHeaderSort column={column} title="Nama Customer" />
       );
     },
     cell: ({ row }) => {
@@ -325,16 +314,7 @@ export const customerColumns = (
   {
     accessorKey: "statusActive",
     header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="h-8 px-2 lg:px-3"
-        >
-          Status
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
+      return <DataTableColumnHeaderSort column={column} title="Status" />;
     },
     cell: ({ row }) => {
       const status = row.getValue("statusActive") as StatusActive;
@@ -345,14 +325,7 @@ export const customerColumns = (
     accessorKey: "activeDate",
     header: ({ column }) => {
       return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="h-8 px-2 lg:px-3"
-        >
-          Tgl Bergabung
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
+        <DataTableColumnHeaderSort column={column} title="Tgl Bergabung" />
       );
     },
     cell: ({ row }) => {
@@ -361,7 +334,7 @@ export const customerColumns = (
       if (!date) return <span className="text-muted-foreground">-</span>;
 
       return (
-        <span className="text-sm text-muted-foreground">
+        <span className="text-sm font-medium text-muted-foreground">
           {format(new Date(date), "dd MMM yyyy", { locale: id })}
         </span>
       );
