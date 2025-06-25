@@ -294,6 +294,8 @@ export const employeeRouter = router({
           input.activeDate,
           "Tanggal aktif"
         );
+
+        const resignDate = validateOptionalDate(input.resignDate);
         // Update employee with employment data using transaction
         const result = await ctx.db.$transaction(async (prisma) => {
           // Update employee data
@@ -304,6 +306,7 @@ export const employeeRouter = router({
               name: input.name,
               isActive: input.isActive,
               activeDate: activeDate,
+              resignDate: resignDate,
               gender: input.gender,
               address: input.address,
               city: input.city,

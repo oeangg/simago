@@ -113,14 +113,14 @@ const getStatusBadge = (status: StatusActive) => {
       className: "bg-green-500 hover:bg-green-600",
     },
     NOACTIVE: {
-      variant: "secondary" as const,
+      variant: "destructive" as const,
       label: "Tidak Aktif",
       className: "",
     },
     SUSPENDED: {
-      variant: "destructive" as const,
+      variant: "secondary" as const,
       label: "Ditangguhkan",
-      className: "",
+      className: "bg-yellow-500",
     },
   };
 

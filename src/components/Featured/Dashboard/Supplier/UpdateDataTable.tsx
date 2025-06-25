@@ -141,56 +141,70 @@ export const SupplierUpdateDataTable = () => {
 
   // Transform data ketika diterima dari API
   useEffect(() => {
-    if (dataSupplierTrpc?.data) {
+    if (dataSupplierTrpc?.data && Array.isArray(dataSupplierTrpc.data)) {
       try {
         const transformedSuppliers: SupplierColumnsProps[] =
-          dataSupplierTrpc.data.map((supplier) => {
-            // Karena router hanya mengambil primary address dan contact,
-            // kita bisa langsung menggunakan data pertama dari array
-            const primaryAddress = supplier.addresses[0] || null;
-            const primaryContact = supplier.contacts[0] || null;
+          dataSupplierTrpc.data
+            .filter((supplier) => supplier && typeof supplier === "object") // Filter out invalid entries
+            .map((supplier) => {
+              // Safely get primary address and contact
+              const primaryAddress = supplier.addresses?.[0] || null;
+              const primaryContact = supplier.contacts?.[0] || null;
 
-            return {
-              id: supplier.id,
-              code: supplier.code,
-              name: supplier.name,
-              supplierType: supplier.supplierType,
-              statusActive: supplier.statusActive,
-              npwpNumber: supplier.npwpNumber || "",
-              activeDate: supplier ? new Date(supplier.activeDate) : undefined,
-              // Transform addresses - karena hanya primary yang diambil
-              addresses: primaryAddress
-                ? [
-                    {
-                      id: primaryAddress.id,
-                      addressType: primaryAddress.addressType,
-                      addressLine1: primaryAddress.addressLine1,
-                      addressLine2: primaryAddress.addressLine2,
-                      zipcode: primaryAddress.zipcode,
-                      isPrimaryAddress: primaryAddress.isPrimaryAddress,
-                      country: primaryAddress.country,
-                      province: primaryAddress.province,
-                      regency: primaryAddress.regency,
-                      district: primaryAddress.district,
-                    },
-                  ]
-                : [],
+              return {
+                id: supplier.id,
+                code: supplier.code || "", // Provide fallback for required field
+                name: supplier.name || "", // Provide fallback for required field
+                supplierType: supplier.supplierType,
+                statusActive: supplier.statusActive,
+                npwpNumber: supplier.npwpNumber || null,
+                activeDate: supplier.activeDate
+                  ? new Date(supplier.activeDate)
+                  : undefined,
 
-              // Transform contacts - karena hanya primary yang diambil
-              contacts: primaryContact
-                ? [
-                    {
-                      id: primaryContact.id,
-                      contactType: primaryContact.contactType,
-                      name: primaryContact.name,
-                      phoneNumber: primaryContact.phoneNumber,
-                      email: primaryContact.email || "",
-                      isPrimaryContact: primaryContact.isPrimaryContact,
-                    },
-                  ]
-                : [],
-            };
-          });
+                // Transform addresses - only include primary address
+                addresses: primaryAddress
+                  ? [
+                      {
+                        id: primaryAddress.id,
+                        addressType: primaryAddress.addressType,
+                        addressLine1: primaryAddress.addressLine1 || "",
+                        addressLine2: primaryAddress.addressLine2 || null,
+                        zipcode: primaryAddress.zipcode || null,
+                        isPrimaryAddress:
+                          primaryAddress.isPrimaryAddress ?? false,
+                        country: primaryAddress.country
+                          ? { name: primaryAddress.country.name || "" }
+                          : null,
+                        province: primaryAddress.province
+                          ? { name: primaryAddress.province.name || "" }
+                          : null,
+                        regency: primaryAddress.regency
+                          ? { name: primaryAddress.regency.name || "" }
+                          : null,
+                        district: primaryAddress.district
+                          ? { name: primaryAddress.district.name || "" }
+                          : null,
+                      },
+                    ]
+                  : [],
+
+                // Transform contacts - only include primary contact
+                contacts: primaryContact
+                  ? [
+                      {
+                        id: primaryContact.id,
+                        contactType: primaryContact.contactType,
+                        name: primaryContact.name || "",
+                        phoneNumber: primaryContact.phoneNumber || "",
+                        email: primaryContact.email || null,
+                        isPrimaryContact:
+                          primaryContact.isPrimaryContact ?? false,
+                      },
+                    ]
+                  : [],
+              };
+            });
 
         setDataSupplier(transformedSuppliers);
       } catch (error) {
@@ -198,8 +212,14 @@ export const SupplierUpdateDataTable = () => {
         toast.error("Terjadi kesalahan saat memproses data supplier");
         setDataSupplier([]);
       }
+    } else if (
+      dataSupplierTrpc?.data === null ||
+      dataSupplierTrpc?.data === undefined
+    ) {
+      // Handle case when data is explicitly null/undefined
+      setDataSupplier([]);
     }
-  }, [dataSupplierTrpc]);
+  }, [dataSupplierTrpc?.data]);
 
   // Function untuk update filters (bisa digunakan untuk search dan filter nanti)
   const updateFilters = (newFilters: Partial<SupplierFilters>) => {

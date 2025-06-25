@@ -2,75 +2,89 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
 
-import { StatusActive, SupplierType } from "@prisma/client";
+import { StatusActive, VendorType } from "@prisma/client";
 import {
-  InputSupplierAddressTypeSchema,
-  InputSupplierContactTypeSchema,
-  supplierSchema,
-  supplierUpdateSchema,
-} from "@/schemas/supplierSchema";
+  InputVendorAddressTypeSchema,
+  InputVendorBankingTypeSchema,
+  InputVendorContactTypeSchema,
+  vendorSchema,
+  vendorUpdateSchema,
+} from "@/schemas/vendorSchema";
 import { validateOptionalDate } from "../validateDate";
 
-export const supplierRouter = router({
-  createAllSupplier: protectedProcedure
-    .input(supplierSchema)
+export const vendorRouter = router({
+  createAllVendor: protectedProcedure
+    .input(vendorSchema)
     .mutation(async ({ ctx, input }) => {
       try {
         const result = await ctx.db.$transaction(async (tx) => {
-          // 1. Check if customer code already exists
+          // 1.  code already exists
 
-          const existingSupplier = await tx.supplier.findUnique({
+          const existingVendor = await tx.vendor.findUnique({
             where: { code: input.code },
           });
 
-          if (existingSupplier) {
+          if (existingVendor) {
             throw new TRPCError({
               code: "CONFLICT",
-              message: "Kode supplier sudah digunakan",
+              message: "Kode vendor sudah digunakan",
             });
           }
 
+          //cek type npwpDate
           const npwpDateObj = validateOptionalDate(input.npwpDate);
-
-          // 2. Create supplier
-          const supplier = await tx.supplier.create({
+          // 2. Create
+          const vendor = await tx.vendor.create({
             data: {
               code: input.code,
               name: input.name,
-              supplierType: input.supplierType,
               notes: input.notes,
+              picName: input.picName,
+              picPosition: input.picPosition,
               npwpNumber: input.npwpNumber,
               npwpName: input.npwpName,
               npwpAddress: input.npwpAddress,
               npwpDate: npwpDateObj,
+              paymentTerms: input.paymentTerms,
+              vendorType: input.vendorType as VendorType,
             },
           });
 
           // 3. Create addresses
-          if (input.addresses && input.addresses.length > 0) {
-            await tx.supplierAddress.createMany({
-              data: input.addresses.map((address) => ({
+          if (input.vendorAddresses && input.vendorAddresses.length > 0) {
+            await tx.vendorAddress.createMany({
+              data: input.vendorAddresses.map((address) => ({
                 ...address,
-                supplierId: supplier.id,
+                vendorId: vendor.id,
               })),
             });
           }
 
           // 4. Create contacts
-          if (input.contacts && input.contacts.length > 0) {
-            await tx.supplierContact.createMany({
-              data: input.contacts.map((contact) => ({
+          if (input.vendorContacts && input.vendorContacts.length > 0) {
+            await tx.vendorContact.createMany({
+              data: input.vendorContacts.map((contact) => ({
                 ...contact,
-                supplierId: supplier.id,
+                vendorId: vendor.id,
               })),
             });
           }
 
-          // Return complete supplier data
-          return await tx.supplier.findUnique({
-            where: { id: supplier.id },
+          // 4. Create bankins
+          if (input.vendorBankings && input.vendorBankings.length > 0) {
+            await tx.vendorBanking.createMany({
+              data: input.vendorBankings.map((banking) => ({
+                ...banking,
+                vendorId: vendor.id,
+              })),
+            });
+          }
+
+          // Return complete  data
+          return await tx.vendor.findUnique({
+            where: { id: vendor.id },
             include: {
-              addresses: {
+              vendorAddresses: {
                 include: {
                   country: true,
                   province: true,
@@ -78,7 +92,8 @@ export const supplierRouter = router({
                   district: true,
                 },
               },
-              contacts: true,
+              vendorContacts: true,
+              vendorBankings: true,
             },
           });
         });
@@ -86,81 +101,86 @@ export const supplierRouter = router({
         return {
           success: true,
           data: result,
-          message: "Data supplier berhasil dibuat",
+          message: "Data vendor berhasil dibuat",
         };
       } catch (error) {
         if (error instanceof TRPCError) throw error;
 
-        console.error("Create supplier error:", error);
+        console.error("Create driver error:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Gagal membuat data supplier",
+          message: "Gagal membuat data driver",
         });
       }
     }),
 
-  // Update Supplier dengan atomic transaction
-  updateAllSupplier: protectedProcedure
-    .input(supplierUpdateSchema)
+  // Update  dengan atomic transaction
+  updateAllVendor: protectedProcedure
+    .input(vendorUpdateSchema)
     .mutation(async ({ ctx, input }) => {
       try {
         const result = await ctx.db.$transaction(async (tx) => {
-          // 1. Check if customer exists
+          // 1. Check if  exists
 
-          const existingSupplier = await tx.supplier.findUnique({
+          const existingVendor = await tx.vendor.findUnique({
             where: { id: input.id },
             include: {
-              addresses: true,
-              contacts: true,
+              vendorAddresses: true,
+              vendorContacts: true,
+              vendorBankings: true,
             },
           });
 
-          if (!existingSupplier) {
+          if (!existingVendor) {
             throw new TRPCError({
               code: "NOT_FOUND",
-              message: "Supplier tidak ditemukan",
+              message: "Vendor tidak ditemukan",
             });
           }
 
-          // 2. Update supplier data if provided
-          if (input.code && input.code !== existingSupplier.code) {
-            const codeExists = await tx.supplier.findUnique({
+          // 2. Update  data if provided
+          if (input.code && input.code !== existingVendor.code) {
+            const codeExists = await tx.vendor.findUnique({
               where: { code: input.code },
             });
 
             if (codeExists) {
               throw new TRPCError({
                 code: "CONFLICT",
-                message: "Kode supplier sudah digunakan",
+                message: "Kode vendor sudah digunakan",
               });
             }
           }
 
-          const npwpDateObj = validateOptionalDate(input.npwpDate);
           //cek type npwpDate
 
-          // Update supplier basic info
-          await tx.supplier.update({
+          const npwpDateObj = validateOptionalDate(input.npwpDate);
+
+          // Update  basic info
+          await tx.vendor.update({
             where: { id: input.id },
             data: {
               code: input.code,
               name: input.name,
-              supplierType: input.supplierType,
               statusActive: input.statusActive,
               notes: input.notes,
+              picName: input.picName,
+              picPosition: input.picPosition,
               npwpNumber: input.npwpNumber,
               npwpName: input.npwpName,
               npwpAddress: input.npwpAddress,
               npwpDate: npwpDateObj,
+              paymentTerms: input.paymentTerms,
+              vendorType: input.vendorType as VendorType,
             },
           });
 
           // 3. Update addresses if provided
-          if (input.addresses && input.addresses.length > 0) {
-            for (const address of input.addresses) {
+          if (input.vendorAddresses && input.vendorAddresses.length > 0) {
+            for (const address of input.vendorAddresses) {
               if (address.id) {
                 // Update existing address - hanya update provided fields
-                const updateData: Partial<InputSupplierAddressTypeSchema> = {};
+                const updateData: Partial<InputVendorAddressTypeSchema> = {};
                 if (address.addressType !== undefined)
                   updateData.addressType = address.addressType;
                 if (address.addressLine1 !== undefined)
@@ -180,7 +200,7 @@ export const supplierRouter = router({
                 if (address.districtCode !== undefined)
                   updateData.districtCode = address.districtCode;
 
-                await tx.supplierAddress.update({
+                await tx.vendorAddress.update({
                   where: { id: address.id },
                   data: updateData,
                 });
@@ -200,7 +220,7 @@ export const supplierRouter = router({
                 }
 
                 //jika address kosong create
-                await tx.supplierAddress.create({
+                await tx.vendorAddress.create({
                   data: {
                     addressType: address.addressType,
                     addressLine1: address.addressLine1,
@@ -211,7 +231,7 @@ export const supplierRouter = router({
                     provinceCode: address.provinceCode || null,
                     regencyCode: address.regencyCode || null,
                     districtCode: address.districtCode || null,
-                    supplierId: input.id,
+                    vendorId: input.id,
                   },
                 });
               }
@@ -219,22 +239,24 @@ export const supplierRouter = router({
           }
 
           // 4. Update contacts if provided
-          if (input.contacts && input.contacts.length > 0) {
-            for (const contact of input.contacts) {
+          if (input.vendorContacts && input.vendorContacts.length > 0) {
+            for (const contact of input.vendorContacts) {
               if (contact.id) {
                 // Update existing contact - only update provided fields
-                const updateData: Partial<InputSupplierContactTypeSchema> = {};
+                const updateData: Partial<InputVendorContactTypeSchema> = {};
                 if (contact.contactType !== undefined)
                   updateData.contactType = contact.contactType;
                 if (contact.name !== undefined) updateData.name = contact.name;
                 if (contact.phoneNumber !== undefined)
                   updateData.phoneNumber = contact.phoneNumber;
+                if (contact.faxNumber !== undefined)
+                  updateData.faxNumber = contact.faxNumber;
                 if (contact.email !== undefined)
                   updateData.email = contact.email;
                 if (contact.isPrimaryContact !== undefined)
                   updateData.isPrimaryContact = contact.isPrimaryContact;
 
-                await tx.supplierContact.update({
+                await tx.vendorContact.update({
                   where: { id: contact.id },
                   data: updateData,
                 });
@@ -253,25 +275,75 @@ export const supplierRouter = router({
                   });
                 }
 
-                await tx.supplierContact.create({
+                await tx.vendorContact.create({
                   data: {
                     contactType: contact.contactType,
                     name: contact.name,
                     phoneNumber: contact.phoneNumber,
                     email: contact.email || null,
                     isPrimaryContact: contact.isPrimaryContact,
-                    supplierId: input.id,
+                    vendorId: input.id,
                   },
                 });
               }
             }
           }
 
-          // Return updated supplier data
-          return await tx.supplier.findUnique({
+          // 5. Update banking if provided
+          if (input.vendorBankings && input.vendorBankings.length > 0) {
+            for (const banking of input.vendorBankings) {
+              if (banking.id) {
+                // Update existing contact - only update provided fields
+                const updateData: Partial<InputVendorBankingTypeSchema> = {};
+                if (banking.bankingNumber !== undefined)
+                  updateData.bankingNumber = banking.bankingNumber;
+                if (banking.bankingName !== undefined)
+                  updateData.bankingName = banking.bankingName;
+                if (banking.bankingBank !== undefined)
+                  updateData.bankingBank = banking.bankingBank;
+                if (banking.bankingBranch !== undefined)
+                  updateData.bankingBranch = banking.bankingBranch;
+                if (banking.isPrimaryBankingNumber !== undefined)
+                  updateData.isPrimaryBankingNumber =
+                    banking.isPrimaryBankingNumber;
+
+                await tx.vendorBanking.update({
+                  where: { id: banking.id },
+                  data: updateData,
+                });
+              } else {
+                // Create new contact - ensure required fields
+                if (
+                  !banking.bankingNumber ||
+                  !banking.bankingName ||
+                  !banking.bankingBank ||
+                  banking.isPrimaryBankingNumber === undefined
+                ) {
+                  throw new TRPCError({
+                    code: "BAD_REQUEST",
+                    message:
+                      "Data banking tidak lengkap untuk membuat data bank baru",
+                  });
+                }
+
+                await tx.vendorBanking.create({
+                  data: {
+                    bankingNumber: banking.bankingNumber,
+                    bankingName: banking.bankingName,
+                    bankingBranch: banking.bankingBranch,
+                    bankingBank: banking.bankingBank,
+                    isPrimaryBankingNumber: banking.isPrimaryBankingNumber,
+                    vendorId: input.id,
+                  },
+                });
+              }
+            }
+          }
+          // Return updated  data
+          return await tx.vendor.findUnique({
             where: { id: input.id },
             include: {
-              addresses: {
+              vendorAddresses: {
                 include: {
                   country: true,
                   province: true,
@@ -279,7 +351,8 @@ export const supplierRouter = router({
                   district: true,
                 },
               },
-              contacts: true,
+              vendorContacts: true,
+              vendorBankings: true,
             },
           });
         });
@@ -287,21 +360,21 @@ export const supplierRouter = router({
         return {
           success: true,
           data: result,
-          message: "Data supplier berhasil diperbarui",
+          message: "Data bank berhasil diperbarui",
         };
       } catch (error) {
         if (error instanceof TRPCError) throw error;
 
-        console.error("Update supplier error:", error);
+        console.error("Update bank error:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Gagal memperbarui supplier",
+          message: "Gagal memperbarui data bank",
         });
       }
     }),
 
-  // Delete Supplier
-  deleteSupplier: protectedProcedure
+  // Delete
+  deleteVendor: protectedProcedure
     .input(
       z.object({
         id: z.string(),
@@ -309,38 +382,38 @@ export const supplierRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        const supplier = await ctx.db.supplier.findUnique({
+        const vendor = await ctx.db.vendor.findUnique({
           where: { id: input.id },
         });
 
-        if (!supplier) {
+        if (!vendor) {
           throw new TRPCError({
             code: "NOT_FOUND",
-            message: "Supplier tidak ditemukan",
+            message: "Vendor tidak ditemukan",
           });
         }
 
-        await ctx.db.supplier.delete({
+        await ctx.db.vendor.delete({
           where: { id: input.id },
         });
 
         return {
           success: true,
-          message: "Supplier berhasil dihapus",
+          message: "data vendor berhasil dihapus",
         };
       } catch (error) {
         if (error instanceof TRPCError) throw error;
 
-        console.error("Delete Supplier error:", error);
+        console.error("Delete Vendor error:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Gagal menghapus supplier",
+          message: "Gagal menghapus vendor",
         });
       }
     }),
 
-  // Get Supplier by ID
-  getSupplier: protectedProcedure
+  // Get  by ID
+  getVendorById: protectedProcedure
     .input(
       z.object({
         id: z.string(),
@@ -348,10 +421,10 @@ export const supplierRouter = router({
     )
     .query(async ({ ctx, input }) => {
       try {
-        const supplier = await ctx.db.supplier.findUnique({
+        const vendor = await ctx.db.vendor.findUnique({
           where: { id: input.id },
           include: {
-            addresses: {
+            vendorAddresses: {
               include: {
                 country: true,
                 province: true,
@@ -359,37 +432,38 @@ export const supplierRouter = router({
                 district: true,
               },
             },
-            contacts: true,
+            vendorContacts: true,
+            vendorBankings: true,
           },
         });
 
-        if (!supplier) {
+        if (!vendor) {
           throw new TRPCError({
             code: "NOT_FOUND",
-            message: "Supplier tidak ditemukan",
+            message: "Vendor tidak ditemukan",
           });
         }
 
-        return supplier;
+        return vendor;
       } catch (error) {
         if (error instanceof TRPCError) throw error;
 
-        console.error("Get supplier error:", error);
+        console.error("Get vendor error:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Gagal mengambil data supplier",
+          message: "Gagal mengambil data vendor",
         });
       }
     }),
 
-  // Get All Suppliers
-  getAllSuppliers: protectedProcedure
+  // Get All
+  getAllVendors: protectedProcedure
     .input(
       z.object({
         page: z.number().default(1),
         limit: z.number().default(10),
         search: z.string().optional(),
-        supplierType: z.nativeEnum(SupplierType).optional(),
+        vendorType: z.nativeEnum(VendorType).optional(),
         statusActive: z.nativeEnum(StatusActive).optional(),
       })
     )
@@ -416,19 +490,19 @@ export const supplierRouter = router({
                   ],
                 }
               : {},
-            input.supplierType ? { supplierType: input.supplierType } : {},
+            input.vendorType ? { vendorType: input.vendorType } : {},
             input.statusActive ? { statusActive: input.statusActive } : {},
           ],
         };
 
-        const [suppliers, total] = await Promise.all([
-          ctx.db.supplier.findMany({
+        const [drivers, total] = await Promise.all([
+          ctx.db.vendor.findMany({
             where,
             skip: (input.page - 1) * input.limit,
             take: input.limit,
 
             include: {
-              addresses: {
+              vendorAddresses: {
                 where: { isPrimaryAddress: true },
                 include: {
                   country: true,
@@ -437,27 +511,30 @@ export const supplierRouter = router({
                   district: true,
                 },
               },
-              contacts: {
+              vendorContacts: {
                 where: { isPrimaryContact: true },
+              },
+              vendorBankings: {
+                where: { isPrimaryBankingNumber: true },
               },
             },
             orderBy: { createdAt: "desc" },
           }),
-          ctx.db.supplier.count({ where }),
+          ctx.db.vendor.count({ where }),
         ]);
 
-        console.log(suppliers);
+        console.log(drivers);
         return {
-          data: suppliers,
+          data: drivers,
           total,
           page: input.page,
           totalPages: Math.ceil(total / input.limit),
         };
       } catch (error) {
-        console.error("Get all suppliers error:", error);
+        console.error("Get all drivers error:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Gagal mengambil data suppliers",
+          message: "Gagal mengambil data drivers",
         });
       }
     }),

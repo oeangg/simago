@@ -8,6 +8,7 @@ import { employmentRouter } from "./routers/employment";
 import { positionRouter } from "./routers/position";
 import { supplierRouter } from "./routers/supplier";
 import { userRouter } from "./routers/user";
+import { vendorRouter } from "./routers/vendor";
 import { router } from "./trpc";
 
 export const appRouter = router({
@@ -21,6 +22,7 @@ export const appRouter = router({
   Division: divisionRouter,
   Supplier: supplierRouter,
   Driver: driverRouter,
+  Vendor: vendorRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -76,7 +76,7 @@ const getStatusBadge = (status: boolean) => {
   return (
     <Badge variant={config.variant} className={config.className}>
       <div
-        className={`w-2 h-2 rounded-full mr-2 ${
+        className={`w-2 h-2 rounded-full mr-2  ${
           status ? "bg-white" : "bg-red-100"
         }`}
       />
@@ -161,26 +161,8 @@ export const employeeColumns = (
       const latestEmployment = employee.employments[0];
 
       // Format tanggal helper
-      const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        const months = [
-          "Jan",
-          "Feb",
-          "Mar",
-          "Apr",
-          "Mei",
-          "Jun",
-          "Jul",
-          "Agt",
-          "Sep",
-          "Okt",
-          "Nov",
-          "Des",
-        ];
-        return `${date.getDate()} ${
-          months[date.getMonth()]
-        } ${date.getFullYear()}`;
-      };
+      const date = row.getValue("activeDate") as string | null;
+      if (!date) return <span className="text-muted-foreground">-</span>;
 
       // Get initials for avatar
       const getInitials = (name: string) => {
@@ -213,7 +195,7 @@ export const employeeColumns = (
                 </div>
                 <div className="flex items-center gap-1 text-xs text-gray-500">
                   <Calendar className="w-3 h-3" />
-                  Mulai {formatDate(latestEmployment.startDate)}
+                  Mulai {format(new Date(date), "dd MMM yyyy", { locale: id })}
                 </div>
               </div>
             )}
@@ -335,7 +317,7 @@ export const employeeColumns = (
     header: "Status",
     cell: ({ row }) => {
       const status = row.original.isActive as boolean;
-      return getStatusBadge(status);
+      return <div className="w-[100px]">{getStatusBadge(status)}</div>;
     },
   },
   {

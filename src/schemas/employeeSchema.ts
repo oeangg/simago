@@ -18,8 +18,9 @@ export const employmentSchema = z.object({
 export const employeeSchema = z.object({
   nik: z
     .string()
-    .min(1, { message: "NIK tidak boleh kosong" })
-    .max(12, { message: "NIK terlalu panjang" }),
+    .min(1, "NIK tidak boleh kosong")
+    .max(10, "NIK Maksimal 10 karakter")
+    .regex(/^[A-Z0-9-]+$/, "NIK hanya boleh huruf kapital, angka, dan strip"),
   name: z.string().min(1, { message: "Nama tidak boleh kosong" }),
   isActive: z.boolean(),
   activeDate: z.string().min(1, "Tanggal Aktif harus diisi"),
@@ -27,10 +28,7 @@ export const employeeSchema = z.object({
   gender: z.nativeEnum(Gender),
   address: z.string().min(1, { message: "Alamat tidak boleh kosong" }),
   city: z.string().min(1, { message: "Kota tidak boleh kosong" }),
-  zipcode: z
-    .string()
-    .min(1, { message: "Kode pos tidak boleh kosong" })
-    .max(5, { message: "Kode pos max 5 karakter" }),
+  zipcode: z.string().regex(/^\d{5}$/, "Kode pos harus 5 digit"),
   photo: z.string().optional(),
   ttdDigital: z.string().optional(),
 

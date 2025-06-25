@@ -35,17 +35,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { SupplierColumnsProps } from "./Columns";
-import { getSupplierFromRow, searchSupplier } from "./DataTableUtils";
-import { SupplierDataPagination } from "./Pagination";
 import { exportToCSV } from "@/tools/exportToCSV";
+import { VendorColumnsProps } from "./Columns";
+import { getVendorFromRow, searchVendor } from "./DataTableUtils";
+import { VendorDataPagination } from "./Pagination";
 
-interface DataTableProps<TData extends SupplierColumnsProps, TValue> {
+interface DataTableProps<TData extends VendorColumnsProps, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
 }
 
-export function SupplierDataTable<TData extends SupplierColumnsProps, TValue>({
+export function VendorDataTable<TData extends VendorColumnsProps, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
@@ -85,8 +85,8 @@ export function SupplierDataTable<TData extends SupplierColumnsProps, TValue>({
     // Global filter function using utility
     globalFilterFn: (row, columnId, value) => {
       try {
-        const supplier = getSupplierFromRow(row);
-        return searchSupplier(supplier, value);
+        const vendor = getVendorFromRow(row);
+        return searchVendor(vendor, value);
       } catch {
         return false;
       }
@@ -96,30 +96,29 @@ export function SupplierDataTable<TData extends SupplierColumnsProps, TValue>({
   // Export selected rows using utility
   const exportSelectedRows = () => {
     const selectedRows = table.getFilteredSelectedRowModel().rows;
-    const suppliers = selectedRows
+    const vendors = selectedRows
       .map((row) => {
         try {
-          return getSupplierFromRow(row);
+          return getVendorFromRow(row);
         } catch (error) {
-          console.error("Error getting supplier from row:", error);
+          console.error("Error getting vendor from row:", error);
           return null;
         }
       })
-      .filter(
-        (supplier): supplier is SupplierColumnsProps => supplier !== null
-      );
+      .filter((vendor): vendor is VendorColumnsProps => vendor !== null);
 
-    if (suppliers.length > 0) {
-      const csvData = suppliers.map((supp) => ({
-        Code: supp.code,
-        Nama: supp.name,
-        Alamat: supp.addresses[0]?.addressLine1 || "-",
-        Kontak: supp.contacts[0]?.name || "-",
-        Status: supp.statusActive ? "Aktif" : "Non-Aktif",
-        TanggalAktif: supp.activeDate,
+    if (vendors.length > 0) {
+      const csvData = vendors.map((dt) => ({
+        Code: dt.code,
+        Nama: dt.name,
+        Alamat: dt.vendorAddresses[0]?.addressLine1 || "-",
+        Kontak: dt.vendorContacts[0]?.name || "-",
+        Banking: dt.vendorBankings[0]?.bankingNumber.toString() || "-",
+        Status: dt.statusActive ? "Aktif" : "Non-Aktif",
+        TanggalAktif: dt.activeDate,
       }));
 
-      exportToCSV(csvData, "data-suppliers");
+      exportToCSV(csvData, "data-vendors");
     }
   };
 
@@ -132,7 +131,7 @@ export function SupplierDataTable<TData extends SupplierColumnsProps, TValue>({
         {/* Search */}
         <div className="flex-1 w-full sm:w-auto">
           <Input
-            placeholder="Cari supplier (nama, kode, NPWP, kontak, alamat)..."
+            placeholder="Cari vendor (nama, kode, NPWP, kontak, alamat)..."
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
             className="max-w-md"
@@ -167,7 +166,7 @@ export function SupplierDataTable<TData extends SupplierColumnsProps, TValue>({
                     >
                       {column.id === "code" && "Kode"}
                       {column.id === "name" && "Nama"}
-                      {column.id === "supplierType" && "Tipe"}
+                      {column.id === "vendorType" && "Tipe"}
                       {column.id === "primaryAddress" && "Alamat"}
                       {column.id === "primaryContact" && "Kontak"}
                       {column.id === "npwp" && "NPWP"}
@@ -190,9 +189,9 @@ export function SupplierDataTable<TData extends SupplierColumnsProps, TValue>({
 
           {/* Add Supplier */}
           <Button asChild>
-            <Link href="/dashboard/supplier/add">
+            <Link href="/dashboard/vendor/add">
               <Plus className="mr-2 h-4 w-4" />
-              Tambah Supplier
+              Tambah Vendor
             </Link>
           </Button>
         </div>
@@ -202,7 +201,7 @@ export function SupplierDataTable<TData extends SupplierColumnsProps, TValue>({
       {selectedCount > 0 && (
         <div className="flex items-center justify-between p-3 bg-muted rounded-md">
           <span className="text-sm text-muted-foreground">
-            {selectedCount} suppplier dipilih
+            {selectedCount} vendor dipilih
           </span>
           <Button
             variant="outline"
@@ -259,8 +258,8 @@ export function SupplierDataTable<TData extends SupplierColumnsProps, TValue>({
                   className="h-24 text-center"
                 >
                   {globalFilter || table.getState().columnFilters.length > 0
-                    ? "Tidak ada supplier yang sesuai dengan pencarian"
-                    : "Belum ada data supplier"}
+                    ? "Tidak ada vendor yang sesuai dengan pencarian"
+                    : "Belum ada data vendor"}
                 </TableCell>
               </TableRow>
             )}
@@ -269,7 +268,7 @@ export function SupplierDataTable<TData extends SupplierColumnsProps, TValue>({
       </div>
 
       {/* Pagination */}
-      <SupplierDataPagination table={table} />
+      <VendorDataPagination table={table} />
     </div>
   );
 }

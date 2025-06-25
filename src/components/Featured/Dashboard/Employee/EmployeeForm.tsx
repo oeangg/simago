@@ -557,7 +557,6 @@ export function EmployeeForm({
                           placeholder="Ex : NIK-1122"
                           {...field}
                           disabled={isEdit ? true : isSubmitting}
-                          className=" uppercase"
                         />
                       </FormControl>
                       <FormMessage />
@@ -633,86 +632,151 @@ export function EmployeeForm({
                   )}
                 />
 
-                <FormField
-                  control={control}
-                  name="city"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Kota <span className="text-red-500">*</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Masukkan kota"
-                          {...field}
-                          disabled={isSubmitting}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div>
+                  <FormField
+                    control={control}
+                    name="city"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Kota <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Masukkan kota"
+                            {...field}
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={control}
+                    name="address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Alamat <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Masukkan alamat lengkap"
+                            className="resize-none"
+                            rows={4}
+                            {...field}
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={control}
+                    name="zipcode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Kode Pos <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Masukkan kode pos"
+                            {...field}
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-                <FormField
-                  control={control}
-                  name="zipcode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Kode Pos <span className="text-red-500">*</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Masukkan kode pos"
-                          {...field}
-                          disabled={isSubmitting}
+                <div className="space-y-4">
+                  <FormField
+                    control={control}
+                    name="activeDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Tanggal Masuk <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            {...field}
+                            disabled={isSubmitting}
+                            placeholder="Pilih tanggal masuk"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {/* Status Active and Resign Date - Only for Edit */}
+                  {isEdit && (
+                    <div className="space-y-2 border rounded-lg p-4">
+                      <FormField
+                        control={control}
+                        name="isActive"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                              <FormLabel className="text-base">
+                                Status Aktif
+                              </FormLabel>
+                              <div className="text-sm text-muted-foreground">
+                                {field.value ? (
+                                  <span className="text-green-500">
+                                    Status Karyawan masih aktif
+                                  </span>
+                                ) : (
+                                  <span className="text-red-500">
+                                    Resign/tidak Aktif
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                disabled={isSubmitting}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Resign Date - hanya muncul jika isActive = false */}
+                      {!form.watch("isActive") && (
+                        <FormField
+                          control={control}
+                          name="resignDate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                Tanggal Resign{" "}
+                                <span className="text-red-500">*</span>
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="date"
+                                  {...field}
+                                  disabled={isSubmitting}
+                                  placeholder="Pilih tanggal resign"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                      )}
+                    </div>
                   )}
-                />
-                <FormField
-                  control={control}
-                  name="address"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Alamat <span className="text-red-500">*</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Masukkan alamat lengkap"
-                          className="resize-none"
-                          rows={4}
-                          {...field}
-                          disabled={isSubmitting}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={control}
-                  name="activeDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Tanggal Masuk <span className="text-red-500">*</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          {...field}
-                          disabled={isSubmitting}
-                          placeholder="Pilih tanggal masuk"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                </div>
               </div>
 
               {/* Photo Upload */}
@@ -836,71 +900,6 @@ export function EmployeeForm({
                   )}
                 />
               </div>
-
-              {/* Status Active and Resign Date - Only for Edit */}
-
-              {/* Status Active and Resign Date - Only for Edit */}
-              {isEdit && (
-                <div className="space-y-4">
-                  <FormField
-                    control={control}
-                    name="isActive"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">
-                            Status Aktif
-                          </FormLabel>
-                          <div className="text-sm text-muted-foreground">
-                            {field.value ? (
-                              <span className="text-green-500">
-                                Status Karyawan masih aktif
-                              </span>
-                            ) : (
-                              <span className="text-red-500">
-                                Resign/tidak Aktif
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                            disabled
-                            // disabled={isSubmitting}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Resign Date - hanya muncul jika isActive = false */}
-                  {!form.watch("isActive") && (
-                    <FormField
-                      control={control}
-                      name="resignDate"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            Tanggal Resign{" "}
-                            <span className="text-red-500">*</span>
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              type="date"
-                              {...field}
-                              disabled={isSubmitting}
-                              placeholder="Pilih tanggal resign"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
-                </div>
-              )}
             </div>
 
             <Separator />

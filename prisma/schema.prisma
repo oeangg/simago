@@ -110,13 +110,16 @@ model Vendor {
   id              String          @id @default(cuid())
   code            String          @unique
   name            String
+  vendorType  VendorType
   statusActive    StatusActive    @default(ACTIVE)
   activeDate      DateTime        @default(now())
-  faxNumber       String?
+  picName String?
+  picPosition String?
   notes           String?
   npwpNumber      String?
   npwpName        String?
   npwpAddress     String?
+  paymentTerms  Int
   npwpDate        DateTime?
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
@@ -154,6 +157,7 @@ model VendorContact {
   contactType      ContactType
   name             String
   phoneNumber      String
+  faxNumber       String?
   email            String?
   isPrimaryContact Boolean
   vendorId         String
@@ -168,6 +172,7 @@ model VendorBanking {
   bankingNumber          String      @unique
   bankingName            String
   bankingBank            BankingBank
+  bankingBranch   String
   isPrimaryBankingNumber Boolean
   vendorId               String
   vendor                 Vendor      @relation(fields: [vendorId], references: [id])
@@ -442,6 +447,11 @@ enum StatusActive {
 }
 
 enum SupplierType {
+  LOGISTIC
+  SERVICES
+}
+
+enum VendorType {
   LOGISTIC
   SERVICES
 }

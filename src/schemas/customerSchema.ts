@@ -64,10 +64,17 @@ export const inputContactSchema = z
 
 // Skema gabungan untuk CREATE Full Customer
 export const customerSchema = z.object({
-  code: z.string().min(1, "Kode tidak boleh kosong").toUpperCase(),
+  code: z
+    .string()
+    .min(1, "Kode Customer tidak boleh kosong")
+    .max(10, "Kode Maksimal 10 karakter")
+    .regex(
+      /^[A-Z0-9-]+$/,
+      "Kode vendor hanya boleh huruf kapital, angka, dan strip"
+    ),
   name: z.string().min(1, "Nama tidak boleh kosong"),
   statusActive: statusActiveSchema,
-  activeDate: z.string().optional(),
+  activeDate: z.string().min(1, "Tanggal Aktif harus diisi"),
   notes: z.string().optional(),
   npwpNumber: z.string().optional(),
   npwpName: z.string().optional(),

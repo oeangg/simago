@@ -99,6 +99,7 @@ export const driverRouter = router({
             gender: input.gender as Gender,
             phoneNumber: input.phoneNumber,
             activeDate: activeDateObj,
+            statusActive: input.statusActive,
             addressLine1: input.addressLine1,
             addressLine2: input.addressLine2 || null,
           },

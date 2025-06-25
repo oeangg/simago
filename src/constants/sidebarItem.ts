@@ -60,6 +60,10 @@ export const data: sidebarData = {
           title: "Daftar Driver",
           url: "/dashboard/driver",
         },
+        {
+          title: "Daftar Kendaraan",
+          url: "/dashboard/kendaraan",
+        },
       ],
     },
     {

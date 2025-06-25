@@ -21,22 +21,27 @@ import {
   Mail,
   MapPin,
   FileText,
-  Home,
   Globe,
+  Home,
 } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { AddressType, ContactType, StatusActive } from "@prisma/client";
+import {
+  AddressType,
+  ContactType,
+  StatusActive,
+  VendorType,
+} from "@prisma/client";
 import { DataTableColumnHeaderSort } from "../DataTableColumnHeaderSort";
 
-interface CustomerAddress {
+interface VendorAddresses {
   id: string;
   addressType: AddressType;
   addressLine1: string;
   addressLine2?: string | null;
   zipcode?: string | null;
   isPrimaryAddress: boolean;
-  country: {
+  country?: {
     name: string;
   } | null;
   province?: {
@@ -50,30 +55,49 @@ interface CustomerAddress {
   } | null;
 }
 
-interface CustomerContact {
+interface VendorContacts {
   id: string;
   contactType: ContactType;
   name: string;
+  faxNumber?: string | null;
   phoneNumber: string;
   email?: string | null;
   isPrimaryContact: boolean;
 }
 
-export interface CustomerColumnsProps {
-  id?: string;
+interface VendorBankings {
+  id: string;
+  bankingNumber: string;
+  bankingName: string;
+  bankingBank: string;
+  bankingBranch: string;
+  isPrimaryBankingNumber: boolean;
+}
+
+export interface VendorColumnsProps {
+  id: string;
   code: string;
   name: string;
+  vendorType: VendorType;
   statusActive: StatusActive;
-  activeDate?: Date;
+  activeDate?: string | null;
+  picName: string | null;
+  picPosition: string | null;
+  notes?: string | null;
+  paymentTerms: number;
   npwpNumber?: string | null;
-  addresses: CustomerAddress[];
-  contacts: CustomerContact[];
+  npwpName?: string | null;
+  npwpAddress?: string | null;
+  npwpDate?: string | null;
+  vendorAddresses: VendorAddresses[];
+  vendorContacts: VendorContacts[];
+  vendorBankings: VendorBankings[];
 }
 
 interface ColumnActions {
-  onView: (customer: CustomerColumnsProps) => void;
-  onEdit: (customer: CustomerColumnsProps) => void;
-  onDelete: (customer: CustomerColumnsProps) => void;
+  onView: (vendor: VendorColumnsProps) => void;
+  onEdit: (vendor: VendorColumnsProps) => void;
+  onDelete: (vendor: VendorColumnsProps) => void;
 }
 
 // Helper functions
@@ -132,9 +156,9 @@ const getStatusBadge = (status: StatusActive) => {
   );
 };
 
-export const customerColumns = (
+export const vendorColumns = (
   actions: ColumnActions
-): ColumnDef<CustomerColumnsProps>[] => [
+): ColumnDef<VendorColumnsProps>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -173,13 +197,11 @@ export const customerColumns = (
   {
     accessorKey: "name",
     header: ({ column }) => {
-      return (
-        <DataTableColumnHeaderSort column={column} title="Nama Customer" />
-      );
+      return <DataTableColumnHeaderSort column={column} title="Nama Vendor" />;
     },
     cell: ({ row }) => {
-      const customer = row.original;
-      const primaryAddress = row.original.addresses.find(
+      const vendor = row.original;
+      const primaryAddress = row.original.vendorAddresses.find(
         (addr) => addr.isPrimaryAddress
       );
 
@@ -187,27 +209,40 @@ export const customerColumns = (
         return <span className="text-muted-foreground text-sm">-</span>;
       }
 
-      const country = primaryAddress.country?.name;
       return (
         <div className="flex items-center gap-2 min-w-[200px]">
-          {country === "INDONESIA" ? (
+          {primaryAddress.country?.name === "INDONESIA" ? (
             <Home className="h-4 w-4 text-blue-500 flex-shrink-0" />
           ) : (
             <Globe className="h-4 w-4 text-green-500 flex-shrink-0" />
           )}
           <div className="flex flex-col">
-            <span className="font-medium">{customer.name}</span>
-            <span className="text-xs text-muted-foreground">{country}</span>
+            <span className="font-medium line-clamp-1">{vendor.name}</span>
+            <span className="text-xs text-muted-foreground">
+              {primaryAddress.country?.name}
+            </span>
           </div>
         </div>
       );
     },
   },
   {
-    id: "isPrimaryAddress",
+    accessorKey: "vendorType",
+    header: "Tipe",
+    cell: ({ row }) => {
+      const type = row.getValue("vendorType") as VendorType;
+      return (
+        <Badge variant={type === "LOGISTIC" ? "default" : "secondary"}>
+          {type === "LOGISTIC" ? "Logistic" : "Services"}
+        </Badge>
+      );
+    },
+  },
+  {
+    id: "primaryAddress",
     header: "Alamat Utama",
     cell: ({ row }) => {
-      const primaryAddress = row.original.addresses.find(
+      const primaryAddress = row.original.vendorAddresses.find(
         (addr) => addr.isPrimaryAddress
       );
 
@@ -254,10 +289,10 @@ export const customerColumns = (
     },
   },
   {
-    id: "isPrimaryContact",
+    id: "primaryContact",
     header: "Kontak Utama",
     cell: ({ row }) => {
-      const primaryContact = row.original.contacts.find(
+      const primaryContact = row.original.vendorContacts.find(
         (cont) => cont.isPrimaryContact
       );
 
@@ -313,9 +348,7 @@ export const customerColumns = (
   },
   {
     accessorKey: "statusActive",
-    header: ({ column }) => {
-      return <DataTableColumnHeaderSort column={column} title="Status" />;
-    },
+    header: "Status",
     cell: ({ row }) => {
       const status = row.getValue("statusActive") as StatusActive;
       return getStatusBadge(status);
@@ -325,7 +358,7 @@ export const customerColumns = (
     accessorKey: "activeDate",
     header: ({ column }) => {
       return (
-        <DataTableColumnHeaderSort column={column} title="Tgl Bergabung" />
+        <DataTableColumnHeaderSort column={column} title="Tgl Terdaftar" />
       );
     },
     cell: ({ row }) => {
@@ -344,7 +377,7 @@ export const customerColumns = (
     id: "actions",
     header: "Aksi",
     cell: ({ row }) => {
-      const customer = row.original;
+      const vendor = row.original;
 
       return (
         <DropdownMenu>
@@ -356,17 +389,17 @@ export const customerColumns = (
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-[160px]">
             <DropdownMenuLabel>Aksi</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => actions.onView(customer)}>
+            <DropdownMenuItem onClick={() => actions.onView(vendor)}>
               <Eye className="mr-2 h-4 w-4" />
               Lihat Detail
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => actions.onEdit(customer)}>
+            <DropdownMenuItem onClick={() => actions.onEdit(vendor)}>
               <Edit className="mr-2 h-4 w-4" />
               Edit
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => actions.onDelete(customer)}
+              onClick={() => actions.onDelete(vendor)}
               className="text-red-600 focus:text-red-600"
             >
               <Trash2 className="mr-2 h-4 w-4" />

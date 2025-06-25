@@ -213,10 +213,18 @@ export default function ViewSupplier({
     addressLine1: string;
     addressLine2?: string | null;
     zipcode?: string | null;
+    country?: { name: string } | null;
+    province?: { name: string } | null;
+    regency?: { name: string } | null;
+    district?: { name: string } | null;
   }) => {
     const parts = [
       address.addressLine1,
       address.addressLine2,
+      address.district?.name,
+      address.regency?.name,
+      address.province?.name,
+      address.country?.name,
       address.zipcode,
     ].filter(Boolean);
     return parts.join(", ");
@@ -523,6 +531,32 @@ export default function ViewSupplier({
                   <p className="text-sm leading-relaxed">
                     {formatAddress(primaryAddress)}
                   </p>
+                  {primaryAddress.country && (
+                    <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-gray-600">
+                      {primaryAddress.district?.name && (
+                        <div>
+                          <span className="font-medium">Kecamatan:</span>{" "}
+                          {primaryAddress.district.name}
+                        </div>
+                      )}
+                      {primaryAddress.regency?.name && (
+                        <div>
+                          <span className="font-medium">Kabupaten/Kota:</span>{" "}
+                          {primaryAddress.regency.name}
+                        </div>
+                      )}
+                      {primaryAddress.province?.name && (
+                        <div>
+                          <span className="font-medium">Provinsi:</span>{" "}
+                          {primaryAddress.province.name}
+                        </div>
+                      )}
+                      <div>
+                        <span className="font-medium">Negara:</span>{" "}
+                        {primaryAddress.country.name}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -569,6 +603,32 @@ export default function ViewSupplier({
                         <p className="text-sm text-gray-700 leading-relaxed">
                           {formatAddress(address)}
                         </p>
+                        {address.country && (
+                          <div className="mt-2 grid grid-cols-2 gap-1 text-xs text-gray-500">
+                            {address.district?.name && (
+                              <div>
+                                <span className="font-medium">Kecamatan:</span>{" "}
+                                {address.district.name}
+                              </div>
+                            )}
+                            {address.regency?.name && (
+                              <div>
+                                <span className="font-medium">Kab/Kota:</span>{" "}
+                                {address.regency.name}
+                              </div>
+                            )}
+                            {address.province?.name && (
+                              <div>
+                                <span className="font-medium">Provinsi:</span>{" "}
+                                {address.province.name}
+                              </div>
+                            )}
+                            <div>
+                              <span className="font-medium">Negara:</span>{" "}
+                              {address.country.name}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

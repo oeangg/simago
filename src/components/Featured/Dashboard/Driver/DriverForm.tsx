@@ -32,8 +32,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { Loader2, Save, User } from "lucide-react";
 import { Gender } from "@prisma/client";
 
@@ -43,6 +41,7 @@ import {
   driverUpdateSchema,
   DriverUpdateTypeSchema,
 } from "@/schemas/driverSchema";
+import { Switch } from "@/components/ui/switch";
 
 interface DriverFormProps {
   driver?: {
@@ -237,7 +236,7 @@ export function DriverForm({
             </CardTitle>
             <CardDescription>Masukkan informasi dasar Driver</CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-6">
+          <CardContent className="grid gap-4">
             <div className="grid gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
@@ -252,7 +251,6 @@ export function DriverForm({
                         placeholder="ex : DV-001"
                         {...field}
                         disabled={mode === "edit"}
-                        className="uppercase"
                       />
                     </FormControl>
                     <FormMessage />
@@ -363,23 +361,22 @@ export function DriverForm({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="city"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Kota <span className="text-red-500">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input placeholder="Masukkan nama kota" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <div className="grid gap-4 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="city"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Kota <span className="text-red-500">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input placeholder="Masukkan nama kota" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="activeDate"
@@ -396,34 +393,50 @@ export function DriverForm({
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="statusActive"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={(value) =>
-                          field.onChange(value === "true")
-                        }
-                        value={field.value ? "true" : "false"}
-                        className="flex flex-row space-x-6 mt-2"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="true" id="active" />
-                          <Label htmlFor="active">Aktif</Label>
+              {mode === "edit" && (
+                <FormField
+                  control={form.control}
+                  name="statusActive"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">
+                          Status Aktif
+                        </FormLabel>
+                        <div className="text-sm text-muted-foreground">
+                          {field.value ? (
+                            <span className="text-green-500">
+                              Status Karyawan masih aktif
+                            </span>
+                          ) : (
+                            <span className="text-red-500">
+                              Resign/tidak Aktif
+                            </span>
+                          )}
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="false" id="inactive" />
-                          <Label htmlFor="inactive">Tidak Aktif</Label>
-                        </div>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={(value) => {
+                            console.log(
+                              "Switch onCheckedChange called with:",
+                              value
+                            ); // Lihat nilai dari switch
+                            field.onChange(value); // Langsung teruskan nilai
+                            console.log(
+                              "After field.onChange, field.value (might not be updated yet):",
+                              field.value
+                            ); // Nilai ini mungkin belum diperbarui
+                          }}
+                          disabled={mode !== "edit"}
+                          // disabled={isSubmitting}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              )}
             </div>
           </CardContent>
         </Card>

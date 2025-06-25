@@ -45,39 +45,44 @@ import {
   Phone,
   FileText,
   Mail,
-  CalendarIcon,
-  Warehouse,
   HandCoins,
+  CreditCard,
+  CalendarIcon,
 } from "lucide-react";
 import {
   AddressType,
+  BankingBank,
   ContactType,
   StatusActive,
-  SupplierType,
+  VendorType,
 } from "@prisma/client";
-import { id } from "date-fns/locale";
-import { format } from "date-fns";
-import {
-  supplierSchema,
-  SupplierTypeSchema,
-  supplierUpdateSchema,
-  SupplierUpdateTypeSchema,
-} from "@/schemas/supplierSchema";
 
-interface SupplierFormProps {
-  supplier?: {
+import {
+  vendorSchema,
+  VendorTypeSchema,
+  vendorUpdateSchema,
+  VendorUpdateTypeSchema,
+} from "@/schemas/vendorSchema";
+import { format } from "date-fns";
+import { id } from "date-fns/locale";
+
+interface VendorFormProps {
+  vendor?: {
     id: string;
     code: string;
     name: string;
-    supplierType: SupplierType;
+    vendorType: VendorType;
     statusActive: StatusActive;
     activeDate: string | null;
+    picName?: string | null;
+    picPosition?: string | null;
     notes?: string | null;
+    paymentTerms: number;
     npwpNumber?: string | null;
     npwpName?: string | null;
     npwpAddress?: string | null;
     npwpDate?: string | null;
-    addresses: Array<{
+    vendorAddresses: Array<{
       id: string;
       addressType: AddressType;
       addressLine1: string;
@@ -88,15 +93,26 @@ interface SupplierFormProps {
       provinceCode?: string | null;
       regencyCode?: string | null;
       districtCode?: string | null;
+      // vendorId: string;
     }>;
-    contacts: Array<{
+    vendorContacts: Array<{
       id: string;
       contactType: ContactType;
       name: string;
+      faxNumber?: string | null;
       phoneNumber: string;
       email?: string | null;
       isPrimaryContact: boolean;
-      supplierId: string;
+      vendorId: string;
+    }>;
+    vendorBankings: Array<{
+      id: string;
+      bankingNumber: string;
+      bankingName: string;
+      bankingBank: string;
+      bankingBranch: string;
+      isPrimaryBankingNumber: boolean;
+      vendorId: string;
     }>;
   };
   mode: "create" | "edit";
@@ -140,29 +156,37 @@ const defaultContact = {
   contactType: "PRIMARY" as ContactType,
   name: "",
   phoneNumber: "",
+  faxNumber: "",
   email: "",
   isPrimaryContact: true,
 };
 
+const defaultBanking = {
+  bankingNumber: "",
+  bankingName: "",
+  bankingBank: "BCA" as BankingBank,
+  bankingBranch: "",
+  isPrimaryBankingNumber: true,
+};
+
 const MAX_ADDRESSES = 10;
 
-export function SupplierForm({
-  supplier,
+export function VendorForm({
+  vendor,
   mode,
   onSuccess,
   onCancel,
-}: SupplierFormProps) {
+}: VendorFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch supplier data if in edit mode
   const {
-    data: supplierData,
-    isLoading: isLoadingSupplier,
-    isPending: isPendingSupplier,
-  } = trpc.Supplier.getSupplier.useQuery(
-    { id: supplier?.id || "" },
-    { enabled: mode === "edit" && !!supplier?.id }
+    data: vendorData,
+    isLoading: isLoadingVendor,
+    isPending: isPendingVendor,
+  } = trpc.Vendor.getVendorById.useQuery(
+    { id: vendor?.id || "" },
+    { enabled: mode === "edit" && !!vendor?.id }
   );
 
   // Fetch countries
@@ -173,22 +197,23 @@ export function SupplierForm({
 
   // Initialize form default values
   const getDefaultValues = useCallback(() => {
-    if (mode === "edit" && supplierData) {
+    if (mode === "edit" && vendorData) {
       return {
-        id: supplierData.id,
-        code: supplierData.code,
-        name: supplierData.name,
-        supplierType: supplierData.supplierType,
-        statusActive: supplierData.statusActive,
-        activeDate: supplierData.activeDate,
-        notes: supplierData.notes || "",
-        npwpNumber: supplierData.npwpNumber || "",
-        npwpName: supplierData.npwpName || "",
-        npwpAddress: supplierData.npwpAddress || "",
-        npwpDate: supplierData.npwpDate
-          ? supplierData.npwpDate.slice(0, 10)
-          : "",
-        addresses: supplierData.addresses.map((addr) => ({
+        id: vendorData.id,
+        code: vendorData.code,
+        name: vendorData.name,
+        vendorType: vendorData.vendorType,
+        statusActive: vendorData.statusActive,
+        activeDate: vendorData.activeDate,
+        notes: vendorData.notes || "",
+        picName: vendorData.picName || "",
+        picPosition: vendorData.picPosition || "",
+        paymentTerms: vendorData.paymentTerms,
+        npwpNumber: vendorData.npwpNumber || "",
+        npwpName: vendorData.npwpName || "",
+        npwpAddress: vendorData.npwpAddress || "",
+        npwpDate: vendorData.npwpDate ? vendorData.npwpDate.slice(0, 10) : "",
+        vendorAddresses: vendorData.vendorAddresses.map((addr) => ({
           id: addr.id,
           addressType: addr.addressType,
           addressLine1: addr.addressLine1,
@@ -199,15 +224,26 @@ export function SupplierForm({
           provinceCode: addr.provinceCode || "",
           regencyCode: addr.regencyCode || "",
           districtCode: addr.districtCode || "",
+          vendorId: addr.vendorId,
         })),
-        contacts: supplierData.contacts.map((ctc) => ({
+        vendorContacts: vendorData.vendorContacts.map((ctc) => ({
           id: ctc.id,
           contactType: ctc.contactType,
           name: ctc.name,
           phoneNumber: ctc.phoneNumber,
+          faxNumber: ctc.faxNumber || "",
           email: ctc.email || "",
           isPrimaryContact: ctc.isPrimaryContact,
-          supplierId: ctc.supplierId,
+          vendorId: ctc.vendorId,
+        })),
+        vendorBankings: vendorData.vendorBankings.map((bank) => ({
+          id: bank.id,
+          bankingNumber: bank.bankingNumber,
+          bankingName: bank.bankingName,
+          bankingBank: bank.bankingBank,
+          bankingBranch: bank.bankingBranch,
+          isPrimaryBankingNumber: bank.isPrimaryBankingNumber,
+          vendorId: bank.vendorId,
         })),
       };
     }
@@ -215,23 +251,27 @@ export function SupplierForm({
     return {
       code: "",
       name: "",
-      supplierType: "DOMESTIC" as SupplierType,
-      activeDate: new Date().toISOString().split("T")[0],
+      vendorType: "LOGISTIC" as VendorType,
       statusActive: "ACTIVE" as StatusActive,
+      activeDate: new Date().toISOString().split("T")[0],
       notes: "",
+      paymentTerms: 0,
+      picName: "",
+      picPosition: "",
       npwpNumber: "",
       npwpName: "",
       npwpAddress: "",
       npwpDate: "",
-      addresses: [{ ...defaultAddress }],
-      contacts: [{ ...defaultContact }],
+      vendorAddresses: [{ ...defaultAddress }],
+      vendorContacts: [{ ...defaultContact }],
+      vendorBankings: [{ ...defaultBanking }],
     };
-  }, [supplierData, mode]);
+  }, [vendorData, mode]);
 
   // Initialize form
-  const form = useForm<SupplierTypeSchema>({
+  const form = useForm<VendorTypeSchema>({
     resolver: zodResolver(
-      mode === "create" ? supplierSchema : supplierUpdateSchema
+      mode === "create" ? vendorSchema : vendorUpdateSchema
     ),
     defaultValues: getDefaultValues(),
     mode: "onChange",
@@ -239,10 +279,10 @@ export function SupplierForm({
 
   // Re-initialize form (edit mode)
   useEffect(() => {
-    if (mode === "edit" && supplierData && !isPendingSupplier) {
+    if (mode === "edit" && vendorData && !isPendingVendor) {
       form.reset(getDefaultValues());
     }
-  }, [supplierData, mode, isPendingSupplier, form, getDefaultValues]);
+  }, [vendorData, mode, isPendingVendor, form, getDefaultValues]);
 
   // Get form state
   const { isDirty, isValid } = form.formState;
@@ -254,7 +294,7 @@ export function SupplierForm({
     remove: removeAddress,
   } = useFieldArray({
     control: form.control,
-    name: "addresses",
+    name: "vendorAddresses",
   });
 
   const {
@@ -263,11 +303,20 @@ export function SupplierForm({
     remove: removeContact,
   } = useFieldArray({
     control: form.control,
-    name: "contacts",
+    name: "vendorContacts",
   });
 
-  // Watch supplier type and address for conditional rendering
-  const watchedAddresses = form.watch("addresses");
+  const {
+    fields: bankingFields,
+    append: appendBanking,
+    remove: removeBanking,
+  } = useFieldArray({
+    control: form.control,
+    name: "vendorBankings",
+  });
+
+  // Watch  and address for conditional rendering
+  const watchedAddresses = form.watch("vendorAddresses");
 
   // tRPC utils
   const utils = trpc.useUtils();
@@ -303,44 +352,44 @@ export function SupplierForm({
   });
 
   // Mutations
-  const createMutation = trpc.Supplier.createAllSupplier.useMutation({
+  const createMutation = trpc.Vendor.createAllVendor.useMutation({
     onSuccess: () => {
-      toast.success("Data Supplier berhasil dibuat");
-      utils.Supplier.getAllSuppliers.invalidate();
+      toast.success("Data Vendor berhasil dibuat");
+      utils.Vendor.getAllVendors.invalidate();
       if (onSuccess) {
         onSuccess();
       } else {
-        router.push("/dashboard/supplier");
+        router.push("/dashboard/vendor");
       }
     },
     onError: (error) => {
-      console.error("Create Supplier error:", error);
-      toast.error(error.message || "Gagal membuat data supplier");
+      console.error("Create Vendor error:", error);
+      toast.error(error.message || "Gagal membuat data vendor");
     },
   });
 
-  const updateMutation = trpc.Supplier.updateAllSupplier.useMutation({
+  const updateMutation = trpc.Vendor.updateAllVendor.useMutation({
     onSuccess: () => {
-      toast.success("Supplier berhasil diperbarui");
-      utils.Supplier.getAllSuppliers.invalidate();
+      toast.success("Vendor berhasil diperbarui");
+      utils.Vendor.getAllVendors.invalidate();
       if (onSuccess) {
         onSuccess();
       } else {
-        router.push("/dashboard/supplier");
+        router.push("/dashboard/vendor");
       }
     },
     onError: (error) => {
-      console.error("Update data supplier error:", error);
-      toast.error(error.message || "Gagal memperbarui data supplier");
+      console.error("Update data vendor error:", error);
+      toast.error(error.message || "Gagal memperbarui data vendor");
     },
   });
 
   // Handle province change - reset regencycode
   const handleProvinceChange = useCallback(
     (value: string, index: number) => {
-      form.setValue(`addresses.${index}.provinceCode`, value);
-      form.setValue(`addresses.${index}.regencyCode`, "");
-      form.setValue(`addresses.${index}.districtCode`, "");
+      form.setValue(`vendorAddresses.${index}.provinceCode`, value);
+      form.setValue(`vendorAddresses.${index}.regencyCode`, "");
+      form.setValue(`vendorAddresses.${index}.districtCode`, "");
     },
     [form]
   );
@@ -348,8 +397,8 @@ export function SupplierForm({
   // Handle regency change - reset district code
   const handleRegencyChange = useCallback(
     (value: string, index: number) => {
-      form.setValue(`addresses.${index}.regencyCode`, value);
-      form.setValue(`addresses.${index}.districtCode`, "");
+      form.setValue(`vendorAddresses.${index}.regencyCode`, value);
+      form.setValue(`vendorAddresses.${index}.districtCode`, "");
     },
     [form]
   );
@@ -357,20 +406,20 @@ export function SupplierForm({
   // Handle country change - reset city code
   const handleCountryChange = useCallback(
     (value: string, index: number) => {
-      form.setValue(`addresses.${index}.countryCode`, value);
+      form.setValue(`vendorAddresses.${index}.countryCode`, value);
 
       // Jika country ID
       if (value !== "ID") {
-        form.setValue(`addresses.${index}.provinceCode`, "");
-        form.setValue(`addresses.${index}.regencyCode`, "");
-        form.setValue(`addresses.${index}.districtCode`, "");
+        form.setValue(`vendorAddresses.${index}.provinceCode`, "");
+        form.setValue(`vendorAddresses.${index}.regencyCode`, "");
+        form.setValue(`vendorAddresses.${index}.districtCode`, "");
       }
     },
     [form]
   );
 
   // Helper function to clean form data
-  const cleanFormData = useCallback((data: SupplierTypeSchema) => {
+  const cleanFormData = useCallback((data: VendorTypeSchema) => {
     // Helper untuk convert empty string ke undefined
     const emptyToUndefined = (value: string | undefined) => {
       return value && value.trim() !== "" ? value : undefined;
@@ -379,15 +428,18 @@ export function SupplierForm({
     return {
       code: data.code,
       name: data.name,
-      supplierType: data.supplierType,
+      vendorType: data.vendorType,
       statusActive: data.statusActive,
       activeDate: data.activeDate,
       notes: emptyToUndefined(data.notes),
+      picName: emptyToUndefined(data.picName),
+      picPosition: emptyToUndefined(data.picPosition),
+      paymentTerms: data.paymentTerms,
       npwpNumber: emptyToUndefined(data.npwpNumber),
       npwpName: emptyToUndefined(data.npwpName),
       npwpAddress: emptyToUndefined(data.npwpAddress),
       npwpDate: emptyToUndefined(data.npwpDate),
-      addresses: data.addresses?.map((address) => ({
+      vendorAddresses: data.vendorAddresses?.map((address) => ({
         ...(address.id && { id: address.id }), // Only include id if exists
         addressType: address.addressType,
         addressLine1: address.addressLine1,
@@ -409,21 +461,31 @@ export function SupplierForm({
             ? undefined
             : emptyToUndefined(address.districtCode),
       })),
-      contacts: data.contacts?.map((contact) => ({
+      vendorContacts: data.vendorContacts?.map((contact) => ({
         ...(contact.id && { id: contact.id }), // Only include id if exists
         contactType: contact.contactType,
         name: contact.name,
+        faxNumber: emptyToUndefined(contact.faxNumber),
         phoneNumber: contact.phoneNumber,
         email: emptyToUndefined(contact.email),
         isPrimaryContact: contact.isPrimaryContact,
-        ...(contact.supplierId && { supplierId: contact.supplierId }), // Only include supplierID if exists
+        ...(contact.vendorId && { vendorId: contact.vendorId }), // Only include vendorId if exists
+      })),
+      vendorBankings: data.vendorBankings?.map((bank) => ({
+        ...(bank.id && { id: bank.id }), // Only include id if exists
+        bankingNumber: bank.bankingNumber,
+        bankingName: bank.bankingName,
+        bankingBank: bank.bankingBank,
+        bankingBranch: bank.bankingBranch,
+        isPrimaryBankingNumber: bank.isPrimaryBankingNumber,
+        ...(bank.vendorId && { vendorId: bank.vendorId }), // Only include vendorId if exists
       })),
     };
   }, []);
 
   // Submit handler
-  const onSubmitSupplier = useCallback(
-    async (data: SupplierTypeSchema) => {
+  const onSubmitVendor = useCallback(
+    async (data: VendorTypeSchema) => {
       setIsLoading(true);
       try {
         const cleanedData = cleanFormData(data);
@@ -433,8 +495,8 @@ export function SupplierForm({
         } else {
           await updateMutation.mutateAsync({
             ...cleanedData,
-            id: supplier?.id,
-          } as SupplierUpdateTypeSchema);
+            id: vendor?.id,
+          } as VendorUpdateTypeSchema);
         }
       } catch (error) {
         console.error("Submit error:", error);
@@ -443,14 +505,14 @@ export function SupplierForm({
         setIsLoading(false);
       }
     },
-    [mode, createMutation, updateMutation, supplier?.id, cleanFormData]
+    [mode, createMutation, updateMutation, vendor?.id, cleanFormData]
   );
 
   // Handle primary selection
   const handlePrimaryAddress = useCallback(
     (index: number) => {
       addressFields.forEach((_, i) => {
-        form.setValue(`addresses.${i}.isPrimaryAddress`, i === index);
+        form.setValue(`vendorAddresses.${i}.isPrimaryAddress`, i === index);
       });
     },
     [addressFields, form]
@@ -459,10 +521,22 @@ export function SupplierForm({
   const handlePrimaryContact = useCallback(
     (index: number) => {
       contactFields.forEach((_, i) => {
-        form.setValue(`contacts.${i}.isPrimaryContact`, i === index);
+        form.setValue(`vendorContacts.${i}.isPrimaryContact`, i === index);
       });
     },
     [contactFields, form]
+  );
+
+  const handlePrimaryBanking = useCallback(
+    (index: number) => {
+      bankingFields.forEach((_, i) => {
+        form.setValue(
+          `vendorBankings.${i}.isPrimaryBankingNumber`,
+          i === index
+        );
+      });
+    },
+    [bankingFields, form]
   );
 
   // Handle cancel
@@ -470,7 +544,7 @@ export function SupplierForm({
     if (onCancel) {
       onCancel();
     } else {
-      router.push("/dashboard/supplier");
+      router.push("/dashboard/vendor");
     }
   }, [onCancel, router]);
 
@@ -483,10 +557,14 @@ export function SupplierForm({
     appendContact({ ...defaultContact, isPrimaryContact: false });
   }, [appendContact]);
 
+  const handleAddBanking = useCallback(() => {
+    appendBanking({ ...defaultBanking, isPrimaryBankingNumber: false });
+  }, [appendBanking]);
+
   // Handle remove address with primary address validation
   const handleRemoveAddress = useCallback(
     (index: number) => {
-      const currentAddresses = form.getValues("addresses");
+      const currentAddresses = form.getValues("vendorAddresses");
       if (!currentAddresses || currentAddresses.length <= 1) return;
 
       const addressToRemove = currentAddresses[index];
@@ -496,7 +574,10 @@ export function SupplierForm({
       if (addressToRemove?.isPrimaryAddress) {
         const newPrimaryIndex = index === 0 ? 0 : 0;
         setTimeout(() => {
-          form.setValue(`addresses.${newPrimaryIndex}.isPrimaryAddress`, true);
+          form.setValue(
+            `vendorAddresses.${newPrimaryIndex}.isPrimaryAddress`,
+            true
+          );
         }, 0);
       }
     },
@@ -506,7 +587,7 @@ export function SupplierForm({
   // Handle remove contact with primary contact validation
   const handleRemoveContact = useCallback(
     (index: number) => {
-      const currentContacts = form.getValues("contacts");
+      const currentContacts = form.getValues("vendorContacts");
       if (!currentContacts || currentContacts.length <= 1) return;
 
       const contactToRemove = currentContacts[index];
@@ -516,14 +597,39 @@ export function SupplierForm({
       if (contactToRemove?.isPrimaryContact) {
         const newPrimaryIndex = index === 0 ? 0 : 0;
         setTimeout(() => {
-          form.setValue(`contacts.${newPrimaryIndex}.isPrimaryContact`, true);
+          form.setValue(
+            `vendorContacts.${newPrimaryIndex}.isPrimaryContact`,
+            true
+          );
         }, 0);
       }
     },
     [form, removeContact]
   );
 
-  if (mode === "edit" && (isLoadingSupplier || isPendingSupplier)) {
+  const handleRemoveBanking = useCallback(
+    (index: number) => {
+      const currentBankings = form.getValues("vendorBankings");
+      if (!currentBankings || currentBankings.length <= 1) return;
+
+      const bankingToRemove = currentBankings[index];
+      removeBanking(index);
+
+      // If removing primary banking, set first remaining banking as primary
+      if (bankingToRemove?.isPrimaryBankingNumber) {
+        const newPrimaryIndex = index === 0 ? 0 : 0;
+        setTimeout(() => {
+          form.setValue(
+            `vendorBankings.${newPrimaryIndex}.isPrimaryBankingNumber`,
+            true
+          );
+        }, 0);
+      }
+    },
+    [form, removeBanking]
+  );
+
+  if (mode === "edit" && (isLoadingVendor || isPendingVendor)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -533,20 +639,17 @@ export function SupplierForm({
 
   return (
     <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmitSupplier)}
-        className="space-y-6"
-      >
-        {/* Supplier Information */}
+      <form onSubmit={form.handleSubmit(onSubmitVendor)} className="space-y-6">
+        {/* Vendor Information */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
-              Informasi Supplier
+              Informasi Vendor
             </CardTitle>
-            <CardDescription>Masukkan informasi dasar Supplier</CardDescription>
+            <CardDescription>Masukkan informasi dasar Vendor</CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-4">
+          <CardContent className="grid gap-6">
             <div className="grid gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
@@ -554,11 +657,11 @@ export function SupplierForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Kode Supplier <span className="text-red-500">*</span>
+                      Kode Vendor <span className="text-red-500">*</span>
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="ex : SUPP-001"
+                        placeholder="ex : VEN-001"
                         {...field}
                         disabled={mode === "edit"}
                       />
@@ -574,10 +677,10 @@ export function SupplierForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Nama Supplier <span className="text-red-500">*</span>
+                      Nama Vendor <span className="text-red-500">*</span>
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="Masukkan nama Supplier" {...field} />
+                      <Input placeholder="Masukkan nama Vendor" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -588,30 +691,104 @@ export function SupplierForm({
             <div className="grid gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
-                name="supplierType"
+                name="vendorType"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Tipe Supplier <span className="text-red-500">*</span>
+                      Tipe Vendor <span className="text-red-500">*</span>
                     </FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Pilih tipe Supplier" />
+                          <SelectValue placeholder="Pilih tipe vendor" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="LOGISTIC">
-                          <div className="flex items-center">
-                            <Warehouse className="mr-2 h-4 w-4" />
-                            Logistic
-                          </div>
+                        <SelectItem value="LOGISTIC">Logistik</SelectItem>
+                        <SelectItem value="SERVICES">Jasa/Service</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="paymentTerms"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Terms of Payment (hari){" "}
+                      <span className="text-red-500">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <HandCoins className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          type="number"
+                          placeholder="0"
+                          className="pl-5"
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(parseInt(e.target.value) || 0)
+                          }
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 border p-4 rounded-lg ">
+              <FormField
+                control={form.control}
+                name="activeDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tanggal Aktif</FormLabel>
+                    <FormControl>
+                      <div className="flex items-center px-3 py-2 border border-input bg-background rounded-md">
+                        <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">
+                          {field.value
+                            ? format(new Date(field.value), "dd MMMM yyyy", {
+                                locale: id,
+                              })
+                            : "Tanggal belum diset"}
+                        </span>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="statusActive"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      disabled={mode !== "edit"}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Pilih status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="ACTIVE">
+                          <Badge className="bg-green-500">Active</Badge>
                         </SelectItem>
-                        <SelectItem value="SERVICES">
-                          <div className="flex items-center">
-                            <HandCoins className="mr-2 h-4 w-4" />
-                            Services
-                          </div>
+                        <SelectItem value="NOACTIVE">
+                          <Badge variant="destructive">No Active</Badge>
+                        </SelectItem>
+                        <SelectItem value="SUSPENDED">
+                          <Badge className="bg-yellow-500">Ditangguhkan</Badge>
                         </SelectItem>
                       </SelectContent>
                     </Select>
@@ -619,66 +796,36 @@ export function SupplierForm({
                   </FormItem>
                 )}
               />
+            </div>
 
-              <div className="grid grid-cols-2 gap-2 ">
-                <FormField
-                  control={form.control}
-                  name="statusActive"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        disabled={mode !== "edit"}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Pilih status" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="ACTIVE">
-                            <Badge className="bg-green-500">Active</Badge>
-                          </SelectItem>
-                          <SelectItem value="NOACTIVE">
-                            <Badge variant="destructive">No Active</Badge>
-                          </SelectItem>
-                          <SelectItem value="SUSPENDED">
-                            <Badge className="bg-yellow-500">
-                              Ditangguhkan
-                            </Badge>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <div className="grid gap-4 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="picName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nama PIC</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Masukkan nama PIC" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                <FormField
-                  control={form.control}
-                  name="activeDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tanggal Aktif</FormLabel>
-                      <FormControl>
-                        <div className="flex items-center px-3 py-2 border border-input bg-background rounded-md">
-                          <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">
-                            {field.value
-                              ? format(new Date(field.value), "dd MMMM yyyy", {
-                                  locale: id,
-                                })
-                              : "Tanggal belum diset"}
-                          </span>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="picPosition"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Jabatan PIC</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Masukkan jabatan PIC" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             <FormField
@@ -689,8 +836,9 @@ export function SupplierForm({
                   <FormLabel>Catatan</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Masukkan catatan..."
+                      placeholder="Masukkan catatan tambahan..."
                       className="resize-none"
+                      rows={3}
                       {...field}
                     />
                   </FormControl>
@@ -786,6 +934,174 @@ export function SupplierForm({
           </CardContent>
         </Card>
 
+        {/* Banking Information */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5" />
+                  Informasi Bank
+                </CardTitle>
+                <CardDescription>
+                  Tambahkan informasi rekening bank vendor (minimal 1 rekening)
+                  <span className="text-red-500">*</span>
+                </CardDescription>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAddBanking}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Tambah Rekening
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {bankingFields.map((field, index) => (
+              <div
+                key={field.id}
+                className="rounded-lg border p-4 space-y-4 relative"
+              >
+                {bankingFields.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-2 top-2"
+                    onClick={() => handleRemoveBanking(index)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Rekening {index + 1}</span>
+
+                  <FormField
+                    control={form.control}
+                    name={`vendorBankings.${index}.isPrimaryBankingNumber`}
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <RadioGroup
+                            value={field.value ? "true" : "false"}
+                            onValueChange={() => handlePrimaryBanking(index)}
+                          >
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="true" />
+                              <Label className="text-sm font-normal cursor-pointer">
+                                Rekening Utama
+                              </Label>
+                            </div>
+                          </RadioGroup>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name={`vendorBankings.${index}.bankingNumber`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Nomor Rekening <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Masukkan nomor rekening"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`vendorBankings.${index}.bankingName`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Nama Pemilik Rekening{" "}
+                          <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Masukkan nama pemilik rekening"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name={`vendorBankings.${index}.bankingBank`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Bank <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Pilih bank" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="BCA">BCA</SelectItem>
+                            <SelectItem value="BNI">BNI</SelectItem>
+                            <SelectItem value="BRI">BRI</SelectItem>
+                            <SelectItem value="MANDIRI">Mandiri</SelectItem>
+                            <SelectItem value="BNI_SYARIAH">
+                              BNI Syariah
+                            </SelectItem>
+                            <SelectItem value="DANAMON">Danamon</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`vendorBankings.${index}.bankingBranch`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Cabang Bank <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Masukkan nama cabang bank"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
         {/* Add Addresses */}
         <Card>
           <CardHeader>
@@ -796,7 +1112,7 @@ export function SupplierForm({
                   Alamat
                 </CardTitle>
                 <CardDescription>
-                  Tambahkan alamat supplier (minimal 1 alamat)
+                  Tambahkan alamat vendor (minimal 1 alamat)
                   <span className="text-red-500">*</span>
                 </CardDescription>
               </div>
@@ -840,7 +1156,7 @@ export function SupplierForm({
 
                     <FormField
                       control={form.control}
-                      name={`addresses.${index}.isPrimaryAddress`}
+                      name={`vendorAddresses.${index}.isPrimaryAddress`}
                       render={({ field }) => (
                         <FormItem className="flex items-center space-x-2">
                           <FormControl>
@@ -864,7 +1180,7 @@ export function SupplierForm({
                   <div className="grid gap-4 md:grid-cols-2">
                     <FormField
                       control={form.control}
-                      name={`addresses.${index}.addressType`}
+                      name={`vendorAddresses.${index}.addressType`}
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
@@ -900,7 +1216,7 @@ export function SupplierForm({
 
                     <FormField
                       control={form.control}
-                      name={`addresses.${index}.countryCode`}
+                      name={`vendorAddresses.${index}.countryCode`}
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
@@ -936,7 +1252,7 @@ export function SupplierForm({
 
                   <FormField
                     control={form.control}
-                    name={`addresses.${index}.addressLine1`}
+                    name={`vendorAddresses.${index}.addressLine1`}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
@@ -955,7 +1271,7 @@ export function SupplierForm({
 
                   <FormField
                     control={form.control}
-                    name={`addresses.${index}.addressLine2`}
+                    name={`vendorAddresses.${index}.addressLine2`}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Alamat Baris 2</FormLabel>
@@ -975,7 +1291,7 @@ export function SupplierForm({
                     <div className="grid gap-4 md:grid-cols-3">
                       <FormField
                         control={form.control}
-                        name={`addresses.${index}.provinceCode`}
+                        name={`vendorAddresses.${index}.provinceCode`}
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>
@@ -1010,7 +1326,7 @@ export function SupplierForm({
 
                       <FormField
                         control={form.control}
-                        name={`addresses.${index}.regencyCode`}
+                        name={`vendorAddresses.${index}.regencyCode`}
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>
@@ -1047,7 +1363,7 @@ export function SupplierForm({
 
                       <FormField
                         control={form.control}
-                        name={`addresses.${index}.districtCode`}
+                        name={`vendorAddresses.${index}.districtCode`}
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>
@@ -1081,11 +1397,11 @@ export function SupplierForm({
                     </div>
                   )}
 
-                  {/* Show message for Supplier non ID */}
+                  {/* Show message for Vendor non ID */}
                   {watchedAddresses?.[index]?.countryCode !== "ID" && (
                     <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                       <p className="text-sm text-blue-700">
-                        <strong>Catatan:</strong> Untuk Supplier Luar Indonesia
+                        <strong>Catatan:</strong> Untuk Vendor Luar Indonesia
                         (ID), cukup isi alamat lengkap di field &rdquo;Alamat
                         Baris 1&rdquo; dan &rdquo;Alamat Baris 2&rdquo;.
                       </p>
@@ -1094,7 +1410,7 @@ export function SupplierForm({
 
                   <FormField
                     control={form.control}
-                    name={`addresses.${index}.zipcode`}
+                    name={`vendorAddresses.${index}.zipcode`}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Kode Pos</FormLabel>
@@ -1121,7 +1437,7 @@ export function SupplierForm({
                   Kontak
                 </CardTitle>
                 <CardDescription>
-                  Tambahkan kontak supplier (minimal 1 kontak)
+                  Tambahkan kontak vendor (minimal 1 kontak)
                   <span className="text-red-500">*</span>
                 </CardDescription>
               </div>
@@ -1159,7 +1475,7 @@ export function SupplierForm({
 
                   <FormField
                     control={form.control}
-                    name={`contacts.${index}.isPrimaryContact`}
+                    name={`vendorContacts.${index}.isPrimaryContact`}
                     render={({ field }) => (
                       <FormItem className="flex items-center space-x-2">
                         <FormControl>
@@ -1183,7 +1499,7 @@ export function SupplierForm({
                 <div className="grid gap-4 md:grid-cols-2">
                   <FormField
                     control={form.control}
-                    name={`contacts.${index}.contactType`}
+                    name={`vendorContacts.${index}.contactType`}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
@@ -1223,7 +1539,7 @@ export function SupplierForm({
 
                   <FormField
                     control={form.control}
-                    name={`contacts.${index}.name`}
+                    name={`vendorContacts.${index}.name`}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
@@ -1244,7 +1560,7 @@ export function SupplierForm({
                 <div className="grid gap-4 md:grid-cols-2">
                   <FormField
                     control={form.control}
-                    name={`contacts.${index}.phoneNumber`}
+                    name={`vendorContacts.${index}.phoneNumber`}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
@@ -1263,25 +1579,39 @@ export function SupplierForm({
 
                   <FormField
                     control={form.control}
-                    name={`contacts.${index}.email`}
+                    name={`vendorContacts.${index}.faxNumber`}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel>Nomor Fax</FormLabel>
                         <FormControl>
-                          <div className="relative">
-                            <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              placeholder="Contoh : email@gmail.com"
-                              className="pl-5"
-                              {...field}
-                            />
-                          </div>
+                          <Input placeholder="Masukkan nomor Fax" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
+
+                <FormField
+                  control={form.control}
+                  name={`vendorContacts.${index}.email`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            placeholder="Contoh : email@gmail.com"
+                            className="pl-5"
+                            {...field}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
             ))}
           </CardContent>
@@ -1343,7 +1673,7 @@ export function SupplierForm({
             ) : (
               <>
                 <Save className="mr-2 h-4 w-4" />
-                {mode === "create" ? "Simpan Supplier" : "Update Supplier"}
+                {mode === "create" ? "Simpan Vendor" : "Update Vendor"}
               </>
             )}
           </Button>

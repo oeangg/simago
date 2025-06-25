@@ -6,7 +6,14 @@ const phoneRegex = new RegExp(
 );
 
 export const driverSchema = z.object({
-  code: z.string().min(1, "code tidak boleh kosong!"),
+  code: z
+    .string()
+    .min(1, "Kode Driver tidak boleh kosong")
+    .max(10, "Kode Maksimal 10 karakter")
+    .regex(
+      /^[A-Z0-9-]+$/,
+      "Kode vendor hanya boleh huruf kapital, angka, dan strip"
+    ),
   name: z.string().min(1, "Nama tidak boleh kosong!"),
   gender: z.nativeEnum(Gender),
   addressLine1: z.string().min(1, "address line1 tidak boleh kosong!"),
