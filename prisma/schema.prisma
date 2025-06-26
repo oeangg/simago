@@ -32,6 +32,7 @@ model Customer {
   contacts     CustomerContact[]
 
   @@index([name])
+  @@map("customers")
 }
 
 model CustomerAddress {
@@ -54,6 +55,7 @@ model CustomerAddress {
 
   @@unique([customerId, isPrimaryAddress], name: "OnePrimaryAddressPerCustomer")
   @@unique([customerId, addressType], name: "OneAddressTypePerCustomer")
+  @@map("customer_addresses")
 }
 
 model CustomerContact {
@@ -68,6 +70,7 @@ model CustomerContact {
 
   @@unique([customerId, isPrimaryContact], name: "OnePrimaryContactPerCustomer")
   @@unique([customerId, contactType], name: "OneContactTypePerCustomer")
+  @@map("customer_contacts")
 }
 
 //
@@ -86,6 +89,7 @@ model Driver {
   updatedAt    DateTime @updatedAt
 
   @@index([name])
+  @@map("drivers")
 }
 
 model Vehicle {
@@ -96,6 +100,8 @@ model Vehicle {
   vehicleYear   String?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+
+  @@map("vehicles")
 }
 
 //
@@ -110,16 +116,16 @@ model Vendor {
   id              String          @id @default(cuid())
   code            String          @unique
   name            String
-  vendorType  VendorType
+  vendorType      VendorType
   statusActive    StatusActive    @default(ACTIVE)
   activeDate      DateTime        @default(now())
-  picName String?
-  picPosition String?
+  picName         String?
+  picPosition     String?
   notes           String?
   npwpNumber      String?
   npwpName        String?
   npwpAddress     String?
-  paymentTerms  Int
+  paymentTerms    Int
   npwpDate        DateTime?
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
@@ -128,6 +134,7 @@ model Vendor {
   vendorContacts  VendorContact[]
 
   @@index([name])
+  @@map("vendors")
 }
 
 model VendorAddress {
@@ -150,6 +157,7 @@ model VendorAddress {
 
   @@unique([vendorId, isPrimaryAddress], name: "OnePrimaryAddressPerVendor")
   @@unique([vendorId, addressType], name: "OneAddressTypePerVendor")
+  @@map("vendor_addresses")
 }
 
 model VendorContact {
@@ -157,7 +165,7 @@ model VendorContact {
   contactType      ContactType
   name             String
   phoneNumber      String
-  faxNumber       String?
+  faxNumber        String?
   email            String?
   isPrimaryContact Boolean
   vendorId         String
@@ -165,6 +173,7 @@ model VendorContact {
 
   @@unique([vendorId, isPrimaryContact], name: "OnePrimaryContactPerVendor")
   @@unique([vendorId, contactType], name: "OneContactTypePerVendor")
+  @@map("vendor_contacts")
 }
 
 model VendorBanking {
@@ -172,27 +181,15 @@ model VendorBanking {
   bankingNumber          String      @unique
   bankingName            String
   bankingBank            BankingBank
-  bankingBranch   String
+  bankingBranch          String
   isPrimaryBankingNumber Boolean
   vendorId               String
   vendor                 Vendor      @relation(fields: [vendorId], references: [id])
 
   @@unique([vendorId, isPrimaryBankingNumber], name: "OnePrimaryBankingNumberPerVendor")
   @@index([bankingNumber])
+  @@map("vendor_bankings")
 }
-
-enum BankingBank {
-  BRI
-  BCA
-  BNI
-  BNI_SYARIAH
-  DANAMON
-  JAGO
-  MANDIRI
-  AEON
-}
-
-//
 
 model Country {
   code            String            @id
@@ -202,6 +199,7 @@ model Country {
   vendorAddress   VendorAddress[]
 
   @@index([name])
+  @@map("countries")
 }
 
 model Province {
@@ -213,6 +211,7 @@ model Province {
   regencies       Regency[]
 
   @@index([name])
+  @@map("provinces")
 }
 
 model Regency {
@@ -226,6 +225,7 @@ model Regency {
   district        District[]
 
   @@index([name])
+  @@map("regencies")
 }
 
 model District {
@@ -238,6 +238,7 @@ model District {
   regency         Regency           @relation(fields: [regencyCode], references: [code])
 
   @@index([name])
+  @@map("districts")
 }
 
 model Employee {
@@ -260,6 +261,7 @@ model Employee {
 
   @@index([name])
   @@index([phoneNumber])
+  @@map("employees")
 }
 
 model Employment {
@@ -274,42 +276,116 @@ model Employment {
   division   Division  @relation(fields: [divisionId], references: [id], onDelete: Cascade)
   employeeId String
   employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@map("employments")
 }
 
 //
 model Material {
-  id            String           @id @default(cuid())
-  code          String           @unique
-  name          String
-  description   String?
-  category      CategoryMaterial
-  unit          UnitOfMeasure
-  brand         String?
-  specification String?
-  minStock      Int              @default(1)
-  maxStock      Int              @default(1)
-  unitPrice     Int              @default(1)
-  statusActive  Boolean          @default(true)
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-
-  stock Stock?
+  id                String            @id @default(cuid())
+  code              String            @unique // Kode material unik
+  name              String
+  description       String?
+  category          MaterialCategory
+  unit              Unit
+  brand             Brand
+  currentStock      Int               @default(0)
+  minimumStock      Int               @default(0)
+  maximumStock      Int?
+  goodStock         Int?
+  badStock          Int?
+  lastPurchasePrice Decimal?          @db.Decimal(10, 2)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  materialInItems   MaterialInItem[]
+  materialOutItems  MaterialOutItem[]
 
   @@index([name])
+  @@map("materials")
 }
 
-model Stock {
-  id             String   @id @default(cuid())
-  materialId     String   @unique
-  quantity       Int      @default(1)
-  updatebyUserId String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+model MaterialIn {
+  id                   String           @id @default(cuid())
+  transactionNo        String           @unique //bisa autogenerat
+  supplierId           String
+  supplierName         String
+  transactionDate      DateTime         @default(now())
+  invoiceNo            String? // Nomor invoice dari supplier
+  totalAmountBeforeTax Decimal          @db.Decimal(12, 2)
+  totalTax             Decimal?         @db.Decimal(12, 2)
+  otherCosts           Decimal?         @db.Decimal(12, 2)
+  totalAmount          Decimal          @db.Decimal(12, 2)
+  notes                String?
+  createdBy            String
+  createdByUser        User             @relation(fields: [createdBy], references: [id])
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  // Relations - items detail
+  items                MaterialInItem[]
 
-  user     User     @relation(fields: [updatebyUserId], references: [id])
-  material Material @relation(fields: [materialId], references: [id])
+  @@map("material_ins")
+}
 
-  @@index([quantity])
+model MaterialInItem {
+  id           String     @id @default(cuid())
+  materialInId String
+  materialIn   MaterialIn @relation(fields: [materialInId], references: [id], onDelete: Cascade)
+  materialId   String
+  material     Material   @relation(fields: [materialId], references: [id])
+  quantity     Int
+  unitPrice    Decimal    @db.Decimal(10, 2)
+  totalPrice   Decimal    @db.Decimal(12, 2) // quantity * unitPrice
+  notes        String?
+  stockBefore  Int // Stock sebelum transaksi
+  stockAfter   Int // Stock setelah transaksi
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@map("material_in_items")
+}
+
+model MaterialOut {
+  id                   String            @id @default(cuid())
+  transactionNo        String            @unique // 
+  customerName         String? // Denormalisasi
+  orderId              String? // Reference ke order/project
+  shipmentId           String? // Reference ke shipment
+  destinationType      String // "CUSTOMER", "PROJECT", "INTERNAL_USE", "WASTE", etc.
+  transactionDate      DateTime          @default(now())
+  totalAmountBeforeTax Decimal           @db.Decimal(12, 2)
+  totalTax             Decimal           @db.Decimal(12, 2)
+  otherCosts           Decimal           @db.Decimal(12, 2)
+  totalAmount          Decimal           @db.Decimal(12, 2)
+  notes                String?
+  createdBy            String
+  createdByUser        User              @relation(fields: [createdBy], references: [id])
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  items                MaterialOutItem[]
+
+  @@map("material_outs")
+}
+
+model MaterialOutItem {
+  id            String      @id @default(cuid())
+  materialOutId String
+  materialOut   MaterialOut @relation(fields: [materialOutId], references: [id], onDelete: Cascade)
+  materialId    String
+  material      Material    @relation(fields: [materialId], references: [id])
+
+  quantity  Int
+  unitCost  Decimal? @db.Decimal(10, 2) // Cost per unit (untuk internal costing)
+  totalCost Decimal? @db.Decimal(12, 2) // quantity * unitCost
+  notes     String?
+
+  // Stock tracking
+  stockBefore Int // Stock sebelum transaksi
+  stockAfter  Int // Stock setelah transaksi
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("material_out_items")
 }
 
 //
@@ -317,12 +393,16 @@ model Position {
   id          String       @id @default(cuid())
   name        String       @unique
   employments Employment[]
+
+  @@map("positions")
 }
 
 model Division {
   id          String       @id @default(cuid())
   name        String       @unique
   employments Employment[]
+
+  @@map("divisions")
 }
 
 model Supplier {
@@ -343,6 +423,7 @@ model Supplier {
   contacts     SupplierContact[]
 
   @@index([name])
+  @@map("suppliers")
 }
 
 model SupplierAddress {
@@ -365,6 +446,7 @@ model SupplierAddress {
 
   @@unique([supplierId, isPrimaryAddress], name: "OnePrimaryAddressPerSupplier")
   @@unique([supplierId, addressType], name: "OneAddressTypePerSupplier")
+  @@map("supplier_addresses")
 }
 
 model SupplierContact {
@@ -379,6 +461,7 @@ model SupplierContact {
 
   @@unique([supplierId, isPrimaryContact], name: "OnePrimaryContactPerSupplier")
   @@unique([supplierId, contactType], name: "OneContactTypePerSupplier")
+  @@map("supplier_contacts")
 }
 
 model Session {
@@ -387,6 +470,8 @@ model Session {
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("session")
 }
 
 model User {
@@ -401,7 +486,12 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   session   Session?
-  stock     Stock[]
+
+  //realtion stock
+  materialIns  MaterialIn[]
+  materialOuts MaterialOut[]
+
+  @@map("users")
 }
 
 //enum
@@ -414,17 +504,35 @@ enum AddressType {
   SHIPPING
 }
 
+enum BankingBank {
+  BRI
+  BCA
+  BNI
+  BNI_SYARIAH
+  DANAMON
+  JAGO
+  MANDIRI
+  AEON
+}
+
+enum Brand {
+  SAMSUNG
+  BOSCH
+  SONY
+  PANASONIC
+  MITSUBISHI
+  SIEMENS
+  ABB
+  SCHNEIDER
+  GENERIC
+  OTHER
+}
+
+//
+
 enum CustomerType {
   DOMESTIC
   INTERNATIONAL
-}
-
-enum CategoryMaterial {
-  CONSUMABLE
-  FINISHED_GOODS
-  PACKAGING
-  RAW_MATERIAL
-  SPARE_PART
 }
 
 enum ContactType {
@@ -438,6 +546,25 @@ enum ContactType {
 enum Gender {
   MALE
   FEMALE
+}
+
+enum MaterialCategory {
+  ELECTRONIC
+  MECHANICAL
+  CHEMICAL
+  PACKAGING
+  TOOLS
+  SPARE_PARTS
+  CONSUMABLES
+  RAW_MATERIAL
+}
+
+enum Role {
+  USER
+  SUPERVISOR
+  MANAGER
+  ADMIN
+  SUPER_ADMIN
 }
 
 enum StatusActive {
@@ -456,26 +583,13 @@ enum VendorType {
   SERVICES
 }
 
-enum UnitOfMeasure {
-  CM
-  METER
-  ONS
-  GRAM
-  KG
-  TON
-  LITER
+enum Unit {
   PCS
+  KG
+  LITER
+  METER
   BOX
-  PACK
-  SHEET
   ROLL
   SET
-}
-
-enum Role {
-  USER
-  SUPERVISOR
-  MANAGER
-  ADMIN
-  SUPER_ADMIN
+  PACK
 }

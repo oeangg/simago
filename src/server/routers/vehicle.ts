@@ -1,125 +1,99 @@
-import { driverSchema, driverUpdateSchema } from "@/schemas/driverSchema";
+import { vehicleSchema, vehicleUpdateSchema } from "@/schemas/vehicle";
 import { protectedProcedure, router } from "../trpc";
 import { TRPCError } from "@trpc/server";
-import { Gender } from "@prisma/client";
-import { validateRequiredDate } from "../validateDate";
 import { z } from "zod";
 
-export const driverRouter = router({
-  createDriver: protectedProcedure
-    .input(driverSchema)
+export const vehicleRouter = router({
+  createVehicle: protectedProcedure
+    .input(vehicleSchema)
     .mutation(async ({ ctx, input }) => {
       try {
-        const driverIsExist = await ctx.db.driver.findUnique({
+        const vehicleIsExist = await ctx.db.vehicle.findUnique({
           where: {
-            code: input.code,
+            vehicleNumber: input.vehicleNumber,
           },
         });
 
-        if (driverIsExist) {
+        if (vehicleIsExist) {
           throw new TRPCError({
             code: "CONFLICT",
-            message: "Code driver sudah terdaftar!",
+            message: "Nomor kendaraan sudah terdaftar!",
           });
         }
 
-        const activeDateObj = validateRequiredDate(
-          input.activeDate,
-          "Tanggal Aktif"
-        );
-
-        const newDriver = await ctx.db.driver.create({
+        const newVehicle = await ctx.db.vehicle.create({
           data: {
-            code: input.code,
-            name: input.name,
-            city: input.city,
-            gender: input.gender as Gender,
-            phoneNumber: input.phoneNumber,
-            activeDate: activeDateObj,
-            addressLine1: input.addressLine1,
-            addressLine2: input.addressLine2 || null,
+            ...input,
           },
         });
 
         return {
-          message: "Driver berhasil ditambahkan",
-          data: newDriver,
+          message: "Data kendaraan berhasil ditambahkan",
+          data: newVehicle,
         };
       } catch (error) {
         if (error instanceof TRPCError) throw error;
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Gagal menambahkan driver",
+          message: "Gagal menambahkan data kendaraan",
         });
       }
     }),
 
-  updateDriver: protectedProcedure
-    .input(driverUpdateSchema)
+  updateVehicle: protectedProcedure
+    .input(vehicleUpdateSchema)
     .mutation(async ({ ctx, input }) => {
       try {
-        const driverIsExist = await ctx.db.driver.findUnique({
+        const vehicleIsExist = await ctx.db.vehicle.findUnique({
           where: {
             id: input.id,
           },
         });
 
-        if (!driverIsExist) {
+        if (!vehicleIsExist) {
           throw new TRPCError({
             code: "NOT_FOUND",
-            message: "id driver tidak ditemukan!",
+            message: "id kendaraan tidak ditemukan!",
           });
         }
 
-        if (input.code !== driverIsExist.code) {
-          const codeExists = await ctx.db.driver.findUnique({
-            where: { code: input.code },
+        if (input.vehicleNumber !== vehicleIsExist.vehicleNumber) {
+          const numberExists = await ctx.db.vehicle.findUnique({
+            where: { vehicleNumber: input.vehicleNumber },
           });
 
-          if (codeExists) {
+          if (numberExists) {
             throw new TRPCError({
               code: "CONFLICT",
-              message: "Code driver sudah terdaftar",
+              message: "nomor kendaraan sudah terdaftar",
             });
           }
         }
 
-        const activeDateObj = validateRequiredDate(
-          input.activeDate,
-          "Tanggal Aktif"
-        );
-
-        const result = await ctx.db.driver.update({
+        const result = await ctx.db.vehicle.update({
           where: {
             id: input.id,
           },
           data: {
-            name: input.name,
-            city: input.city,
-            gender: input.gender as Gender,
-            phoneNumber: input.phoneNumber,
-            activeDate: activeDateObj,
-            statusActive: input.statusActive,
-            addressLine1: input.addressLine1,
-            addressLine2: input.addressLine2 || null,
+            ...input,
           },
         });
 
         return {
           success: true,
-          message: "Driver berhasil diupdate!",
+          message: "Data kendaraan berhasil diupdate!",
           data: result,
         };
       } catch (error) {
         if (error instanceof TRPCError) throw error;
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Gagal menambahkan driver",
+          message: "Gagal mengupdate data kendaraan",
         });
       }
     }),
 
-  deleteDriver: protectedProcedure
+  deleteVehicle: protectedProcedure
     .input(
       z.object({
         id: z.string(),
@@ -127,20 +101,20 @@ export const driverRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        const findDriver = await ctx.db.driver.findUnique({
+        const findVehicle = await ctx.db.vehicle.findUnique({
           where: {
             id: input.id,
           },
         });
 
-        if (!findDriver) {
+        if (!findVehicle) {
           throw new TRPCError({
             code: "NOT_FOUND",
-            message: "Driver tidak ditemukan!",
+            message: "Kendaraan tidak ditemukan!",
           });
         }
 
-        await ctx.db.driver.delete({
+        await ctx.db.vehicle.delete({
           where: {
             id: input.id,
           },
@@ -148,18 +122,18 @@ export const driverRouter = router({
 
         return {
           success: true,
-          message: "Driver berhasil dihapus",
+          message: "Kendaraan berhasil dihapus",
         };
       } catch (error) {
         if (error instanceof TRPCError) throw error;
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Gagal menghapus driver",
+          message: "Gagal menghapus kendaraan",
         });
       }
     }),
 
-  getDriverById: protectedProcedure
+  getVehicleById: protectedProcedure
     .input(
       z.object({
         id: z.string(),
@@ -167,38 +141,37 @@ export const driverRouter = router({
     )
     .query(async ({ ctx, input }) => {
       try {
-        const driver = await ctx.db.driver.findUnique({
+        const vehicle = await ctx.db.vehicle.findUnique({
           where: {
             id: input.id,
           },
         });
 
-        if (!driver) {
+        if (!vehicle) {
           throw new TRPCError({
             code: "NOT_FOUND",
-            message: "Driver tidak ditemukan",
+            message: "Kendaraan tidak ditemukan",
           });
         }
 
-        return driver;
+        return vehicle;
       } catch (error) {
         if (error instanceof TRPCError) throw error;
 
-        console.error("Get driver error:", error);
+        console.error("Get vehicle error:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Gagal mengambil data driver",
+          message: "Gagal mengambil data kendaraan",
         });
       }
     }),
 
-  getAllDrivers: protectedProcedure
+  getAllVehicle: protectedProcedure
     .input(
       z.object({
         page: z.number().default(1),
         limit: z.number().default(10),
         search: z.string().optional(),
-        statusActive: z.boolean().optional(),
       })
     )
     .query(async ({ ctx, input }) => {
@@ -209,13 +182,13 @@ export const driverRouter = router({
               ? {
                   OR: [
                     {
-                      name: {
+                      vehicleNumber: {
                         contains: input.search,
                         mode: "insensitive" as const,
                       },
                     },
                     {
-                      code: {
+                      vehicleName: {
                         contains: input.search,
                         mode: "insensitive" as const,
                       },
@@ -223,33 +196,31 @@ export const driverRouter = router({
                   ],
                 }
               : {},
-            input.statusActive ? { statusActive: input.statusActive } : {},
           ],
         };
 
-        const [drivers, total] = await Promise.all([
-          ctx.db.driver.findMany({
+        const [vehicles, total] = await Promise.all([
+          ctx.db.vehicle.findMany({
             where,
             skip: (input.page - 1) * input.limit,
             take: input.limit,
 
             orderBy: { createdAt: "desc" },
           }),
-          ctx.db.driver.count({ where }),
+          ctx.db.vehicle.count({ where }),
         ]);
 
-        console.log(drivers);
         return {
-          data: drivers,
+          data: vehicles,
           total,
           page: input.page,
           totalPages: Math.ceil(total / input.limit),
         };
       } catch (error) {
-        console.error("Get all driver error:", error);
+        console.error("Get all vehicle error:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Gagal mengambil data drivers",
+          message: "Gagal mengambil data semua kendaraan",
         });
       }
     }),
