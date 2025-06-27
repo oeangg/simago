@@ -409,30 +409,27 @@ export function CustomerForm({
   }, []);
 
   // Submit handler
-  const onSubmitCustomer = useCallback(
-    async (data: CustomerTypeSchema) => {
-      setIsLoading(true);
-      try {
-        const cleanedData = cleanFormData(data);
-        console.log("Submitting data:", cleanedData);
+  const onSubmitCustomer = async (data: CustomerTypeSchema) => {
+    setIsLoading(true);
+    try {
+      const cleanedData = cleanFormData(data);
+      console.log("Submitting data:", cleanedData);
 
-        if (mode === "create") {
-          await createMutation.mutateAsync(cleanedData);
-        } else {
-          await updateMutation.mutateAsync({
-            ...cleanedData,
-            id: customer?.id,
-          } as CustomerUpdateTypeSchema);
-        }
-      } catch (error) {
-        console.error("Submit error:", error);
-        toast.error("Terjadi kesalahan saat menyimpan data");
-      } finally {
-        setIsLoading(false);
+      if (mode === "create") {
+        await createMutation.mutateAsync(cleanedData);
+      } else {
+        await updateMutation.mutateAsync({
+          ...cleanedData,
+          id: customer?.id,
+        } as CustomerUpdateTypeSchema);
       }
-    },
-    [mode, createMutation, updateMutation, customer?.id, cleanFormData]
-  );
+    } catch (error) {
+      console.error("Submit error:", error);
+      toast.error("Terjadi kesalahan saat menyimpan data");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Handle primary selection
   const handlePrimaryAddress = useCallback(
