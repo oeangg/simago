@@ -204,7 +204,9 @@ export function VendorForm({
         name: vendorData.name,
         vendorType: vendorData.vendorType,
         statusActive: vendorData.statusActive,
-        activeDate: vendorData.activeDate,
+        activeDate: vendorData.activeDate
+          ? new Date(vendorData.activeDate).toISOString().slice(0, 10)
+          : new Date().toISOString().slice(0, 10),
         notes: vendorData.notes || "",
         picName: vendorData.picName || "",
         picPosition: vendorData.picPosition || "",
@@ -212,7 +214,9 @@ export function VendorForm({
         npwpNumber: vendorData.npwpNumber || "",
         npwpName: vendorData.npwpName || "",
         npwpAddress: vendorData.npwpAddress || "",
-        npwpDate: vendorData.npwpDate ? vendorData.npwpDate.slice(0, 10) : "",
+        npwpDate: vendorData.npwpDate
+          ? new Date(vendorData.npwpDate).toISOString().slice(0, 10)
+          : "",
         vendorAddresses: vendorData.vendorAddresses.map((addr) => ({
           id: addr.id,
           addressType: addr.addressType,

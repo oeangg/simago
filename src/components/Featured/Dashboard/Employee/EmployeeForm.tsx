@@ -338,20 +338,28 @@ export function EmployeeForm({
       nik: employee?.nik || "",
       name: employee?.name || "",
       isActive: employee?.isActive ?? true,
-      activeDate: employee?.activeDate ? employee.activeDate?.slice(0, 10) : "",
+      activeDate: employee?.activeDate
+        ? new Date(employee.activeDate).toISOString().slice(0, 10)
+        : "",
       gender: employee?.gender || undefined,
       address: employee?.address || "",
       city: employee?.city || "",
       zipcode: employee?.zipcode || "",
       photo: employee?.photo || "",
       ttdDigital: employee?.ttdDigital || "",
-      resignDate: employee?.resignDate ? employee.resignDate.slice(0, 10) : "",
+      resignDate: employee?.resignDate
+        ? new Date(employee.activeDate).toISOString().slice(0, 10)
+        : "",
       phoneNumber: employee?.phoneNumber || "",
       employments:
         employee?.employments?.map((emp) => ({
           id: emp.id,
-          startDate: emp.startDate ? emp.startDate.slice(0, 10) : "",
-          endDate: emp.endDate ? emp.endDate.slice(0, 10) : "",
+          startDate: emp.startDate
+            ? new Date(emp.startDate).toISOString().slice(0, 10)
+            : "",
+          endDate: emp.endDate
+            ? new Date(emp.startDate).toISOString().slice(0, 10)
+            : "",
           positionId: emp.positionId,
           divisionId: emp.divisionId,
         })) || [],

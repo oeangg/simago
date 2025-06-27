@@ -180,13 +180,15 @@ export function SupplierForm({
         name: supplierData.name,
         supplierType: supplierData.supplierType,
         statusActive: supplierData.statusActive,
-        activeDate: supplierData.activeDate,
+        activeDate: supplierData.activeDate
+          ? new Date(supplierData.activeDate).toISOString().slice(0, 10)
+          : new Date(supplierData.activeDate).toISOString().slice(0, 10),
         notes: supplierData.notes || "",
         npwpNumber: supplierData.npwpNumber || "",
         npwpName: supplierData.npwpName || "",
         npwpAddress: supplierData.npwpAddress || "",
         npwpDate: supplierData.npwpDate
-          ? supplierData.npwpDate.slice(0, 10)
+          ? new Date(supplierData.npwpDate).toISOString().slice(0, 10)
           : "",
         addresses: supplierData.addresses.map((addr) => ({
           id: addr.id,

@@ -172,13 +172,15 @@ export function CustomerForm({
         code: customerData.code,
         name: customerData.name,
         statusActive: customerData.statusActive,
-        activeDate: customerData.activeDate,
+        activeDate: customerData.activeDate
+          ? new Date(customerData.activeDate).toISOString().slice(0, 10)
+          : new Date(customerData.activeDate).toISOString().slice(0, 10),
         notes: customerData.notes || "",
         npwpNumber: customerData.npwpNumber || "",
         npwpName: customerData.npwpName || "",
         npwpAddress: customerData.npwpAddress || "",
         npwpDate: customerData.npwpDate
-          ? customerData.npwpDate.slice(0, 10)
+          ? new Date(customerData.npwpDate).toISOString().slice(0, 10)
           : "",
         addresses: customerData.addresses.map((addr) => ({
           id: addr.id,

@@ -5,9 +5,11 @@ import { divisionRouter } from "./routers/division";
 import { driverRouter } from "./routers/driver";
 import { employeeRouter } from "./routers/employee";
 import { employmentRouter } from "./routers/employment";
+import { materialRouter } from "./routers/material";
 import { positionRouter } from "./routers/position";
 import { supplierRouter } from "./routers/supplier";
 import { userRouter } from "./routers/user";
+import { vehicleRouter } from "./routers/vehicle";
 import { vendorRouter } from "./routers/vendor";
 import { router } from "./trpc";
 
@@ -23,6 +25,8 @@ export const appRouter = router({
   Supplier: supplierRouter,
   Driver: driverRouter,
   Vendor: vendorRouter,
+  Vehicle: vehicleRouter,
+  Material: materialRouter,
 });
 
 export type AppRouter = typeof appRouter;

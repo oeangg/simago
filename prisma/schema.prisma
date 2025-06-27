@@ -106,10 +106,16 @@ model Vehicle {
 
 //
 
+
+
 enum VehicleType {
   BOX
   TRUCK
-  MOTORCYCLE
+  WINGBOX
+  TRONTON
+  TRAILER
+  PICKUP
+  VAN
 }
 
 model Vendor {

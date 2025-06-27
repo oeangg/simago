@@ -92,7 +92,9 @@ export function DriverForm({
         city: driverData.city,
         phoneNumber: driverData.phoneNumber,
         statusActive: driverData.statusActive,
-        activeDate: driverData.activeDate.slice(0, 10),
+        activeDate: driverData.activeDate
+          ? new Date(driverData.activeDate).toISOString().slice(0, 10)
+          : new Date(driverData.activeDate).toISOString().slice(0, 10),
       };
     }
 
