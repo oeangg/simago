@@ -10,11 +10,27 @@ import {
   vendorSchema,
   vendorUpdateSchema,
 } from "@/schemas/vendorSchema";
-import { validateOptionalDate } from "../validateDate";
+
+const requiredDateSchema = z.string().transform((str) => new Date(str));
+const optionalDateSchema = z
+  .string()
+  .nullable()
+  .optional()
+  .transform((val) => (val ? new Date(val) : null));
+
+const vendorInputSchema = vendorSchema.extend({
+  activeDate: requiredDateSchema,
+  npwpDate: optionalDateSchema,
+});
+
+const updateVendorSchema = vendorUpdateSchema.extend({
+  activeDate: requiredDateSchema,
+  npwpDate: optionalDateSchema,
+});
 
 export const vendorRouter = router({
   createAllVendor: protectedProcedure
-    .input(vendorSchema)
+    .input(vendorInputSchema)
     .mutation(async ({ ctx, input }) => {
       try {
         const result = await ctx.db.$transaction(async (tx) => {
@@ -32,7 +48,7 @@ export const vendorRouter = router({
           }
 
           //cek type npwpDate
-          const npwpDateObj = validateOptionalDate(input.npwpDate);
+
           // 2. Create
           const vendor = await tx.vendor.create({
             data: {
@@ -44,7 +60,7 @@ export const vendorRouter = router({
               npwpNumber: input.npwpNumber,
               npwpName: input.npwpName,
               npwpAddress: input.npwpAddress,
-              npwpDate: npwpDateObj,
+              npwpDate: input.npwpDate,
               paymentTerms: input.paymentTerms,
               vendorType: input.vendorType as VendorType,
             },
@@ -116,7 +132,7 @@ export const vendorRouter = router({
 
   // Update  dengan atomic transaction
   updateAllVendor: protectedProcedure
-    .input(vendorUpdateSchema)
+    .input(updateVendorSchema)
     .mutation(async ({ ctx, input }) => {
       try {
         const result = await ctx.db.$transaction(async (tx) => {
@@ -154,7 +170,7 @@ export const vendorRouter = router({
 
           //cek type npwpDate
 
-          const npwpDateObj = validateOptionalDate(input.npwpDate);
+          //cek type npwpDate
 
           // Update  basic info
           await tx.vendor.update({
@@ -169,7 +185,7 @@ export const vendorRouter = router({
               npwpNumber: input.npwpNumber,
               npwpName: input.npwpName,
               npwpAddress: input.npwpAddress,
-              npwpDate: npwpDateObj,
+              npwpDate: input.npwpDate,
               paymentTerms: input.paymentTerms,
               vendorType: input.vendorType as VendorType,
             },

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -101,6 +101,12 @@ const vehicleTypeOptions = [
   { value: "VAN", label: "Van" },
 ];
 
+type VehicleTypeFormData = VehicleTypeSchema | VehicleUpdateSchema;
+// Type guard untuk check apakah data memiliki id (untuk update)
+function isUpdateData(data: VehicleTypeSchema): data is VehicleUpdateSchema {
+  return "id" in data;
+}
+
 export function VehicleForm({
   vehicle,
   mode,
@@ -119,8 +125,7 @@ export function VehicleForm({
     { enabled: mode === "edit" && !!vehicle?.id }
   );
 
-  // Initialize form default values
-  const getDefaultValues = useCallback(() => {
+  const getDefaultValues = useCallback((): VehicleTypeFormData => {
     if (mode === "edit" && vehicleData) {
       return {
         id: vehicleData.id,
@@ -140,10 +145,14 @@ export function VehicleForm({
   }, [vehicleData, mode]);
 
   // Initialize form
+
+  const resolver =
+    mode === "create"
+      ? (zodResolver(vehicleSchema) as Resolver<VehicleTypeSchema>)
+      : (zodResolver(vehicleUpdateSchema) as Resolver<VehicleUpdateSchema>);
+
   const form = useForm<VehicleTypeSchema>({
-    resolver: zodResolver(
-      mode === "create" ? vehicleSchema : vehicleUpdateSchema
-    ),
+    resolver: resolver as Resolver<VehicleTypeFormData>,
     defaultValues: getDefaultValues(),
     mode: "onChange",
   });
@@ -192,54 +201,33 @@ export function VehicleForm({
     },
   });
 
-  // Helper function to clean form data
-  const cleanFormData = useCallback((data: VehicleTypeSchema) => {
-    // Helper untuk convert empty string ke undefined
-    const emptyToUndefined = (value: string | undefined) => {
-      return value && value.trim() !== "" ? value : undefined;
-    };
-
-    return {
-      vehicleNumber: data.vehicleNumber,
-      vehicleType: data.vehicleType as VehicleType,
-      vehicleMake: emptyToUndefined(data.vehicleMake),
-      vehicleYear: emptyToUndefined(data.vehicleYear),
-    };
-  }, []);
-
   // Submit handler
-  const onSubmitVehicle = useCallback(
-    async (data: VehicleTypeSchema) => {
-      setIsLoading(true);
-      try {
-        const cleanedData = cleanFormData(data);
+  const onSubmitVehicle = async (data: VehicleTypeSchema) => {
+    setIsLoading(true);
+    try {
+      const submitData = data;
 
-        if (mode === "create") {
-          await createMutation.mutateAsync(cleanedData);
-        } else {
-          await updateMutation.mutateAsync({
-            ...cleanedData,
-            id: vehicle?.id,
-          } as VehicleUpdateSchema);
-        }
-      } catch (error) {
-        console.error("Submit error:", error);
-        toast.error("Terjadi kesalahan saat menyimpan data");
-      } finally {
-        setIsLoading(false);
+      if (mode === "create" && !isUpdateData(data)) {
+        await createMutation.mutateAsync(submitData as VehicleTypeSchema);
+      } else if (mode === "edit" && isUpdateData(data)) {
+        await updateMutation.mutateAsync(submitData as VehicleUpdateSchema);
       }
-    },
-    [mode, createMutation, updateMutation, vehicle?.id, cleanFormData]
-  );
+    } catch (error) {
+      console.error("Submit error:", error);
+      toast.error("Terjadi kesalahan saat menyimpan data");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Handle cancel
-  const handleCancel = useCallback(() => {
+  const handleCancel = () => {
     if (onCancel) {
       onCancel();
     } else {
       router.push("/dashboard/kendaraan");
     }
-  }, [onCancel, router]);
+  };
 
   if (mode === "edit" && (isLoadingVehicle || isPendingVehicle)) {
     return (

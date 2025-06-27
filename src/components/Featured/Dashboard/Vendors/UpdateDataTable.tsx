@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { vendorColumns, VendorColumnsProps } from "./Columns";
 import ViewVendor from "./VendorView";
 import { VendorDataTable } from "./DataTable";
+import { formatDateForInput } from "@/tools/formatDateForInput";
 
 // Skeleton component untuk loading state
 const SupplierTableSkeleton = () => {
@@ -130,7 +131,7 @@ export const VendorUpdateDataTable = () => {
   const handleDeleteSupplier = (vendor: VendorColumnsProps) => {
     if (
       window.confirm(
-        `Apakah Anda yakin ingin menghapus vendor "${vendor.name}"?`
+        `Apakah Anda yakin ingin menghapus vendor ${vendor.name} ${vendor.id}  ?`
       )
     ) {
       deleteVendor.mutate({ id: vendor.id! });
@@ -155,7 +156,7 @@ export const VendorUpdateDataTable = () => {
               name: vendor.name,
               vendorType: vendor.vendorType,
               statusActive: vendor.statusActive,
-              activeDate: vendor.activeDate || null,
+              activeDate: formatDateForInput(vendor.activeDate),
               picName: vendor.picName || null,
               picPosition: vendor.picPosition || null,
               notes: vendor.notes || null,
@@ -163,7 +164,7 @@ export const VendorUpdateDataTable = () => {
               npwpNumber: vendor.npwpNumber || null,
               npwpName: vendor.npwpName || null,
               npwpAddress: vendor.npwpAddress || null,
-              npwpDate: vendor.npwpDate || null,
+              npwpDate: formatDateForInput(vendor.npwpDate),
 
               // Transform addresses - karena hanya primary yang diambil
               vendorAddresses: primaryAddress

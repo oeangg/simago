@@ -1,4 +1,4 @@
-import { VendorEditPage } from "@/components/Featured/Dashboard/Vendors/VendorEditForm";
+import { VendorEditPage } from "@/components/Featured/Dashboard/Vendors/VendorEditPage";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {

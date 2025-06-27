@@ -83,6 +83,15 @@ export const VendorEditPage = ({ id }: vendorEditPageProps) => {
       </div>
     );
   }
+
+  // const dataVendortoFrontend = dataVendor
+  //   ? {
+  //       ...dataVendor,
+  //       activeDate: dataVendor.activeDate.toISOString().split("T")[0],
+  //       npwpDate: dataVendor.npwpDate?.toISOString().split("T")[0] || null,
+  //     }
+  //   : undefined;
+
   return (
     <div className="container  max-w-4xl mx-auto  space-y-6">
       {/* Header */}

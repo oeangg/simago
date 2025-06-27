@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -65,6 +65,7 @@ import {
 } from "@/schemas/vendorSchema";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
+import { formatDateForInput } from "@/tools/formatDateForInput";
 
 interface VendorFormProps {
   vendor?: {
@@ -73,7 +74,7 @@ interface VendorFormProps {
     name: string;
     vendorType: VendorType;
     statusActive: StatusActive;
-    activeDate: string | null;
+    activeDate: Date | string;
     picName?: string | null;
     picPosition?: string | null;
     notes?: string | null;
@@ -81,7 +82,7 @@ interface VendorFormProps {
     npwpNumber?: string | null;
     npwpName?: string | null;
     npwpAddress?: string | null;
-    npwpDate?: string | null;
+    npwpDate?: Date | string | null;
     vendorAddresses: Array<{
       id: string;
       addressType: AddressType;
@@ -171,6 +172,15 @@ const defaultBanking = {
 
 const MAX_ADDRESSES = 10;
 
+type VendorTypeFormData = VendorTypeSchema | VendorUpdateTypeSchema;
+
+// Type guard untuk check apakah data memiliki id (untuk update)
+function isUpdateData(
+  data: VendorTypeFormData
+): data is VendorUpdateTypeSchema {
+  return "id" in data;
+}
+
 export function VendorForm({
   vendor,
   mode,
@@ -196,7 +206,7 @@ export function VendorForm({
   const { data: provinces = [] } = trpc.City.getProvinces.useQuery();
 
   // Initialize form default values
-  const getDefaultValues = useCallback(() => {
+  const getDefaultValues = useCallback((): VendorTypeFormData => {
     if (mode === "edit" && vendorData) {
       return {
         id: vendorData.id,
@@ -204,9 +214,7 @@ export function VendorForm({
         name: vendorData.name,
         vendorType: vendorData.vendorType,
         statusActive: vendorData.statusActive,
-        activeDate: vendorData.activeDate
-          ? new Date(vendorData.activeDate).toISOString().slice(0, 10)
-          : new Date().toISOString().slice(0, 10),
+        activeDate: formatDateForInput(vendorData.activeDate),
         notes: vendorData.notes || "",
         picName: vendorData.picName || "",
         picPosition: vendorData.picPosition || "",
@@ -214,9 +222,7 @@ export function VendorForm({
         npwpNumber: vendorData.npwpNumber || "",
         npwpName: vendorData.npwpName || "",
         npwpAddress: vendorData.npwpAddress || "",
-        npwpDate: vendorData.npwpDate
-          ? new Date(vendorData.npwpDate).toISOString().slice(0, 10)
-          : "",
+        npwpDate: formatDateForInput(vendorData.npwpDate),
         vendorAddresses: vendorData.vendorAddresses.map((addr) => ({
           id: addr.id,
           addressType: addr.addressType,
@@ -257,7 +263,7 @@ export function VendorForm({
       name: "",
       vendorType: "LOGISTIC" as VendorType,
       statusActive: "ACTIVE" as StatusActive,
-      activeDate: new Date().toISOString().split("T")[0],
+      activeDate: new Date().toISOString().split("T")[0], //today
       notes: "",
       paymentTerms: 0,
       picName: "",
@@ -273,10 +279,14 @@ export function VendorForm({
   }, [vendorData, mode]);
 
   // Initialize form
-  const form = useForm<VendorTypeSchema>({
-    resolver: zodResolver(
-      mode === "create" ? vendorSchema : vendorUpdateSchema
-    ),
+
+  const resolver =
+    mode === "create"
+      ? (zodResolver(vendorSchema) as Resolver<VendorTypeSchema>)
+      : (zodResolver(vendorUpdateSchema) as Resolver<VendorUpdateTypeSchema>);
+
+  const form = useForm<VendorTypeFormData>({
+    resolver: resolver as Resolver<VendorTypeFormData>,
     defaultValues: getDefaultValues(),
     mode: "onChange",
   });
@@ -422,95 +432,24 @@ export function VendorForm({
     [form]
   );
 
-  // Helper function to clean form data
-  const cleanFormData = useCallback((data: VendorTypeSchema) => {
-    // Helper untuk convert empty string ke undefined
-    const emptyToUndefined = (value: string | undefined) => {
-      return value && value.trim() !== "" ? value : undefined;
-    };
-
-    return {
-      code: data.code,
-      name: data.name,
-      vendorType: data.vendorType,
-      statusActive: data.statusActive,
-      activeDate: data.activeDate,
-      notes: emptyToUndefined(data.notes),
-      picName: emptyToUndefined(data.picName),
-      picPosition: emptyToUndefined(data.picPosition),
-      paymentTerms: data.paymentTerms,
-      npwpNumber: emptyToUndefined(data.npwpNumber),
-      npwpName: emptyToUndefined(data.npwpName),
-      npwpAddress: emptyToUndefined(data.npwpAddress),
-      npwpDate: emptyToUndefined(data.npwpDate),
-      vendorAddresses: data.vendorAddresses?.map((address) => ({
-        ...(address.id && { id: address.id }), // Only include id if exists
-        addressType: address.addressType,
-        addressLine1: address.addressLine1,
-        addressLine2: emptyToUndefined(address.addressLine2),
-        zipcode: emptyToUndefined(address.zipcode),
-        isPrimaryAddress: address.isPrimaryAddress,
-        countryCode: address.countryCode,
-        // Location fields - undefined untuk International
-        provinceCode:
-          address.countryCode !== "ID"
-            ? undefined
-            : emptyToUndefined(address.provinceCode),
-        regencyCode:
-          address.countryCode !== "ID"
-            ? undefined
-            : emptyToUndefined(address.regencyCode),
-        districtCode:
-          address.countryCode !== "ID"
-            ? undefined
-            : emptyToUndefined(address.districtCode),
-      })),
-      vendorContacts: data.vendorContacts?.map((contact) => ({
-        ...(contact.id && { id: contact.id }), // Only include id if exists
-        contactType: contact.contactType,
-        name: contact.name,
-        faxNumber: emptyToUndefined(contact.faxNumber),
-        phoneNumber: contact.phoneNumber,
-        email: emptyToUndefined(contact.email),
-        isPrimaryContact: contact.isPrimaryContact,
-        ...(contact.vendorId && { vendorId: contact.vendorId }), // Only include vendorId if exists
-      })),
-      vendorBankings: data.vendorBankings?.map((bank) => ({
-        ...(bank.id && { id: bank.id }), // Only include id if exists
-        bankingNumber: bank.bankingNumber,
-        bankingName: bank.bankingName,
-        bankingBank: bank.bankingBank,
-        bankingBranch: bank.bankingBranch,
-        isPrimaryBankingNumber: bank.isPrimaryBankingNumber,
-        ...(bank.vendorId && { vendorId: bank.vendorId }), // Only include vendorId if exists
-      })),
-    };
-  }, []);
-
   // Submit handler
-  const onSubmitVendor = useCallback(
-    async (data: VendorTypeSchema) => {
-      setIsLoading(true);
-      try {
-        const cleanedData = cleanFormData(data);
+  const onSubmitVendor = async (data: VendorTypeFormData) => {
+    setIsLoading(true);
+    try {
+      const submitData = data;
 
-        if (mode === "create") {
-          await createMutation.mutateAsync(cleanedData);
-        } else {
-          await updateMutation.mutateAsync({
-            ...cleanedData,
-            id: vendor?.id,
-          } as VendorUpdateTypeSchema);
-        }
-      } catch (error) {
-        console.error("Submit error:", error);
-        toast.error("Terjadi kesalahan saat menyimpan data");
-      } finally {
-        setIsLoading(false);
+      if (mode === "create" && !isUpdateData(data)) {
+        await createMutation.mutateAsync(submitData as VendorTypeSchema);
+      } else if (mode === "edit" && isUpdateData(data)) {
+        await updateMutation.mutateAsync(submitData as VendorUpdateTypeSchema);
       }
-    },
-    [mode, createMutation, updateMutation, vendor?.id, cleanFormData]
-  );
+    } catch (error) {
+      console.error("Submit error:", error);
+      toast.error("Terjadi kesalahan saat menyimpan data");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Handle primary selection
   const handlePrimaryAddress = useCallback(
@@ -544,13 +483,13 @@ export function VendorForm({
   );
 
   // Handle cancel
-  const handleCancel = useCallback(() => {
+  const handleCancel = () => {
     if (onCancel) {
       onCancel();
     } else {
       router.push("/dashboard/vendor");
     }
-  }, [onCancel, router]);
+  };
 
   // Handle add actions
   const handleAddAddress = useCallback(() => {
@@ -756,6 +695,12 @@ export function VendorForm({
                       <div className="flex items-center px-3 py-2 border border-input bg-background rounded-md">
                         <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
                         <span className="text-sm">
+                          {/* new Date().toISOString().split("T")[0]
+                          {field.value
+                            ? format(new Date(field.value), "dd MMMM yyyy", {
+                                locale: id,
+                              })
+                            : "Tanggal belum diset"} */}
                           {field.value
                             ? format(new Date(field.value), "dd MMMM yyyy", {
                                 locale: id,

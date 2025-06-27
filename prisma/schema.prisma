@@ -184,13 +184,13 @@ model VendorContact {
 
 model VendorBanking {
   id                     String      @id @default(cuid())
-  bankingNumber          String      @unique
+  bankingNumber          String      
   bankingName            String
   bankingBank            BankingBank
   bankingBranch          String
   isPrimaryBankingNumber Boolean
   vendorId               String
-  vendor                 Vendor      @relation(fields: [vendorId], references: [id])
+  vendor                 Vendor      @relation(fields: [vendorId], references: [id], onDelete: Cascade )
 
   @@unique([vendorId, isPrimaryBankingNumber], name: "OnePrimaryBankingNumberPerVendor")
   @@index([bankingNumber])

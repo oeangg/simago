@@ -121,7 +121,7 @@ export const vendorSchema = z.object({
   name: z.string().min(1, "Nama vendor tidak boleh kosong"),
   vendorType: vendorTypeSchema,
   statusActive: statusActiveSchema,
-  activeDate: z.string().min(1, "Tanggal Aktif harus diisi"),
+  activeDate: z.string().min(1, "Tanggal aktif harus diisi"),
   paymentTerms: z
     .number()
     .min(0, "Terms pembayaran minimal 0 hari")
