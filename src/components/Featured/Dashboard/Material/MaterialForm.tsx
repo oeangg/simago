@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 import { trpc } from "@/app/_trpcClient/client";
 
-import { Brand, MaterialCategory, Prisma, Unit } from "@prisma/client";
+import { Brand, MaterialCategory, Unit } from "@prisma/client";
 import {
   createMaterialSchema,
   CreateMaterialTypeSchema,
@@ -59,41 +59,42 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+export interface MaterialFormData {
+  id?: string;
+  code: string;
+  name: string;
+  description?: string | null;
+  category: MaterialCategory;
+  unit: Unit;
+  brand: Brand;
+  currentStock: number;
+  minimumStock: number;
+  maximumStock?: number | null;
+  goodStock?: number | null;
+  badStock?: number | null;
+  lastPurchasePrice?: number | null;
+}
+
 interface MaterialFormProps {
-  material?: {
-    id: string;
-    code: string;
-    name: string;
-    description?: string | null;
-    category: MaterialCategory;
-    unit: Unit;
-    brand: Brand;
-    currentStock: number;
-    minimumStock: number;
-    maximumStock?: number | null;
-    goodStock?: number | null;
-    badStock?: number | null;
-    lastPurchasePrice?: number | null;
-  };
+  material?: MaterialFormData;
   mode: "create" | "edit";
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-type MaterialTypeFormData = CreateMaterialTypeSchema | UpdateMaterialTypeSchema;
+export type MaterialTypeFormDataSchema =
+  | CreateMaterialTypeSchema
+  | UpdateMaterialTypeSchema;
 
-// Type guard untuk check apakah data memiliki id (untuk update)
+// Type guard tetap sama
 function isUpdateData(
-  data: MaterialTypeFormData
+  data: MaterialTypeFormDataSchema
 ): data is UpdateMaterialTypeSchema {
   return "id" in data;
 }
 
 // Category options dengan label yang lebih user-friendly
 const categoryOptions = [
-  { value: "ELECTRONIC", label: "Elektronik" },
-  { value: "MECHANICAL", label: "Mekanikal" },
-  { value: "CHEMICAL", label: "Kimia" },
   { value: "PACKAGING", label: "Kemasan" },
   { value: "TOOLS", label: "Perkakas" },
   { value: "SPARE_PARTS", label: "Suku Cadang" },
@@ -108,15 +109,17 @@ const unitOptions = [
   { value: "LITER", label: "Liter" },
   { value: "METER", label: "Meter" },
   { value: "BOX", label: "Box" },
+  { value: "SET", label: "Set" },
   { value: "PACK", label: "Pack" },
   { value: "ROLL", label: "Roll" },
 ];
 
 // Brand options
 const brandOptions = [
+  { value: "MITSUBISHI", label: "Mitsubishi" },
   { value: "SCHNEIDER", label: "Schneider Electric" },
-  { value: "ABB", label: "ABB" },
   { value: "SIEMENS", label: "Siemens" },
+  { value: "OTHER", label: "Lainnya" },
 ];
 
 export function MaterialForm({
@@ -137,13 +140,13 @@ export function MaterialForm({
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
-  const getDefaultValues = useCallback((): MaterialTypeFormData => {
+  const getDefaultValues = useCallback((): MaterialTypeFormDataSchema => {
     if (mode === "edit" && materialData) {
       return {
         id: materialData.id,
         code: materialData.code,
         name: materialData.name,
-        description: materialData.description || "",
+        description: materialData.description || undefined,
         category: materialData.category,
         unit: materialData.unit,
         brand: materialData.brand,
@@ -152,9 +155,8 @@ export function MaterialForm({
         maximumStock: materialData.maximumStock ?? undefined,
         goodStock: materialData.goodStock ?? undefined,
         badStock: materialData.badStock ?? undefined,
-        lastPurchasePrice: materialData.lastPurchasePrice
-          ? parseFloat(materialData.lastPurchasePrice.toString())
-          : undefined,
+        lastPurchasePrice:
+          materialData.lastPurchasePrice?.toNumber() ?? undefined,
       };
     }
 
@@ -183,8 +185,8 @@ export function MaterialForm({
           updateMaterialSchema
         ) as Resolver<UpdateMaterialTypeSchema>);
 
-  const form = useForm<MaterialTypeFormData>({
-    resolver: resolver as Resolver<MaterialTypeFormData>,
+  const form = useForm<MaterialTypeFormDataSchema>({
+    resolver: resolver as Resolver<MaterialTypeFormDataSchema>,
     defaultValues: getDefaultValues(),
     mode: "onChange",
   });
@@ -236,24 +238,13 @@ export function MaterialForm({
     },
   });
 
-  const onSubmitMaterial = async (data: MaterialTypeFormData) => {
+  const onSubmitMaterial = async (data: MaterialTypeFormDataSchema) => {
     setIsLoading(true);
     try {
-      const submitData = {
-        ...data,
-        lastPurchasePrice: data.lastPurchasePrice
-          ? new Prisma.Decimal(data.lastPurchasePrice)
-          : null,
-      };
-
       if (mode === "create" && !isUpdateData(data)) {
-        await createMutation.mutateAsync(
-          submitData as CreateMaterialTypeSchema
-        );
+        await createMutation.mutateAsync(data as CreateMaterialTypeSchema);
       } else if (mode === "edit" && isUpdateData(data)) {
-        await updateMutation.mutateAsync(
-          submitData as UpdateMaterialTypeSchema
-        );
+        await updateMutation.mutateAsync(data as UpdateMaterialTypeSchema);
       }
     } catch (error) {
       console.error("Submit error:", error);
@@ -563,7 +554,7 @@ export function MaterialForm({
                           value={field.value ?? ""}
                           onChange={(e) => {
                             const value = e.target.value;
-                            field.onChange(value ? parseInt(value) : undefined);
+                            field.onChange(value ? parseInt(value) : null);
                           }}
                         />
                       </FormControl>
@@ -594,7 +585,7 @@ export function MaterialForm({
                           value={field.value ?? ""}
                           onChange={(e) => {
                             const value = e.target.value;
-                            field.onChange(value ? parseInt(value) : undefined);
+                            field.onChange(value ? parseInt(value) : null);
                           }}
                         />
                       </FormControl>
@@ -625,7 +616,7 @@ export function MaterialForm({
                           value={field.value ?? ""}
                           onChange={(e) => {
                             const value = e.target.value;
-                            field.onChange(value ? parseInt(value) : undefined);
+                            field.onChange(value ? parseInt(value) : null);
                           }}
                         />
                       </FormControl>
@@ -685,16 +676,10 @@ export function MaterialForm({
                           className="pl-14"
                           {...field}
                           // cek instance dari Prisma.Decimal, jika ya maka convert ke string dengan .toString().
-                          value={
-                            field.value instanceof Prisma.Decimal
-                              ? field.value.toString()
-                              : field.value ?? ""
-                          }
+                          value={field.value ?? ""}
                           onChange={(e) => {
                             const value = e.target.value;
-                            field.onChange(
-                              value ? parseFloat(value) : undefined
-                            );
+                            field.onChange(value ? parseFloat(value) : null);
                           }}
                         />
                       </div>

@@ -9,11 +9,27 @@ import {
   supplierSchema,
   supplierUpdateSchema,
 } from "@/schemas/supplierSchema";
-import { validateOptionalDate } from "../validateDate";
+
+const requiredDateSchema = z.string().transform((str) => new Date(str));
+const optionalDateSchema = z
+  .string()
+  .nullable()
+  .optional()
+  .transform((val) => (val ? new Date(val) : null));
+
+const supplierInputSchema = supplierSchema.extend({
+  activeDate: requiredDateSchema,
+  npwpDate: optionalDateSchema,
+});
+
+const updateSupplierSchema = supplierUpdateSchema.extend({
+  activeDate: requiredDateSchema,
+  npwpDate: optionalDateSchema,
+});
 
 export const supplierRouter = router({
   createAllSupplier: protectedProcedure
-    .input(supplierSchema)
+    .input(supplierInputSchema)
     .mutation(async ({ ctx, input }) => {
       try {
         const result = await ctx.db.$transaction(async (tx) => {
@@ -30,8 +46,6 @@ export const supplierRouter = router({
             });
           }
 
-          const npwpDateObj = validateOptionalDate(input.npwpDate);
-
           // 2. Create supplier
           const supplier = await tx.supplier.create({
             data: {
@@ -42,7 +56,7 @@ export const supplierRouter = router({
               npwpNumber: input.npwpNumber,
               npwpName: input.npwpName,
               npwpAddress: input.npwpAddress,
-              npwpDate: npwpDateObj,
+              npwpDate: input.npwpDate,
             },
           });
 
@@ -101,7 +115,7 @@ export const supplierRouter = router({
 
   // Update Supplier dengan atomic transaction
   updateAllSupplier: protectedProcedure
-    .input(supplierUpdateSchema)
+    .input(updateSupplierSchema)
     .mutation(async ({ ctx, input }) => {
       try {
         const result = await ctx.db.$transaction(async (tx) => {
@@ -136,7 +150,6 @@ export const supplierRouter = router({
             }
           }
 
-          const npwpDateObj = validateOptionalDate(input.npwpDate);
           //cek type npwpDate
 
           // Update supplier basic info
@@ -151,7 +164,7 @@ export const supplierRouter = router({
               npwpNumber: input.npwpNumber,
               npwpName: input.npwpName,
               npwpAddress: input.npwpAddress,
-              npwpDate: npwpDateObj,
+              npwpDate: input.npwpDate,
             },
           });
 

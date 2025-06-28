@@ -7,9 +7,24 @@ import {
   updateMaterialSchema,
 } from "@/schemas/materialSchema";
 
+const DecimalSchema = z
+  .union([
+    z.number().min(0, "Harga pembelian tidak boleh negatif"),
+    z.instanceof(Prisma.Decimal),
+  ])
+  .optional();
+
+const CreateMaterialSchema = createMaterialSchema.extend({
+  lastPurchasePrice: DecimalSchema,
+});
+
+const UpdateMaterialSchema = updateMaterialSchema.extend({
+  lastPurchasePrice: DecimalSchema,
+});
+
 export const materialRouter = router({
   createMaterial: protectedProcedure
-    .input(createMaterialSchema)
+    .input(CreateMaterialSchema)
     .mutation(async ({ ctx, input }) => {
       try {
         // Check if code already exists
@@ -26,11 +41,11 @@ export const materialRouter = router({
 
         const data = {
           ...input,
-          lastPurchasePrice: input.lastPurchasePrice
-            ? input.lastPurchasePrice instanceof Prisma.Decimal
-              ? input.lastPurchasePrice
-              : new Prisma.Decimal(input.lastPurchasePrice)
-            : null,
+          lastPurchasePrice:
+            input.lastPurchasePrice !== undefined &&
+            input.lastPurchasePrice !== null
+              ? new Prisma.Decimal(input.lastPurchasePrice)
+              : null,
         };
 
         const material = await ctx.db.material.create({
@@ -55,7 +70,7 @@ export const materialRouter = router({
     }),
 
   updateMaterial: protectedProcedure
-    .input(updateMaterialSchema)
+    .input(UpdateMaterialSchema)
     .mutation(async ({ ctx, input }) => {
       try {
         const { id, ...updateData } = input;
@@ -87,11 +102,11 @@ export const materialRouter = router({
 
         const data = {
           ...updateData,
-          lastPurchasePrice: updateData.lastPurchasePrice
-            ? updateData.lastPurchasePrice instanceof Prisma.Decimal
-              ? updateData.lastPurchasePrice
-              : new Prisma.Decimal(updateData.lastPurchasePrice)
-            : null,
+          lastPurchasePrice:
+            updateData.lastPurchasePrice !== undefined &&
+            updateData.lastPurchasePrice !== null
+              ? new Prisma.Decimal(updateData.lastPurchasePrice)
+              : null,
         };
 
         const material = await ctx.db.material.update({

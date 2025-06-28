@@ -63,6 +63,7 @@ import {
   supplierUpdateSchema,
   SupplierUpdateTypeSchema,
 } from "@/schemas/supplierSchema";
+import { formatDateForInput } from "@/tools/formatDateForInput";
 
 interface SupplierFormProps {
   supplier?: {
@@ -71,12 +72,12 @@ interface SupplierFormProps {
     name: string;
     supplierType: SupplierType;
     statusActive: StatusActive;
-    activeDate: string | null;
+    activeDate: Date | string;
     notes?: string | null;
     npwpNumber?: string | null;
     npwpName?: string | null;
     npwpAddress?: string | null;
-    npwpDate?: string | null;
+    npwpDate?: Date | string | null;
     addresses: Array<{
       id: string;
       addressType: AddressType;
@@ -180,16 +181,12 @@ export function SupplierForm({
         name: supplierData.name,
         supplierType: supplierData.supplierType,
         statusActive: supplierData.statusActive,
-        activeDate: supplierData.activeDate
-          ? new Date(supplierData.activeDate).toISOString().slice(0, 10)
-          : new Date(supplierData.activeDate).toISOString().slice(0, 10),
+        activeDate: formatDateForInput(supplierData.activeDate),
         notes: supplierData.notes || "",
         npwpNumber: supplierData.npwpNumber || "",
         npwpName: supplierData.npwpName || "",
         npwpAddress: supplierData.npwpAddress || "",
-        npwpDate: supplierData.npwpDate
-          ? new Date(supplierData.npwpDate).toISOString().slice(0, 10)
-          : "",
+        npwpDate: formatDateForInput(supplierData.npwpDate),
         addresses: supplierData.addresses.map((addr) => ({
           id: addr.id,
           addressType: addr.addressType,

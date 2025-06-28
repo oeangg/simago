@@ -522,15 +522,9 @@ enum BankingBank {
 }
 
 enum Brand {
-  SAMSUNG
-  BOSCH
-  SONY
-  PANASONIC
   MITSUBISHI
   SIEMENS
-  ABB
   SCHNEIDER
-  GENERIC
   OTHER
 }
 
@@ -555,9 +549,6 @@ enum Gender {
 }
 
 enum MaterialCategory {
-  ELECTRONIC
-  MECHANICAL
-  CHEMICAL
   PACKAGING
   TOOLS
   SPARE_PARTS

@@ -1,3 +1,5 @@
+import { MaterialUpdateDataTable } from "@/components/Featured/Dashboard/Material/UpdateDataTable";
+
 export default function Home() {
-  return <div>Halaman material</div>;
+  return <MaterialUpdateDataTable />;
 }

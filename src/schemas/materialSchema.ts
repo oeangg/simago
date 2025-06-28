@@ -1,16 +1,9 @@
-import { Brand, MaterialCategory, Prisma, Unit } from "@prisma/client";
+import { Brand, MaterialCategory, Unit } from "@prisma/client";
 import { z } from "zod";
 
 const materialCategorySchema = z.nativeEnum(MaterialCategory);
 const unitSchema = z.nativeEnum(Unit);
 const brandSchema = z.nativeEnum(Brand);
-
-const lastPurchasePriceSchema = z
-  .union([
-    z.number().min(0, "Harga pembelian tidak boleh negatif"),
-    z.instanceof(Prisma.Decimal),
-  ])
-  .optional();
 
 // Material schemas
 export const createMaterialSchema = z.object({
@@ -29,30 +22,16 @@ export const createMaterialSchema = z.object({
   brand: brandSchema,
   currentStock: z
     .number()
-    .int("Current stock harus berupa bilangan bulat")
     .min(0, "Current stock tidak boleh negatif")
     .default(0),
   minimumStock: z
     .number()
-    .int("Minimum stock harus berupa bilangan bulat")
     .min(0, "Minimum stock tidak boleh negatif")
     .default(0),
-  maximumStock: z
-    .number()
-    .int("Maximum stock harus berupa bilangan bulat")
-    .min(0, "Maximum stock tidak boleh negatif")
-    .optional(),
-  goodStock: z
-    .number()
-    .int("Good stock harus berupa bilangan bulat")
-    .min(0, "Good stock tidak boleh negatif")
-    .optional(),
-  badStock: z
-    .number()
-    .int("Bad stock harus berupa bilangan bulat")
-    .min(0, "Bad stock tidak boleh negatif")
-    .optional(),
-  lastPurchasePrice: lastPurchasePriceSchema,
+  maximumStock: z.number().min(0).optional(),
+  goodStock: z.number().min(0).optional(),
+  badStock: z.number().min(0).optional(),
+  lastPurchasePrice: z.number().min(0).optional(),
 });
 
 export type CreateMaterialTypeSchema = z.infer<typeof createMaterialSchema>;
