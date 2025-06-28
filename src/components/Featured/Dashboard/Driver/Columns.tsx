@@ -34,7 +34,7 @@ export interface DriverColumnsProps {
   name: string;
   gender: Gender;
   statusActive: boolean;
-  activeDate: string;
+  activeDate: Date | string;
   addressLine1: string;
   addressLine2?: string | null;
   city: string;

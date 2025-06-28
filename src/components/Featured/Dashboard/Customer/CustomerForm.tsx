@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -55,41 +55,43 @@ import {
 import { AddressType, ContactType, StatusActive } from "@prisma/client";
 import { id } from "date-fns/locale";
 import { format } from "date-fns";
+import { formatDateForInput } from "@/tools/formatDateForInput";
 
-interface CustomerFormProps {
-  customer?: {
+interface CustomerFormData {
+  id?: string;
+  code: string;
+  name: string;
+  statusActive: StatusActive;
+  activeDate: Date | string;
+  notes?: string | null;
+  npwpNumber?: string | null;
+  npwpName?: string | null;
+  npwpAddress?: string | null;
+  npwpDate?: Date | string | null;
+  addresses: Array<{
     id: string;
-    code: string;
+    addressType: AddressType;
+    addressLine1: string;
+    addressLine2?: string | null;
+    zipcode?: string | null;
+    isPrimaryAddress: boolean;
+    countryCode: string;
+    provinceCode?: string | null;
+    regencyCode?: string | null;
+    districtCode?: string | null;
+  }>;
+  contacts: Array<{
+    id: string;
+    contactType: ContactType;
     name: string;
-    statusActive: StatusActive;
-    activeDate: string | null;
-    notes?: string | null;
-    npwpNumber?: string | null;
-    npwpName?: string | null;
-    npwpAddress?: string | null;
-    npwpDate?: string | null;
-    addresses: Array<{
-      id: string;
-      addressType: AddressType;
-      addressLine1: string;
-      addressLine2?: string | null;
-      zipcode?: string | null;
-      isPrimaryAddress: boolean;
-      countryCode: string;
-      provinceCode?: string | null;
-      regencyCode?: string | null;
-      districtCode?: string | null;
-    }>;
-    contacts: Array<{
-      id: string;
-      contactType: ContactType;
-      name: string;
-      phoneNumber: string;
-      email?: string | null;
-      isPrimaryContact: boolean;
-      customerId: string;
-    }>;
-  };
+    phoneNumber: string;
+    email?: string | null;
+    isPrimaryContact: boolean;
+    customerId: string;
+  }>;
+}
+interface CustomerFormProps {
+  customer?: CustomerFormData;
   mode: "create" | "edit";
   onSuccess?: () => void;
   onCancel?: () => void;
@@ -135,6 +137,15 @@ const defaultContact = {
   isPrimaryContact: true,
 };
 
+type CustomerTypeFormDataSchema = CustomerTypeSchema | CustomerUpdateTypeSchema;
+
+// Type guard untuk check apakah data memiliki id (untuk update)
+function isUpdateData(
+  data: CustomerTypeFormDataSchema
+): data is CustomerUpdateTypeSchema {
+  return "id" in data;
+}
+
 const MAX_ADDRESSES = 10;
 
 export function CustomerForm({
@@ -165,23 +176,19 @@ export function CustomerForm({
   const { data: provinces = [] } = trpc.City.getProvinces.useQuery();
 
   // Initialize form default values
-  const getDefaultValues = useCallback(() => {
+  const getDefaultValues = useCallback((): CustomerTypeFormDataSchema => {
     if (mode === "edit" && customerData) {
       return {
         id: customerData.id,
         code: customerData.code,
         name: customerData.name,
         statusActive: customerData.statusActive,
-        activeDate: customerData.activeDate
-          ? new Date(customerData.activeDate).toISOString().slice(0, 10)
-          : new Date(customerData.activeDate).toISOString().slice(0, 10),
+        activeDate: formatDateForInput(customerData.activeDate),
         notes: customerData.notes || "",
         npwpNumber: customerData.npwpNumber || "",
         npwpName: customerData.npwpName || "",
         npwpAddress: customerData.npwpAddress || "",
-        npwpDate: customerData.npwpDate
-          ? new Date(customerData.npwpDate).toISOString().slice(0, 10)
-          : "",
+        npwpDate: formatDateForInput(customerData.npwpDate),
         addresses: customerData.addresses.map((addr) => ({
           id: addr.id,
           addressType: addr.addressType,
@@ -222,10 +229,16 @@ export function CustomerForm({
   }, [customerData, mode]);
 
   // Initialize form - key: re-initialize when customerData changes
-  const form = useForm<CustomerTypeSchema>({
-    resolver: zodResolver(
-      mode === "create" ? customerSchema : customerUpdateSchema
-    ),
+
+  const resolver =
+    mode === "create"
+      ? (zodResolver(customerSchema) as Resolver<CustomerTypeSchema>)
+      : (zodResolver(
+          customerUpdateSchema
+        ) as Resolver<CustomerUpdateTypeSchema>);
+
+  const form = useForm<CustomerTypeFormDataSchema>({
+    resolver: resolver as Resolver<CustomerTypeFormDataSchema>,
     defaultValues: getDefaultValues(),
     mode: "onChange",
   });
@@ -357,71 +370,18 @@ export function CustomerForm({
     [form]
   );
 
-  // Helper function to clean form data
-  const cleanFormData = useCallback((data: CustomerTypeSchema) => {
-    // Helper untuk convert empty string ke undefined
-    const emptyToUndefined = (value: string | undefined) => {
-      return value && value.trim() !== "" ? value : undefined;
-    };
-
-    return {
-      code: data.code,
-      name: data.name,
-      statusActive: data.statusActive,
-      activeDate: data.activeDate,
-      notes: emptyToUndefined(data.notes),
-      npwpNumber: emptyToUndefined(data.npwpNumber),
-      npwpName: emptyToUndefined(data.npwpName),
-      npwpAddress: emptyToUndefined(data.npwpAddress),
-      npwpDate: emptyToUndefined(data.npwpDate),
-      addresses: data.addresses?.map((address) => ({
-        ...(address.id && { id: address.id }), // Only include id if exists
-        addressType: address.addressType,
-        addressLine1: address.addressLine1,
-        addressLine2: emptyToUndefined(address.addressLine2),
-        zipcode: emptyToUndefined(address.zipcode),
-        isPrimaryAddress: address.isPrimaryAddress,
-        countryCode: address.countryCode,
-        // Location fields - undefined untuk International
-        provinceCode:
-          address.countryCode === "ID"
-            ? emptyToUndefined(address.provinceCode)
-            : undefined,
-        regencyCode:
-          address.countryCode === "ID"
-            ? emptyToUndefined(address.regencyCode)
-            : undefined,
-        districtCode:
-          address.countryCode === "ID"
-            ? emptyToUndefined(address.districtCode)
-            : undefined,
-      })),
-      contacts: data.contacts?.map((contact) => ({
-        ...(contact.id && { id: contact.id }), // Only include id if exists
-        contactType: contact.contactType,
-        name: contact.name,
-        phoneNumber: contact.phoneNumber,
-        email: emptyToUndefined(contact.email),
-        isPrimaryContact: contact.isPrimaryContact,
-        ...(contact.customerId && { customerId: contact.customerId }), // Only include customerId if exists
-      })),
-    };
-  }, []);
-
   // Submit handler
-  const onSubmitCustomer = async (data: CustomerTypeSchema) => {
+  const onSubmitCustomer = async (data: CustomerTypeFormDataSchema) => {
     setIsLoading(true);
     try {
-      const cleanedData = cleanFormData(data);
-      console.log("Submitting data:", cleanedData);
+      const submitData = data;
 
-      if (mode === "create") {
-        await createMutation.mutateAsync(cleanedData);
-      } else {
-        await updateMutation.mutateAsync({
-          ...cleanedData,
-          id: customer?.id,
-        } as CustomerUpdateTypeSchema);
+      if (mode === "create" && !isUpdateData(data)) {
+        await createMutation.mutateAsync(submitData as CustomerTypeSchema);
+      } else if (mode === "edit" && isUpdateData(data)) {
+        await updateMutation.mutateAsync(
+          submitData as CustomerUpdateTypeSchema
+        );
       }
     } catch (error) {
       console.error("Submit error:", error);

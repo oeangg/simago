@@ -9,12 +9,28 @@ import {
   InputContactTypeSchema,
 } from "@/schemas/customerSchema";
 import { StatusActive } from "@prisma/client";
-import { validateOptionalDate } from "../validateDate";
+
+const requiredDateSchema = z.string().transform((str) => new Date(str));
+const optionalDateSchema = z
+  .string()
+  .nullable()
+  .optional()
+  .transform((val) => (val ? new Date(val) : null));
+
+const InputCustomerSchema = customerSchema.extend({
+  activeDate: requiredDateSchema,
+  npwpDate: optionalDateSchema,
+});
+
+const UpdateCustomerSchema = customerUpdateSchema.extend({
+  activeDate: requiredDateSchema,
+  npwpDate: optionalDateSchema,
+});
 
 export const customerRouter = router({
   // Create Customer dengan atomic transaction
   createAllCustomer: protectedProcedure
-    .input(customerSchema)
+    .input(InputCustomerSchema)
     .mutation(async ({ ctx, input }) => {
       try {
         const result = await ctx.db.$transaction(async (tx) => {
@@ -32,7 +48,6 @@ export const customerRouter = router({
           }
 
           //cek type npwpDate
-          const npwpDateObj = validateOptionalDate(input.npwpDate);
 
           // 2. Create customer
           const customer = await tx.customer.create({
@@ -43,7 +58,7 @@ export const customerRouter = router({
               npwpNumber: input.npwpNumber,
               npwpName: input.npwpName,
               npwpAddress: input.npwpAddress,
-              npwpDate: npwpDateObj,
+              npwpDate: input.npwpDate,
             },
           });
 
@@ -102,7 +117,7 @@ export const customerRouter = router({
 
   // Update Customer dengan atomic transaction
   updateAllCustomer: protectedProcedure
-    .input(customerUpdateSchema)
+    .input(UpdateCustomerSchema)
     .mutation(async ({ ctx, input }) => {
       try {
         const result = await ctx.db.$transaction(async (tx) => {
@@ -137,9 +152,6 @@ export const customerRouter = router({
             }
           }
 
-          //cek type npwpDate
-          const npwpDateObj = validateOptionalDate(input.npwpDate);
-
           // Update customer basic info
           await tx.customer.update({
             where: { id: input.id },
@@ -151,7 +163,7 @@ export const customerRouter = router({
               npwpNumber: input.npwpNumber,
               npwpName: input.npwpName,
               npwpAddress: input.npwpAddress,
-              npwpDate: npwpDateObj,
+              npwpDate: input.npwpDate,
             },
           });
 

@@ -2,12 +2,21 @@ import { driverSchema, driverUpdateSchema } from "@/schemas/driverSchema";
 import { protectedProcedure, router } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import { Gender } from "@prisma/client";
-import { validateRequiredDate } from "../validateDate";
 import { z } from "zod";
+
+const requiredDateSchema = z.string().transform((str) => new Date(str));
+
+const InputDriverSchema = driverSchema.extend({
+  activeDate: requiredDateSchema,
+});
+
+const UpdateDriverSchema = driverUpdateSchema.extend({
+  activeDate: requiredDateSchema,
+});
 
 export const driverRouter = router({
   createDriver: protectedProcedure
-    .input(driverSchema)
+    .input(InputDriverSchema)
     .mutation(async ({ ctx, input }) => {
       try {
         const driverIsExist = await ctx.db.driver.findUnique({
@@ -23,11 +32,6 @@ export const driverRouter = router({
           });
         }
 
-        const activeDateObj = validateRequiredDate(
-          input.activeDate,
-          "Tanggal Aktif"
-        );
-
         const newDriver = await ctx.db.driver.create({
           data: {
             code: input.code,
@@ -35,7 +39,7 @@ export const driverRouter = router({
             city: input.city,
             gender: input.gender as Gender,
             phoneNumber: input.phoneNumber,
-            activeDate: activeDateObj,
+            activeDate: input.activeDate,
             addressLine1: input.addressLine1,
             addressLine2: input.addressLine2 || null,
           },
@@ -55,7 +59,7 @@ export const driverRouter = router({
     }),
 
   updateDriver: protectedProcedure
-    .input(driverUpdateSchema)
+    .input(UpdateDriverSchema)
     .mutation(async ({ ctx, input }) => {
       try {
         const driverIsExist = await ctx.db.driver.findUnique({
@@ -84,11 +88,6 @@ export const driverRouter = router({
           }
         }
 
-        const activeDateObj = validateRequiredDate(
-          input.activeDate,
-          "Tanggal Aktif"
-        );
-
         const result = await ctx.db.driver.update({
           where: {
             id: input.id,
@@ -98,7 +97,7 @@ export const driverRouter = router({
             city: input.city,
             gender: input.gender as Gender,
             phoneNumber: input.phoneNumber,
-            activeDate: activeDateObj,
+            activeDate: input.activeDate,
             statusActive: input.statusActive,
             addressLine1: input.addressLine1,
             addressLine2: input.addressLine2 || null,

@@ -36,7 +36,7 @@ export type EmployeeColumns = {
   nik: string;
   name: string;
   isActive: boolean;
-  activeDate: string;
+  activeDate: Date | string;
   gender: Gender;
   address: string;
   city: string;
@@ -44,11 +44,11 @@ export type EmployeeColumns = {
   phoneNumber: string;
   photo?: string | null;
   ttdDigital?: string | null;
-  resignDate?: string | null;
+  resignDate?: Date | string | null;
   employments: {
     id: string;
-    startDate: string;
-    endDate?: string | null;
+    startDate: Date | string;
+    endDate?: Date | string | null;
     position: {
       id: string;
       name: string;

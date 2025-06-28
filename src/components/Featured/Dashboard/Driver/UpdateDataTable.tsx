@@ -153,6 +153,7 @@ export const DriverUpdateDataTable = () => {
               city: driver.city,
               phoneNumber: driver.phoneNumber,
               statusActive: driver.statusActive,
+
               activeDate: driver.activeDate,
             };
           }

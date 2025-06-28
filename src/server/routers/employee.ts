@@ -1,9 +1,11 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../trpc";
-import { employeeSchema, employeeSchemaUpdate } from "@/schemas/employeeSchema";
+import {
+  inputEmployeeRouterSchema,
+  updateEmployeeRouterSchema,
+} from "@/schemas/employeeSchema";
 import { TRPCError } from "@trpc/server";
 import { Gender, Prisma } from "@prisma/client";
-import { validateOptionalDate, validateRequiredDate } from "../validateDate";
 
 export const employeeRouter = router({
   getAllEmployee: protectedProcedure
@@ -176,7 +178,7 @@ export const employeeRouter = router({
     }),
 
   createFullEmployee: protectedProcedure
-    .input(employeeSchema)
+    .input(inputEmployeeRouterSchema)
     .mutation(async ({ ctx, input }) => {
       // console.log("Input received:", JSON.stringify(input, null, 2));
       try {
@@ -191,11 +193,6 @@ export const employeeRouter = router({
           });
         }
 
-        const activeDate = validateRequiredDate(
-          input.activeDate,
-          "Tanggal aktif"
-        );
-
         const result = await ctx.db.$transaction(async (prisma) => {
           // Create employee
           const employee = await prisma.employee.create({
@@ -203,10 +200,8 @@ export const employeeRouter = router({
               nik: input.nik.toUpperCase(),
               name: input.name,
               isActive: input.isActive,
-              activeDate: activeDate,
-              resignDate: input.resignDate
-                ? validateOptionalDate(input.resignDate)
-                : null,
+              activeDate: input.activeDate,
+              resignDate: input.resignDate,
               gender: input.gender,
               address: input.address,
               city: input.city,
@@ -222,17 +217,10 @@ export const employeeRouter = router({
             // mengonversi string tanggal kembali ke objek Date
             const employmentDataForPrismaDB = input.employments.map((emp) => {
               // --- Validasi dan Konversi startDate ---
-              const startDateObj = validateRequiredDate(
-                emp.startDate,
-                "Tanggal mulai"
-              );
-              // endDate optional
-              const endDateObj = validateOptionalDate(emp.endDate);
-              // --- Validasi dan Konversi endDate ---
 
               return {
-                startDate: startDateObj,
-                endDate: endDateObj,
+                startDate: emp.startDate,
+                endDate: emp.endDate,
                 positionId: emp.positionId,
                 divisionId: emp.divisionId,
                 employeeId: employee.id,
@@ -261,7 +249,7 @@ export const employeeRouter = router({
     }),
 
   updateFullEmployee: protectedProcedure
-    .input(employeeSchemaUpdate)
+    .input(updateEmployeeRouterSchema)
     .mutation(async ({ ctx, input }) => {
       try {
         // Check if employee exists
@@ -290,13 +278,6 @@ export const employeeRouter = router({
           }
         }
 
-        const activeDate = validateRequiredDate(
-          input.activeDate,
-          "Tanggal aktif"
-        );
-
-        const resignDate = validateOptionalDate(input.resignDate);
-        // Update employee with employment data using transaction
         const result = await ctx.db.$transaction(async (prisma) => {
           // Update employee data
           const employee = await prisma.employee.update({
@@ -305,8 +286,8 @@ export const employeeRouter = router({
               // nik: input.nik,
               name: input.name,
               isActive: input.isActive,
-              activeDate: activeDate,
-              resignDate: resignDate,
+              activeDate: input.activeDate,
+              resignDate: input.resignDate,
               gender: input.gender,
               address: input.address,
               city: input.city,
@@ -328,17 +309,9 @@ export const employeeRouter = router({
             const employmentDataForPrismaDB = input.employments.map((emp) => {
               // --- Validasi dan Konversi startDate ---
 
-              const startDateObj = validateRequiredDate(
-                emp.startDate,
-                "Tanggal mulai"
-              );
-              // endDate optional
-              const endDateObj = validateOptionalDate(emp.endDate);
-              // --- Validasi dan Konversi endDate ---
-
               return {
-                startDate: startDateObj,
-                endDate: endDateObj,
+                startDate: emp.startDate,
+                endDate: emp.endDate,
                 positionId: emp.positionId,
                 divisionId: emp.divisionId,
                 employeeId: employee.id,

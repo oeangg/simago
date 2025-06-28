@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -42,23 +42,34 @@ import {
   DriverUpdateTypeSchema,
 } from "@/schemas/driverSchema";
 import { Switch } from "@/components/ui/switch";
+import { formatDateForInput } from "@/tools/formatDateForInput";
 
+interface DriverFormData {
+  id?: string;
+  code: string;
+  name: string;
+  gender: Gender;
+  statusActive: boolean;
+  activeDate: Date | string;
+  addressLine1: string;
+  addressLine2?: string | null;
+  city: string;
+  phoneNumber: string;
+}
 interface DriverFormProps {
-  driver?: {
-    id: string;
-    code: string;
-    name: string;
-    gender: Gender;
-    statusActive: boolean;
-    activeDate: string;
-    addressLine1: string;
-    addressLine2?: string | null;
-    city: string;
-    phoneNumber: string;
-  };
+  driver?: DriverFormData;
   mode: "create" | "edit";
   onSuccess?: () => void;
   onCancel?: () => void;
+}
+
+type DriverTypeFormDataSchema = DriverTypeSchema | DriverUpdateTypeSchema;
+
+// Type guard untuk check apakah data memiliki id (untuk update)
+function isUpdateData(
+  data: DriverTypeFormDataSchema
+): data is DriverUpdateTypeSchema {
+  return "id" in data;
 }
 
 export function DriverForm({
@@ -80,7 +91,7 @@ export function DriverForm({
   );
 
   // Initialize form default values
-  const getDefaultValues = useCallback(() => {
+  const getDefaultValues = useCallback((): DriverTypeFormDataSchema => {
     if (mode === "edit" && driverData) {
       return {
         id: driverData.id,
@@ -92,9 +103,7 @@ export function DriverForm({
         city: driverData.city,
         phoneNumber: driverData.phoneNumber,
         statusActive: driverData.statusActive,
-        activeDate: driverData.activeDate
-          ? new Date(driverData.activeDate).toISOString().slice(0, 10)
-          : new Date(driverData.activeDate).toISOString().slice(0, 10),
+        activeDate: formatDateForInput(driverData.activeDate),
       };
     }
 
@@ -107,15 +116,19 @@ export function DriverForm({
       city: "",
       phoneNumber: "",
       statusActive: true,
-      activeDate: "",
+      activeDate: new Date().toISOString().split("T")[0],
     };
   }, [driverData, mode]);
 
   // Initialize form
-  const form = useForm<DriverTypeSchema>({
-    resolver: zodResolver(
-      mode === "create" ? driverSchema : driverUpdateSchema
-    ),
+
+  const resolver =
+    mode === "create"
+      ? (zodResolver(driverSchema) as Resolver<DriverTypeSchema>)
+      : (zodResolver(driverUpdateSchema) as Resolver<DriverUpdateTypeSchema>);
+
+  const form = useForm<DriverTypeFormDataSchema>({
+    resolver: resolver as Resolver<DriverTypeFormDataSchema>,
     defaultValues: getDefaultValues(),
     mode: "onChange",
   });
@@ -164,50 +177,24 @@ export function DriverForm({
     },
   });
 
-  // Helper function to clean form data
-  const cleanFormData = useCallback((data: DriverTypeSchema) => {
-    // Helper untuk convert empty string ke undefined
-    const emptyToUndefined = (value: string | undefined) => {
-      return value && value.trim() !== "" ? value : undefined;
-    };
-
-    return {
-      code: data.code,
-      name: data.name,
-      gender: data.gender as Gender,
-      addressLine1: data.addressLine1,
-      addressLine2: emptyToUndefined(data.addressLine2),
-      city: data.city,
-      phoneNumber: data.phoneNumber,
-      statusActive: data.statusActive,
-      activeDate: data.activeDate,
-    };
-  }, []);
-
   // Submit handler
-  const onSubmitDriver = useCallback(
-    async (data: DriverTypeSchema) => {
-      setIsLoading(true);
-      try {
-        const cleanedData = cleanFormData(data);
+  const onSubmitDriver = async (data: DriverTypeFormDataSchema) => {
+    setIsLoading(true);
+    try {
+      const submitData = data;
 
-        if (mode === "create") {
-          await createMutation.mutateAsync(cleanedData);
-        } else {
-          await updateMutation.mutateAsync({
-            ...cleanedData,
-            id: driver?.id,
-          } as DriverUpdateTypeSchema);
-        }
-      } catch (error) {
-        console.error("Submit error:", error);
-        toast.error("Terjadi kesalahan saat menyimpan data");
-      } finally {
-        setIsLoading(false);
+      if (mode === "create" && !isUpdateData(data)) {
+        await createMutation.mutateAsync(submitData as DriverTypeSchema);
+      } else if (mode === "edit" && isUpdateData(data)) {
+        await updateMutation.mutateAsync(submitData as DriverUpdateTypeSchema);
       }
-    },
-    [mode, createMutation, updateMutation, driver?.id, cleanFormData]
-  );
+    } catch (error) {
+      console.error("Submit error:", error);
+      toast.error("Terjadi kesalahan saat menyimpan data");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Handle cancel
   const handleCancel = useCallback(() => {

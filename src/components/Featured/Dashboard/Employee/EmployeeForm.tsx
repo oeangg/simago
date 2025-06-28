@@ -38,7 +38,11 @@ import {
   User,
   FileSignature,
 } from "lucide-react";
-import { employeeSchema, employeeTypeSchema } from "@/schemas/employeeSchema";
+import {
+  employeeSchema,
+  employeeTypeSchema,
+  employeeUpdateTypeSchema,
+} from "@/schemas/employeeSchema";
 import { Gender } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import {
@@ -52,42 +56,53 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
+import { formatDateForInput } from "@/tools/formatDateForInput";
+
+interface EmployeeFormData {
+  id?: string;
+  nik: string;
+  name: string;
+  isActive: boolean;
+  activeDate: Date | string;
+  gender: Gender;
+  address: string;
+  city: string;
+  zipcode: string;
+  photo?: string | null;
+  ttdDigital?: string | null;
+  resignDate?: Date | string | null;
+  phoneNumber: string;
+  employments: Array<{
+    id: string;
+    startDate: Date | string;
+    endDate?: Date | string | null;
+    positionId: string;
+    position: {
+      id: string;
+      name: string;
+    };
+    divisionId: string;
+    division: {
+      id: string;
+      name: string;
+    };
+  }>;
+}
 
 interface EmployeeFormProps {
-  employee?: {
-    id: string;
-    nik: string;
-    name: string;
-    isActive: boolean;
-    activeDate: string;
-    gender: Gender;
-    address: string;
-    city: string;
-    zipcode: string;
-    photo?: string | null;
-    ttdDigital?: string | null;
-    resignDate?: string | null;
-    phoneNumber: string;
-    employments: Array<{
-      id: string;
-      startDate: string;
-      endDate?: string | null;
-      positionId: string;
-      position: {
-        id: string;
-        name: string;
-      };
-      divisionId: string;
-      division: {
-        id: string;
-        name: string;
-      };
-    }>;
-  };
+  employee?: EmployeeFormData;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
+type EmployeeTypeFormDataSchema = employeeTypeSchema | employeeUpdateTypeSchema;
+
+// Type guard untuk check apakah data memiliki id (untuk update)
+function isUpdateData(
+  data: EmployeeTypeFormDataSchema
+): data is employeeUpdateTypeSchema {
+  return "id" in data;
+}
 // Position Add Dialog Component
 function AddPositionDialog({
   onPositionAdded,
@@ -104,29 +119,25 @@ function AddPositionDialog({
   const { mutateAsync: createPosition, isPending: isCreatingPosition } =
     trpc.Position.createPosition.useMutation();
 
-  const handleSubmit = useCallback(
-    async (data: { name: string }) => {
-      if (!data.name.trim()) return;
+  const handleSubmit = async (data: { name: string }) => {
+    if (!data.name.trim()) return;
 
-      try {
-        const result = await createPosition({ name: data.name.trim() });
-        onPositionAdded(result.data);
-        toast.success(result.message);
-        positionForm.reset();
-        setOpen(false);
-      } catch (error: unknown) {
-        if (error instanceof TRPCError) {
-          toast.error(error.message);
-        } else if (error instanceof Error) {
-          toast.error(error.message);
-        } else {
-          toast.error("Gagal menambahkan posisi");
-        }
+    try {
+      const result = await createPosition({ name: data.name.trim() });
+      onPositionAdded(result.data);
+      toast.success(result.message);
+      positionForm.reset();
+      setOpen(false);
+    } catch (error: unknown) {
+      if (error instanceof TRPCError) {
+        toast.error(error.message);
+      } else if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Gagal menambahkan posisi");
       }
-    },
-    [createPosition, onPositionAdded, positionForm]
-  );
-
+    }
+  };
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -217,28 +228,25 @@ function AddDivisionDialog({
   const { mutateAsync: createDivision, isPending: isCreatingDivision } =
     trpc.Division.createDivision.useMutation();
 
-  const handleSubmitDivision = useCallback(
-    async (data: { name: string }) => {
-      if (!data.name.trim()) return;
+  const handleSubmitDivision = async (data: { name: string }) => {
+    if (!data.name.trim()) return;
 
-      try {
-        const result = await createDivision({ name: data.name.trim() });
-        onDivisionAdded(result.data);
-        toast.success(result.message);
-        divisionForm.reset();
-        setOpen(false);
-      } catch (error: unknown) {
-        if (error instanceof TRPCError) {
-          toast.error(error.message);
-        } else if (error instanceof Error) {
-          toast.error(error.message);
-        } else {
-          toast.error("Gagal menambahkan divisi");
-        }
+    try {
+      const result = await createDivision({ name: data.name.trim() });
+      onDivisionAdded(result.data);
+      toast.success(result.message);
+      divisionForm.reset();
+      setOpen(false);
+    } catch (error: unknown) {
+      if (error instanceof TRPCError) {
+        toast.error(error.message);
+      } else if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Gagal menambahkan divisi");
       }
-    },
-    [createDivision, onDivisionAdded, divisionForm]
-  );
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -332,34 +340,28 @@ export function EmployeeForm({
   const { data: divisions = [], refetch: refetcDivisions } =
     trpc.Division.getAllDivision.useQuery();
 
-  const form = useForm<employeeTypeSchema>({
+  const form = useForm<EmployeeTypeFormDataSchema>({
     resolver: zodResolver(employeeSchema),
     defaultValues: {
       nik: employee?.nik || "",
       name: employee?.name || "",
       isActive: employee?.isActive ?? true,
-      activeDate: employee?.activeDate
-        ? new Date(employee.activeDate).toISOString().slice(0, 10)
-        : "",
+      activeDate:
+        formatDateForInput(employee?.activeDate) ||
+        new Date().toISOString().split("T")[0],
       gender: employee?.gender || undefined,
       address: employee?.address || "",
       city: employee?.city || "",
       zipcode: employee?.zipcode || "",
       photo: employee?.photo || "",
       ttdDigital: employee?.ttdDigital || "",
-      resignDate: employee?.resignDate
-        ? new Date(employee.activeDate).toISOString().slice(0, 10)
-        : "",
+      resignDate: formatDateForInput(employee?.resignDate) || "",
       phoneNumber: employee?.phoneNumber || "",
       employments:
         employee?.employments?.map((emp) => ({
           id: emp.id,
-          startDate: emp.startDate
-            ? new Date(emp.startDate).toISOString().slice(0, 10)
-            : "",
-          endDate: emp.endDate
-            ? new Date(emp.startDate).toISOString().slice(0, 10)
-            : "",
+          startDate: formatDateForInput(emp.startDate) || "",
+          endDate: formatDateForInput(emp.endDate) || "",
           positionId: emp.positionId,
           divisionId: emp.divisionId,
         })) || [],
@@ -410,36 +412,30 @@ export function EmployeeForm({
   );
 
   // Handle file upload for photo
-  const handlePhotoChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) {
-        alert("Fitur Coming Soon...");
-      }
-    },
-    []
-  );
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      alert("Fitur Coming Soon...");
+    }
+  };
 
   // Handle file upload for TTD
-  const handleTtdChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) {
-        alert("Fitur Coming Soon...");
-      }
-    },
-    []
-  );
+  const handleTtdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      alert("Fitur Coming Soon...");
+    }
+  };
 
-  const removePhoto = useCallback(() => {
+  const removePhoto = () => {
     setPhotoPreview(null);
     setValue("photo", "");
-  }, [setValue]);
+  };
 
-  const removeTtd = useCallback(() => {
+  const removeTtd = () => {
     setTtdPreview(null);
     setValue("ttdDigital", "");
-  }, [setValue]);
+  };
 
   const addEmployment = useCallback(() => {
     append({
@@ -464,74 +460,45 @@ export function EmployeeForm({
 
   const utils = trpc.useUtils();
 
-  const onSubmitEmployee = useCallback(
-    async (data: employeeTypeSchema) => {
-      try {
-        const processedData = {
-          ...data,
-          activeDate: new Date(data.activeDate).toISOString(),
-          employment: data.employments?.map((emp) => ({
-            ...emp,
-            startDate: new Date(emp.startDate).toISOString(),
-            endDate: emp.endDate
-              ? new Date(emp.endDate).toISOString()
-              : undefined,
-          })),
-        };
+  const onSubmitEmployee = async (data: EmployeeTypeFormDataSchema) => {
+    try {
+      const processedData = data;
 
-        let result;
-        if (isEdit && employee) {
-          result = await updateEmployee({
-            id: employee.id,
-            ...processedData,
-          });
-        } else {
-          result = await createEmployee(processedData);
-          form.reset(); // Reset form only for new employee creation
-        }
-
-        toast.success(result.message);
-
-        utils.Employee.invalidate();
-        // Invalidate queries
-        // queryClient.invalidateQueries({ queryKey: ["Employee"] });
-        // queryClient.invalidateQueries({ queryKey: ["Employment"] });
-
-        onSuccess?.();
-      } catch (error: unknown) {
-        console.error("Form submission error:", error);
-
-        if (error instanceof TRPCError) {
-          toast.error(error.message);
-        } else if (error instanceof Error) {
-          toast.error(error.message);
-        } else {
-          toast.error("Telah terjadi kesalahan");
-        }
+      let result;
+      if (isEdit && isUpdateData(data)) {
+        result = await updateEmployee(
+          processedData as employeeUpdateTypeSchema
+        );
+      } else {
+        result = await createEmployee(processedData as employeeTypeSchema);
+        form.reset(); // Reset form only for new employee creation
       }
-    },
-    [
-      isEdit,
-      employee,
-      createEmployee,
-      updateEmployee,
-      form,
-      onSuccess,
-      utils.Employee,
-    ]
-  );
 
-  const handleCancel = useCallback(() => {
-    // if (isDirty) {
-    //   const confirmLeave = confirm(
-    //     "Ada perubahan yang belum disimpan. Yakin ingin keluar?"
-    //   );
-    //   if (!confirmLeave) return;
-    // }
+      toast.success(result.message);
 
+      utils.Employee.invalidate();
+      // Invalidate queries
+      // queryClient.invalidateQueries({ queryKey: ["Employee"] });
+      // queryClient.invalidateQueries({ queryKey: ["Employment"] });
+
+      onSuccess?.();
+    } catch (error: unknown) {
+      console.error("Form submission error:", error);
+
+      if (error instanceof TRPCError) {
+        toast.error(error.message);
+      } else if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Telah terjadi kesalahan");
+      }
+    }
+  };
+
+  const handleCancel = () => {
     reset();
     onCancel?.();
-  }, [reset, onCancel]);
+  };
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
