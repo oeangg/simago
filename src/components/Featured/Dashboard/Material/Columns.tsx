@@ -42,11 +42,10 @@ export interface MaterialColumnsProps {
   category: MaterialCategory;
   unit: Unit;
   brand: Brand;
-  currentStock: number;
   minimumStock: number;
   maximumStock?: number | null;
-  goodStock?: number | null;
-  badStock?: number | null;
+  goodStock: number;
+  badStock: number;
   lastPurchasePrice?: number | null;
 }
 
@@ -266,7 +265,7 @@ export const MaterialColumns = (
     cell: ({ row }) => {
       const material = row.original;
       const stockStatus = getStockStatus(
-        material.currentStock,
+        material.goodStock,
         material.minimumStock,
         material.maximumStock
       );
@@ -291,7 +290,7 @@ export const MaterialColumns = (
                   stockStatus.status === "low" && "text-yellow-600"
                 )}
               >
-                {formatNumber(material.currentStock)} {material.unit}
+                {formatNumber(material.goodStock)} {material.unit}
               </span>
             </div>
             <Badge

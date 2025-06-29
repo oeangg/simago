@@ -6,6 +6,7 @@ import { driverRouter } from "./routers/driver";
 import { employeeRouter } from "./routers/employee";
 import { employmentRouter } from "./routers/employment";
 import { materialRouter } from "./routers/material";
+import { materialInRouter } from "./routers/materialIn";
 import { positionRouter } from "./routers/position";
 import { supplierRouter } from "./routers/supplier";
 import { userRouter } from "./routers/user";
@@ -27,6 +28,7 @@ export const appRouter = router({
   Vendor: vendorRouter,
   Vehicle: vehicleRouter,
   Material: materialRouter,
+  MaterialIn: materialInRouter,
 });
 
 export type AppRouter = typeof appRouter;

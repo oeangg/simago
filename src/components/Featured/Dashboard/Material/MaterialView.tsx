@@ -230,7 +230,7 @@ export default function ViewMaterial({
     }
 
     const stockStatus = getStockStatus(
-      dataMaterial.currentStock,
+      dataMaterial.goodStock,
       dataMaterial.minimumStock,
       dataMaterial.maximumStock
     );
@@ -334,7 +334,7 @@ export default function ViewMaterial({
                         Stok Saat Ini
                       </div>
                       <p className="text-lg font-semibold">
-                        {formatNumber(dataMaterial.currentStock)}{" "}
+                        {formatNumber(dataMaterial.goodStock)}{" "}
                         {dataMaterial.unit}
                       </p>
                     </div>
@@ -526,7 +526,7 @@ export default function ViewMaterial({
                   </div>
                   <p className="font-medium pl-6">
                     {formatCurrency(
-                      dataMaterial.currentStock *
+                      dataMaterial.goodStock *
                         dataMaterial.lastPurchasePrice.toNumber()
                     )}
                   </p>

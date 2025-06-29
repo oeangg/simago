@@ -20,10 +20,6 @@ export const createMaterialSchema = z.object({
   category: materialCategorySchema,
   unit: unitSchema,
   brand: brandSchema,
-  currentStock: z
-    .number()
-    .min(0, "Current stock tidak boleh negatif")
-    .default(0),
   minimumStock: z
     .number()
     .min(0, "Minimum stock tidak boleh negatif")

@@ -106,8 +106,6 @@ model Vehicle {
 
 //
 
-
-
 enum VehicleType {
   BOX
   TRUCK
@@ -184,13 +182,13 @@ model VendorContact {
 
 model VendorBanking {
   id                     String      @id @default(cuid())
-  bankingNumber          String      
+  bankingNumber          String
   bankingName            String
   bankingBank            BankingBank
   bankingBranch          String
   isPrimaryBankingNumber Boolean
   vendorId               String
-  vendor                 Vendor      @relation(fields: [vendorId], references: [id], onDelete: Cascade )
+  vendor                 Vendor      @relation(fields: [vendorId], references: [id], onDelete: Cascade)
 
   @@unique([vendorId, isPrimaryBankingNumber], name: "OnePrimaryBankingNumberPerVendor")
   @@index([bankingNumber])
@@ -295,11 +293,10 @@ model Material {
   category          MaterialCategory
   unit              Unit
   brand             Brand
-  currentStock      Int               @default(0)
   minimumStock      Int               @default(0)
   maximumStock      Int?
-  goodStock         Int?
-  badStock          Int?
+  goodStock         Int               @default(0)
+  badStock          Int               @default(0)
   lastPurchasePrice Decimal?          @db.Decimal(10, 2)
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
@@ -312,7 +309,7 @@ model Material {
 
 model MaterialIn {
   id                   String           @id @default(cuid())
-  transactionNo        String           @unique //bisa autogenerat
+  transactionNo        String           @unique
   supplierId           String
   supplierName         String
   transactionDate      DateTime         @default(now())
@@ -341,6 +338,7 @@ model MaterialInItem {
   quantity     Int
   unitPrice    Decimal    @db.Decimal(10, 2)
   totalPrice   Decimal    @db.Decimal(12, 2) // quantity * unitPrice
+  stockType StockType @default(GOOD)
   notes        String?
   stockBefore  Int // Stock sebelum transaksi
   stockAfter   Int // Stock setelah transaksi
@@ -362,6 +360,7 @@ model MaterialOut {
   totalTax             Decimal           @db.Decimal(12, 2)
   otherCosts           Decimal           @db.Decimal(12, 2)
   totalAmount          Decimal           @db.Decimal(12, 2)
+
   notes                String?
   createdBy            String
   createdByUser        User              @relation(fields: [createdBy], references: [id])
@@ -383,7 +382,7 @@ model MaterialOutItem {
   unitCost  Decimal? @db.Decimal(10, 2) // Cost per unit (untuk internal costing)
   totalCost Decimal? @db.Decimal(12, 2) // quantity * unitCost
   notes     String?
-
+  stockType StockType @default(GOOD)
   // Stock tracking
   stockBefore Int // Stock sebelum transaksi
   stockAfter  Int // Stock setelah transaksi
@@ -589,4 +588,9 @@ enum Unit {
   ROLL
   SET
   PACK
+}
+
+enum StockType {
+  GOOD
+  BAD
 }

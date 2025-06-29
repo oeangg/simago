@@ -1,6 +1,7 @@
 import {
   BookOpen,
   Bot,
+  Box,
   Frame,
   LucideIcon,
   Settings2,
@@ -158,6 +159,22 @@ export const data: sidebarData = {
         },
         {
           title: "Laporan empat",
+          url: "#",
+        },
+      ],
+    },
+    {
+      title: "Warehouse",
+      icon: Box,
+      url: "#",
+      roles: ["MANAGER", "ADMIN", "SUPER_ADMIN"],
+      items: [
+        {
+          title: "Pembelian Material",
+          url: "/dashboard/pembelian-material",
+        },
+        {
+          title: "Pengeluaran Material",
           url: "#",
         },
       ],

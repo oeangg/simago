@@ -95,7 +95,6 @@ export const MaterialEditPage = ({ id }: materialEditPageProps) => {
     category: dataMaterial.category,
     unit: dataMaterial.unit,
     brand: dataMaterial.brand,
-    currentStock: dataMaterial.currentStock,
     minimumStock: dataMaterial.minimumStock,
     maximumStock: dataMaterial.maximumStock,
     goodStock: dataMaterial.goodStock,

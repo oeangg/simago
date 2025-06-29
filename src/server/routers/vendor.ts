@@ -68,11 +68,40 @@ export const vendorRouter = router({
 
           // 3. Create addresses
           if (input.vendorAddresses && input.vendorAddresses.length > 0) {
-            await tx.vendorAddress.createMany({
-              data: input.vendorAddresses.map((address) => ({
-                ...address,
+            const processedAddresses = input.vendorAddresses.map((address) => {
+              // If country is not Indonesia (ID), clear Indonesian location codes
+              if (address.countryCode !== "ID") {
+                return {
+                  addressType: address.addressType,
+                  addressLine1: address.addressLine1,
+                  addressLine2: address.addressLine2,
+                  zipcode: address.zipcode,
+                  isPrimaryAddress: address.isPrimaryAddress,
+                  countryCode: address.countryCode,
+                  provinceCode: null,
+                  regencyCode: null,
+                  districtCode: null,
+                  vendorId: vendor.id,
+                };
+              }
+
+              // For Indonesia, keep the location codes
+              return {
+                addressType: address.addressType,
+                addressLine1: address.addressLine1,
+                addressLine2: address.addressLine2,
+                zipcode: address.zipcode,
+                isPrimaryAddress: address.isPrimaryAddress,
+                countryCode: address.countryCode,
+                provinceCode: address.provinceCode,
+                regencyCode: address.regencyCode,
+                districtCode: address.districtCode,
                 vendorId: vendor.id,
-              })),
+              };
+            });
+
+            await tx.vendorAddress.createMany({
+              data: processedAddresses,
             });
           }
 
@@ -195,8 +224,9 @@ export const vendorRouter = router({
           if (input.vendorAddresses && input.vendorAddresses.length > 0) {
             for (const address of input.vendorAddresses) {
               if (address.id) {
-                // Update existing address - hanya update provided fields
+                // Update existing address
                 const updateData: Partial<InputVendorAddressTypeSchema> = {};
+
                 if (address.addressType !== undefined)
                   updateData.addressType = address.addressType;
                 if (address.addressLine1 !== undefined)
@@ -209,19 +239,29 @@ export const vendorRouter = router({
                   updateData.isPrimaryAddress = address.isPrimaryAddress;
                 if (address.countryCode !== undefined)
                   updateData.countryCode = address.countryCode;
-                if (address.provinceCode !== undefined)
-                  updateData.provinceCode = address.provinceCode;
-                if (address.regencyCode !== undefined)
-                  updateData.regencyCode = address.regencyCode;
-                if (address.districtCode !== undefined)
-                  updateData.districtCode = address.districtCode;
+
+                // Handle location codes based on country - with proper type handling
+                if (address.countryCode === "ID") {
+                  // For Indonesia, use the provided values or undefined
+                  if (address.provinceCode !== undefined)
+                    updateData.provinceCode = address.provinceCode;
+                  if (address.regencyCode !== undefined)
+                    updateData.regencyCode = address.regencyCode;
+                  if (address.districtCode !== undefined)
+                    updateData.districtCode = address.districtCode;
+                } else if (address.countryCode !== undefined) {
+                  // For non-Indonesia, explicitly set to undefined (not null)
+                  updateData.provinceCode = undefined;
+                  updateData.regencyCode = undefined;
+                  updateData.districtCode = undefined;
+                }
 
                 await tx.vendorAddress.update({
                   where: { id: address.id },
                   data: updateData,
                 });
               } else {
-                // Create new jika address msh kosong - cek data wajib diisi sudah tersedia
+                // Create new address
                 if (
                   !address.addressType ||
                   !address.addressLine1 ||
@@ -235,7 +275,6 @@ export const vendorRouter = router({
                   });
                 }
 
-                //jika address kosong create
                 await tx.vendorAddress.create({
                   data: {
                     addressType: address.addressType,
@@ -244,9 +283,18 @@ export const vendorRouter = router({
                     zipcode: address.zipcode || null,
                     isPrimaryAddress: address.isPrimaryAddress,
                     countryCode: address.countryCode,
-                    provinceCode: address.provinceCode || null,
-                    regencyCode: address.regencyCode || null,
-                    districtCode: address.districtCode || null,
+                    provinceCode:
+                      address.countryCode === "ID"
+                        ? address.provinceCode || null
+                        : null,
+                    regencyCode:
+                      address.countryCode === "ID"
+                        ? address.regencyCode || null
+                        : null,
+                    districtCode:
+                      address.countryCode === "ID"
+                        ? address.districtCode || null
+                        : null,
                     vendorId: input.id,
                   },
                 });

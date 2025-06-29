@@ -154,7 +154,6 @@ export const MaterialUpdateDataTable = () => {
                 category: materialData.category,
                 unit: materialData.unit,
                 brand: materialData.brand,
-                currentStock: materialData.currentStock,
                 minimumStock: materialData.minimumStock,
                 maximumStock: materialData.maximumStock ?? undefined,
                 goodStock: materialData.goodStock ?? undefined,

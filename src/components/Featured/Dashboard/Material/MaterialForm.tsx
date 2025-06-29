@@ -67,7 +67,6 @@ export interface MaterialFormData {
   category: MaterialCategory;
   unit: Unit;
   brand: Brand;
-  currentStock: number;
   minimumStock: number;
   maximumStock?: number | null;
   goodStock?: number | null;
@@ -150,7 +149,6 @@ export function MaterialForm({
         category: materialData.category,
         unit: materialData.unit,
         brand: materialData.brand,
-        currentStock: materialData.currentStock,
         minimumStock: materialData.minimumStock,
         maximumStock: materialData.maximumStock ?? undefined,
         goodStock: materialData.goodStock ?? undefined,
@@ -167,7 +165,6 @@ export function MaterialForm({
       category: "RAW_MATERIAL" as MaterialCategory,
       unit: "BOX" as Unit,
       brand: "SCHNEIDER" as Brand,
-      currentStock: 0,
       minimumStock: 0,
       maximumStock: undefined,
       goodStock: undefined,
@@ -473,37 +470,6 @@ export function MaterialForm({
               <div className="grid gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
-                  name="currentStock"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        Stok Saat Ini <span className="text-red-500">*</span>
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <Info className="h-3 w-3 text-muted-foreground" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Jumlah stok yang tersedia saat ini</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="0"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(parseInt(e.target.value) || 0)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
                   name="minimumStock"
                   render={({ field }) => (
                     <FormItem>
@@ -630,7 +596,8 @@ export function MaterialForm({
               </div>
 
               {/* Stock Status Alert */}
-              {form.watch("currentStock") < form.watch("minimumStock") && (
+              {(form.watch("goodStock") ?? 0) <
+                (form.watch("minimumStock") ?? 0) && (
                 <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-md">
                   <AlertCircle className="h-4 w-4 text-red-600" />
                   <p className="text-sm text-red-600">
