@@ -326,6 +326,7 @@ export function CustomerForm({
     onSuccess: () => {
       toast.success("Customer berhasil diperbarui");
       utils.Customer.getAllCustomers.invalidate();
+      utils.Customer.getCustomer.invalidate({ id: customer?.id });
       if (onSuccess) {
         onSuccess();
       } else {

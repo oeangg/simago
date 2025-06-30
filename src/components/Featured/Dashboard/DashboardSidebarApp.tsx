@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { ChevronRight, GalleryVerticalEnd, LogOut } from "lucide-react";
+// import { ChevronRight, GalleryVerticalEnd, LogOut } from "lucide-react";
+import { ChevronRight, LogOut } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 
 import {
@@ -32,6 +33,7 @@ import { Payload } from "@/app/dashboard/layout";
 import { data, SidebarItem } from "@/constants/sidebarItem";
 import { useSetAtom } from "jotai";
 import { headerTitleAtom } from "@/lib/jotai";
+import Image from "next/image";
 
 // This is sample data.
 
@@ -82,9 +84,10 @@ export function DashboardSidebarApp({ payload, ...props }: AppSidebarProps) {
             size="lg"
             className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
           >
-            <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-              <GalleryVerticalEnd className="size-4" />
-            </div>
+            {/* <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg"> */}
+            {/* <GalleryVerticalEnd className="size-4" /> */}
+            <Image src="/logo/logoNew.PNG" height={50} width={50} alt="logo" />
+            {/* </div> */}
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate tracking-wider font-medium uppercase">
                 Simago

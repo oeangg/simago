@@ -469,6 +469,7 @@ export function EmployeeForm({
         result = await updateEmployee(
           processedData as employeeUpdateTypeSchema
         );
+        utils.Employee.getEmployeebyId.invalidate({ id: employee.id });
       } else {
         result = await createEmployee(processedData as employeeTypeSchema);
         form.reset(); // Reset form only for new employee creation
@@ -476,10 +477,7 @@ export function EmployeeForm({
 
       toast.success(result.message);
 
-      utils.Employee.invalidate();
-      // Invalidate queries
-      // queryClient.invalidateQueries({ queryKey: ["Employee"] });
-      // queryClient.invalidateQueries({ queryKey: ["Employment"] });
+      utils.Employee.getAllEmployee.invalidate();
 
       onSuccess?.();
     } catch (error: unknown) {

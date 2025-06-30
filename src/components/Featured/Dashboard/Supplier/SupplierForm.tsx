@@ -322,6 +322,7 @@ export function SupplierForm({
     onSuccess: () => {
       toast.success("Supplier berhasil diperbarui");
       utils.Supplier.getAllSuppliers.invalidate();
+      utils.Supplier.getSupplier.invalidate({ id: supplier?.id });
       if (onSuccess) {
         onSuccess();
       } else {
@@ -421,29 +422,26 @@ export function SupplierForm({
   }, []);
 
   // Submit handler
-  const onSubmitSupplier = useCallback(
-    async (data: SupplierTypeSchema) => {
-      setIsLoading(true);
-      try {
-        const cleanedData = cleanFormData(data);
+  const onSubmitSupplier = async (data: SupplierTypeSchema) => {
+    setIsLoading(true);
+    try {
+      const cleanedData = cleanFormData(data);
 
-        if (mode === "create") {
-          await createMutation.mutateAsync(cleanedData);
-        } else {
-          await updateMutation.mutateAsync({
-            ...cleanedData,
-            id: supplier?.id,
-          } as SupplierUpdateTypeSchema);
-        }
-      } catch (error) {
-        console.error("Submit error:", error);
-        toast.error("Terjadi kesalahan saat menyimpan data");
-      } finally {
-        setIsLoading(false);
+      if (mode === "create") {
+        await createMutation.mutateAsync(cleanedData);
+      } else {
+        await updateMutation.mutateAsync({
+          ...cleanedData,
+          id: supplier?.id,
+        } as SupplierUpdateTypeSchema);
       }
-    },
-    [mode, createMutation, updateMutation, supplier?.id, cleanFormData]
-  );
+    } catch (error) {
+      console.error("Submit error:", error);
+      toast.error("Terjadi kesalahan saat menyimpan data");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Handle primary selection
   const handlePrimaryAddress = useCallback(

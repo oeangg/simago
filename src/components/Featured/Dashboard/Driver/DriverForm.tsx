@@ -166,6 +166,7 @@ export function DriverForm({
     onSuccess: () => {
       toast.success("Data driver berhasil diperbarui");
       utils.Driver.getAllDrivers.invalidate();
+      utils.Driver.getDriverById.invalidate({ id: driver?.id });
       if (onSuccess) {
         onSuccess();
       } else {

@@ -190,6 +190,7 @@ export function VehicleForm({
     onSuccess: (data) => {
       toast.success(data.message);
       utils.Vehicle.getAllVehicle.invalidate();
+      utils.Vehicle.getVehicleById.invalidate({ id: vehicle?.id });
       if (onSuccess) {
         onSuccess();
       } else {

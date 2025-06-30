@@ -180,7 +180,7 @@ export const materialInRouter = router({
     }),
 
   // Get Material In by ID
-  getMaterialById: protectedProcedure
+  getMaterialInById: protectedProcedure
     .input(getMaterialInByIdInput)
     .output(
       materialInSchema.extend({
@@ -226,7 +226,7 @@ export const materialInRouter = router({
     }),
 
   // Get All Material Ins with Pagination
-  getMaterialAll: protectedProcedure
+  getMaterialInAll: protectedProcedure
     .input(getMaterialInsInput)
     .output(
       z.object({
@@ -267,6 +267,13 @@ export const materialInRouter = router({
             transactionDate: {
               gte: startDate,
               lte: endDate,
+            },
+          }),
+
+        ...(startDate &&
+          !endDate && {
+            transactionDate: {
+              gte: startDate,
             },
           }),
       };

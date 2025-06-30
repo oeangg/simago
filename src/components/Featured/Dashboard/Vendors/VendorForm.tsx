@@ -386,6 +386,7 @@ export function VendorForm({
     onSuccess: () => {
       toast.success("Vendor berhasil diperbarui");
       utils.Vendor.getAllVendors.invalidate();
+      utils.Vendor.getVendorById.invalidate({ id: vendor?.id });
       if (onSuccess) {
         onSuccess();
       } else {

@@ -54,6 +54,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { MaterialSelectCell } from "./MaterialSelectedCell";
+import { useRouter } from "next/navigation";
 
 // Define interfaces
 interface Material {
@@ -210,6 +212,7 @@ export function MaterialInForm({
 }: MaterialInFormProps) {
   const utils = trpc.useUtils();
   const [open, setOpen] = React.useState(false);
+  const router = useRouter();
   //get last seq number
   const { data: lastTransactionNo } =
     trpc.MaterialIn.getLastTransactionNumber.useQuery(undefined, {
@@ -268,8 +271,12 @@ export function MaterialInForm({
   const createMutation = trpc.MaterialIn.createMaterialIn.useMutation({
     onSuccess: () => {
       toast.success("Material In berhasil dibuat");
-      utils.MaterialIn.getMaterialAll.invalidate();
-      onSuccess?.();
+      utils.MaterialIn.getMaterialInAll.invalidate();
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.push("/dashboard/pembelian-material");
+      }
     },
     onError: (error) => {
       toast.error(error.message);
@@ -279,8 +286,8 @@ export function MaterialInForm({
   const updateMutation = trpc.MaterialIn.updateMaterialIn.useMutation({
     onSuccess: () => {
       toast.success("Material In berhasil diperbarui");
-      utils.MaterialIn.getMaterialAll.invalidate();
-      utils.MaterialIn.getMaterialById.invalidate({ id: materialIn?.id });
+      utils.MaterialIn.getMaterialInAll.invalidate();
+      utils.MaterialIn.getMaterialInById.invalidate({ id: materialIn?.id });
       onSuccess?.();
     },
     onError: (error) => {
@@ -484,83 +491,42 @@ export function MaterialInForm({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>
+                  <TableHead className="w-64">
                     Material <span className="text-red-500">*</span>
                   </TableHead>
-                  <TableHead>
+                  <TableHead className="w-20">
                     Type Stock <span className="text-red-500">*</span>
                   </TableHead>
-                  <TableHead className="w-32">
+                  <TableHead className="w-24">
                     Qty <span className="text-red-500">*</span>
                   </TableHead>
                   <TableHead className="w-40">
                     Harga <span className="text-red-500">*</span>
                   </TableHead>
-                  <TableHead className="w-40">Total</TableHead>
+                  <TableHead className="w-32">Total</TableHead>
                   <TableHead>Catatan</TableHead>
                   <TableHead className="w-10"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {fields.map((field, index) => {
-                  const material = materials.find(
-                    (m) => m.id === watchItems[index]?.materialId
-                  );
+                  // const material = materials.find(
+                  //   (m) => m.id === watchItems[index]?.materialId
+                  // );
                   const itemTotal =
                     (watchItems[index]?.quantity || 0) *
                     (watchItems[index]?.unitPrice || 0);
 
                   return (
                     <TableRow key={field.id}>
-                      <TableCell>
-                        <FormField
-                          control={form.control}
-                          name={`items.${index}.materialId`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <Select
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Pilih material" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {materials.map((mat) => (
-                                    <SelectItem key={mat.id} value={mat.id}>
-                                      <div className="flex flex-col">
-                                        <span>
-                                          {mat.code} - {mat.name}
-                                        </span>
-                                        <span className="text-xs text-muted-foreground">
-                                          Good: {mat.goodStock} | Bad:{" "}
-                                          {mat.badStock} {mat.unit}
-                                        </span>
-                                      </div>
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        {material && (
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            Stok{" "}
-                            {watchItems[index]?.stockType === "BAD"
-                              ? "Bad"
-                              : "Good"}
-                            :{" "}
-                            {watchItems[index]?.stockType === "BAD"
-                              ? material.badStock
-                              : material.goodStock}{" "}
-                            {material.unit}
-                          </p>
-                        )}
-                      </TableCell>
+                      {/* //material */}
+
+                      <MaterialSelectCell
+                        form={form}
+                        index={index}
+                        materials={materials}
+                        watchItems={watchItems}
+                      />
                       {/* // Add select for stock type in table */}
                       <TableCell>
                         <FormField

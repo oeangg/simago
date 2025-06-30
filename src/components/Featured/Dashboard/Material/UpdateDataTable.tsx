@@ -13,7 +13,7 @@ import ViewMaterial from "./MaterialView";
 import { MaterialDataTable } from "./DataTable";
 
 // Skeleton component untuk loading state
-const SupplierTableSkeleton = () => {
+const TableSkeleton = () => {
   return (
     <div className="space-y-4">
       {/* Filter skeleton */}
@@ -219,7 +219,7 @@ export const MaterialUpdateDataTable = () => {
 
   // Show skeleton while loading
   if (isLoadingMaterial) {
-    return <SupplierTableSkeleton />;
+    return <TableSkeleton />;
   }
 
   // Create columns with actions
