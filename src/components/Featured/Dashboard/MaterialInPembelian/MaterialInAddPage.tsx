@@ -63,7 +63,7 @@ export function MaterialInAddPage() {
           <h1 className="text-3xl font-bold tracking-tight">
             Pembelian Material
           </h1>
-          <p className="text-muted-foreground">Tambah data Material</p>
+          <p className="text-muted-foreground">Tambah data pembelian </p>
         </div>
         <Button type="button" variant="outline" onClick={handleCancel}>
           <X className="mr-2 h-4 w-4" />

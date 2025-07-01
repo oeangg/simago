@@ -21,7 +21,6 @@ import {
   VisibilityState,
 } from "@tanstack/react-table";
 import React from "react";
-import { id as localeId } from "date-fns/locale";
 import { Plus, X, Package, Loader2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -35,6 +34,8 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/cn";
 import { getMaterialInFromRow } from "./DataTableUtils";
 import { exportToCSV } from "@/tools/exportToCSV";
+import { toast } from "sonner";
+import { formatDate } from "@/tools/formatDateLocal";
 
 interface DataTableProps {
   columns: ColumnDef<MaterialInColumnsProps>[];
@@ -62,6 +63,7 @@ export function MaterialInDataTable({
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
+  const [isExploring, setIsExporting] = React.useState(false);
 
   const table = useReactTable({
     data,
@@ -129,37 +131,57 @@ export function MaterialInDataTable({
     onDateRangeChange({ from, to });
   };
 
-  const formatDate = (date: Date | string) => {
-    const dateObj = typeof date === "string" ? new Date(date) : date;
-    return format(dateObj, "dd MMM yyyy", { locale: localeId });
-  };
-
   // Export selected rows using utility
+
   const exportSelectedRows = () => {
-    const selectedRows = table.getFilteredSelectedRowModel().rows;
-    const materials = selectedRows
-      .map((row) => {
-        try {
-          return getMaterialInFromRow(row);
-        } catch (error) {
-          console.error("Error getting material in from row:", error);
-          return null;
-        }
-      })
-      .filter(
-        (material): material is MaterialInColumnsProps => material !== null
-      );
+    try {
+      setIsExporting(true);
+      const selectedRows = table.getFilteredSelectedRowModel().rows;
+      const materialins = selectedRows
+        .map((row) => {
+          try {
+            return getMaterialInFromRow(row);
+          } catch (error) {
+            console.error("Error getting materialIns from row:", error);
+            return null;
+          }
+        })
+        .filter(
+          (materialin): materialin is MaterialInColumnsProps =>
+            materialin !== null
+        );
 
-    if (materials.length > 0) {
-      const csvData = materials.map((dt) => ({
-        "No Transaksi": dt.transactionNo,
-        "Tgl Transaksi": formatDate(dt.transactionDate),
-        Supplier: dt.supplierName,
-        "Jumlah Items": dt.items.length.toString(),
-        "Total Amount": dt.totalAmount,
-      }));
+      if (materialins.length === 0) {
+        console.warn("No materialin selected for export");
+        return;
+      }
 
-      exportToCSV(csvData, "data-pembelian-material");
+      // Perbaikan: Map setiap vendor dengan index yang sesuai
+      const csvData = materialins.map((dt) => {
+        // Ambil data berdasarkan vendor yang sedang diproses
+        // Helper function untuk format alamat
+
+        return {
+          "No Transaksi": dt.transactionNo,
+          "Tgl Transaksi": formatDate(dt.transactionDate),
+          Supplier: dt.supplierName,
+          "Jumlah Items": dt.items.length.toString(),
+          "Total Amount": dt.totalAmount,
+        };
+      });
+
+      if (csvData.length === 0) {
+        toast.error("Tidak ada data untuk diekspor");
+        return;
+      }
+
+      exportToCSV(csvData, "data-vendors");
+      toast.success(`${csvData.length} vendor berhasil dieksport`);
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Gagal mengekspor data");
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -268,7 +290,13 @@ export function MaterialInDataTable({
             {table.getFilteredSelectedRowModel().rows.length} pembelian dipilih
           </span>
           <div className="flex gap-4">
-            <Button variant="outline" size="sm" onClick={exportSelectedRows}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="disabled:opacity-60"
+              onClick={exportSelectedRows}
+              disabled={isExploring}
+            >
               <Download className="mr-2 h-4 w-4" />
               Export to CSV ({table.getFilteredSelectedRowModel().rows.length})
             </Button>

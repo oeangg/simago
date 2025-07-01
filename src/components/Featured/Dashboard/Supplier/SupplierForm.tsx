@@ -45,7 +45,6 @@ import {
   Phone,
   FileText,
   Mail,
-  CalendarIcon,
   Warehouse,
   HandCoins,
 } from "lucide-react";
@@ -55,8 +54,7 @@ import {
   StatusActive,
   SupplierType,
 } from "@prisma/client";
-import { id } from "date-fns/locale";
-import { format } from "date-fns";
+
 import {
   supplierSchema,
   SupplierTypeSchema,
@@ -214,7 +212,7 @@ export function SupplierForm({
     return {
       code: "",
       name: "",
-      supplierType: "DOMESTIC" as SupplierType,
+      supplierType: "LOGISTIC" as SupplierType,
       activeDate: new Date().toISOString().split("T")[0],
       statusActive: "ACTIVE" as StatusActive,
       notes: "",
@@ -377,7 +375,6 @@ export function SupplierForm({
     };
 
     return {
-      code: data.code,
       name: data.name,
       supplierType: data.supplierType,
       statusActive: data.statusActive,
@@ -547,26 +544,6 @@ export function SupplierForm({
             <div className="grid gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
-                name="code"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Kode Supplier <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="ex : SUPP-001"
-                        {...field}
-                        disabled={mode === "edit"}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
@@ -580,9 +557,6 @@ export function SupplierForm({
                   </FormItem>
                 )}
               />
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
                 name="supplierType"
@@ -616,85 +590,81 @@ export function SupplierForm({
                   </FormItem>
                 )}
               />
+            </div>
 
-              <div className="grid grid-cols-2 gap-2 ">
+            <div className="grid gap-4 md:grid-cols-4">
+              <div className="col-span-2">
                 <FormField
                   control={form.control}
-                  name="statusActive"
+                  name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        disabled={mode !== "edit"}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Pilih status" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="ACTIVE">
-                            <Badge className="bg-green-500">Active</Badge>
-                          </SelectItem>
-                          <SelectItem value="NOACTIVE">
-                            <Badge variant="destructive">No Active</Badge>
-                          </SelectItem>
-                          <SelectItem value="SUSPENDED">
-                            <Badge className="bg-yellow-500">
-                              Ditangguhkan
-                            </Badge>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="activeDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tanggal Aktif</FormLabel>
+                      <FormLabel>Catatan</FormLabel>
                       <FormControl>
-                        <div className="flex items-center px-3 py-2 border border-input bg-background rounded-md">
-                          <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">
-                            {field.value
-                              ? format(new Date(field.value), "dd MMMM yyyy", {
-                                  locale: id,
-                                })
-                              : "Tanggal belum diset"}
-                          </span>
-                        </div>
+                        <Textarea
+                          placeholder="Masukkan catatan..."
+                          className="resize-none"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
-            </div>
 
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Catatan</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Masukkan catatan..."
-                      className="resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="statusActive"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      disabled={mode !== "edit"}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Pilih status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="ACTIVE">
+                          <Badge className="bg-green-500">Active</Badge>
+                        </SelectItem>
+                        <SelectItem value="NOACTIVE">
+                          <Badge variant="destructive">No Active</Badge>
+                        </SelectItem>
+                        <SelectItem value="SUSPENDED">
+                          <Badge className="bg-yellow-500">Ditangguhkan</Badge>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="activeDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tanggal Terdaftar</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="date"
+                        placeholder="Tanggal terdaftar..."
+                        className="resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </CardContent>
         </Card>
 

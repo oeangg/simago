@@ -6,6 +6,7 @@ import { z } from "zod";
 import { SignJWT } from "jose";
 import { cookies } from "next/headers";
 import { Payload } from "@/types/payload";
+import { Role } from "@prisma/client";
 
 export const authRouter = router({
   Register: publicProcedure
@@ -130,7 +131,7 @@ export const authRouter = router({
 
       const payload: Payload = {
         sessionId: createSession.id,
-        role: findUser.role,
+        role: findUser.role as Role,
         userId: findUser.id,
       };
 
@@ -151,8 +152,6 @@ export const authRouter = router({
         maxAge: 60 * 60 * 24, //1day
         sameSite: "lax",
       });
-
-      console.log(token);
 
       return { message: `${findUser.fullname}, Selamat datang kembali!` };
     }),

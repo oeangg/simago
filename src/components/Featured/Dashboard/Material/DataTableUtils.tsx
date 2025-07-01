@@ -10,7 +10,8 @@ export function isMaterialData(data: unknown): data is MaterialColumnsProps {
     "category" in data &&
     "unit" in data &&
     "brand" in data &&
-    "currentStock" in data &&
+    "goodStock" in data &&
+    "badStock" in data &&
     "minimumStock" in data
   );
 }

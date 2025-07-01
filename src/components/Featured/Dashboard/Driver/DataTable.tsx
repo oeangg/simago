@@ -40,6 +40,7 @@ import { exportToCSV } from "@/tools/exportToCSV";
 import { DriverColumnsProps } from "./Columns";
 import { getDriverFromRow, searchDriver } from "./DataTableUtils";
 import { DriverDataPagination } from "./Pagination";
+import { formatDate } from "@/tools/formatDateLocal";
 
 interface DataTableProps<TData extends DriverColumnsProps, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -113,13 +114,12 @@ export function DriverDataTable<TData extends DriverColumnsProps, TValue>({
       const csvData = drivers.map((dt) => ({
         Code: dt.code,
         Nama: dt.name,
+        "Alamat ": `${dt.addressLine1} ,${dt.addressLine2}`,
         Kota: dt.city,
-        Alamat1: dt.addressLine1,
-        Alamat2: dt.addressLine2 || "",
         Gender: dt.gender === "MALE" ? "Laki-laki" : "Perempuan",
         "No. Telepon": dt.phoneNumber,
         Status: dt.statusActive ? "Aktif" : "Non-Aktif",
-        TanggalAktif: dt.activeDate,
+        "Tanggal Aktif": formatDate(dt.activeDate),
       }));
 
       exportToCSV(csvData, "data-driver");
@@ -135,7 +135,7 @@ export function DriverDataTable<TData extends DriverColumnsProps, TValue>({
         {/* Search */}
         <div className="flex-1 w-full sm:w-auto">
           <Input
-            placeholder="Cari karyawan (nama, NIK, divisi, jabatan, alamat, telepon)..."
+            placeholder="Cari driver (kode, nama, alamat, telepon)..."
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
             className="max-w-md"

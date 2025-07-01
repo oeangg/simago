@@ -47,7 +47,6 @@ import {
   Mail,
   HandCoins,
   CreditCard,
-  CalendarIcon,
 } from "lucide-react";
 import {
   AddressType,
@@ -63,8 +62,6 @@ import {
   vendorUpdateSchema,
   VendorUpdateTypeSchema,
 } from "@/schemas/vendorSchema";
-import { format } from "date-fns";
-import { id } from "date-fns/locale";
 import { formatDateForInput } from "@/tools/formatDateForInput";
 
 interface VendorFormProps {
@@ -210,7 +207,6 @@ export function VendorForm({
     if (mode === "edit" && vendorData) {
       return {
         id: vendorData.id,
-        code: vendorData.code,
         name: vendorData.name,
         vendorType: vendorData.vendorType,
         statusActive: vendorData.statusActive,
@@ -259,7 +255,6 @@ export function VendorForm({
     }
 
     return {
-      code: "",
       name: "",
       vendorType: "LOGISTIC" as VendorType,
       statusActive: "ACTIVE" as StatusActive,
@@ -594,27 +589,7 @@ export function VendorForm({
             <CardDescription>Masukkan informasi dasar Vendor</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-6">
-            <div className="grid gap-4 md:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="code"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Kode Vendor <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="ex : VEN-001"
-                        {...field}
-                        disabled={mode === "edit"}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+            <div className="grid gap-4 md:grid-cols-3">
               <FormField
                 control={form.control}
                 name="name"
@@ -630,9 +605,7 @@ export function VendorForm({
                   </FormItem>
                 )}
               />
-            </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
                 name="vendorType"
@@ -693,22 +666,7 @@ export function VendorForm({
                   <FormItem>
                     <FormLabel>Tanggal Aktif</FormLabel>
                     <FormControl>
-                      <div className="flex items-center px-3 py-2 border border-input bg-background rounded-md">
-                        <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">
-                          {/* new Date().toISOString().split("T")[0]
-                          {field.value
-                            ? format(new Date(field.value), "dd MMMM yyyy", {
-                                locale: id,
-                              })
-                            : "Tanggal belum diset"} */}
-                          {field.value
-                            ? format(new Date(field.value), "dd MMMM yyyy", {
-                                locale: id,
-                              })
-                            : "Tanggal belum diset"}
-                        </span>
-                      </div>
+                      <Input type="date" {...field} className="block w-full" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

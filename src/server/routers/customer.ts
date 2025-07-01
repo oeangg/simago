@@ -9,6 +9,7 @@ import {
   InputContactTypeSchema,
 } from "@/schemas/customerSchema";
 import { StatusActive } from "@prisma/client";
+import { generateCodeAutoNumber } from "@/tools/generateCodeAutoNumber";
 
 const requiredDateSchema = z.string().transform((str) => new Date(str));
 const optionalDateSchema = z
@@ -35,9 +36,22 @@ export const customerRouter = router({
       try {
         const result = await ctx.db.$transaction(async (tx) => {
           // 1. Check if customer code already exists
+          const userId = ctx.session?.userId;
+          if (!userId) {
+            throw new TRPCError({
+              code: "UNAUTHORIZED",
+              message: "User not authenticated",
+            });
+          }
+          const code = await generateCodeAutoNumber({
+            db: ctx.db,
+            prefix: "CU",
+            tableName: "customers",
+            fieldName: "code",
+          });
 
           const existingCustomer = await tx.customer.findUnique({
-            where: { code: input.code },
+            where: { code: code },
           });
 
           if (existingCustomer) {
@@ -52,7 +66,7 @@ export const customerRouter = router({
           // 2. Create customer
           const customer = await tx.customer.create({
             data: {
-              code: input.code,
+              code,
               name: input.name,
               notes: input.notes,
               npwpNumber: input.npwpNumber,
@@ -167,25 +181,10 @@ export const customerRouter = router({
             });
           }
 
-          // 2. Update customer data if provided
-          if (input.code && input.code !== existingCustomer.code) {
-            const codeExists = await tx.customer.findUnique({
-              where: { code: input.code },
-            });
-
-            if (codeExists) {
-              throw new TRPCError({
-                code: "CONFLICT",
-                message: "Kode customer sudah digunakan",
-              });
-            }
-          }
-
           // Update customer basic info
           await tx.customer.update({
             where: { id: input.id },
             data: {
-              code: input.code,
               name: input.name,
               statusActive: input.statusActive,
               notes: input.notes,

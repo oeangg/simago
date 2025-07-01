@@ -109,14 +109,6 @@ export const inputVendorBankingSchema = z
 // Base vendor schema without refinements
 export const vendorSchema = z.object({
   // Basic Information
-  code: z
-    .string()
-    .min(1, "Kode vendor tidak boleh kosong")
-    .max(10, "Kode Maksimal 10 karakter")
-    .regex(
-      /^[A-Z0-9-]+$/,
-      "Kode vendor hanya boleh huruf kapital, angka, dan strip"
-    ),
 
   name: z.string().min(1, "Nama vendor tidak boleh kosong"),
   vendorType: vendorTypeSchema,

@@ -7,14 +7,6 @@ const brandSchema = z.nativeEnum(Brand);
 
 // Material schemas
 export const createMaterialSchema = z.object({
-  code: z
-    .string()
-    .min(1, "Kode material harus diisi")
-    .max(12, "Kode material maksimal 12 karakter")
-    .regex(
-      /^[A-Z0-9-_]+$/,
-      "Kode hanya boleh huruf besar, angka, tanda hubung dan underscore"
-    ),
   name: z.string().min(1, "Nama material harus diisi"),
   description: z.string().optional(),
   category: materialCategorySchema,

@@ -39,6 +39,8 @@ import { exportToCSV } from "@/tools/exportToCSV";
 import { VendorColumnsProps } from "./Columns";
 import { getVendorFromRow, searchVendor } from "./DataTableUtils";
 import { VendorDataPagination } from "./Pagination";
+import { formatDate } from "@/tools/formatDateLocal";
+import { toast } from "sonner";
 
 interface DataTableProps<TData extends VendorColumnsProps, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -57,6 +59,7 @@ export function VendorDataTable<TData extends VendorColumnsProps, TValue>({
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
   const [globalFilter, setGlobalFilter] = React.useState("");
+  const [isExporting, setIsExporting] = React.useState(false);
 
   const table = useReactTable({
     data,
@@ -95,30 +98,101 @@ export function VendorDataTable<TData extends VendorColumnsProps, TValue>({
 
   // Export selected rows using utility
   const exportSelectedRows = () => {
-    const selectedRows = table.getFilteredSelectedRowModel().rows;
-    const vendors = selectedRows
-      .map((row) => {
-        try {
-          return getVendorFromRow(row);
-        } catch (error) {
-          console.error("Error getting vendor from row:", error);
-          return null;
-        }
-      })
-      .filter((vendor): vendor is VendorColumnsProps => vendor !== null);
+    try {
+      setIsExporting(true);
+      const selectedRows = table.getFilteredSelectedRowModel().rows;
+      const vendors = selectedRows
+        .map((row) => {
+          try {
+            return getVendorFromRow(row);
+          } catch (error) {
+            console.error("Error getting vendor from row:", error);
+            return null;
+          }
+        })
+        .filter((vendor): vendor is VendorColumnsProps => vendor !== null);
 
-    if (vendors.length > 0) {
-      const csvData = vendors.map((dt) => ({
-        Code: dt.code,
-        Nama: dt.name,
-        Alamat: dt.vendorAddresses[0]?.addressLine1 || "-",
-        Kontak: dt.vendorContacts[0]?.name || "-",
-        Banking: dt.vendorBankings[0]?.bankingNumber.toString() || "-",
-        Status: dt.statusActive ? "Aktif" : "Non-Aktif",
-        TanggalAktif: dt.activeDate,
-      }));
+      if (vendors.length === 0) {
+        console.warn("No vendors selected for export");
+        return;
+      }
+
+      // Perbaikan: Map setiap vendor dengan index yang sesuai
+      const csvData = vendors.map((vendor) => {
+        // Ambil data berdasarkan vendor yang sedang diproses
+        const primaryAddress = vendor.vendorAddresses.find(
+          (ad) => ad.isPrimaryAddress
+        );
+        const primaryContact = vendor.vendorContacts.find(
+          (contact) => contact.isPrimaryContact
+        );
+        const primaryBanking = vendor.vendorBankings.find(
+          (banking) => banking.isPrimaryBankingNumber
+        );
+
+        // Helper function untuk format alamat
+
+        const formatAddress = (address: typeof primaryAddress) => {
+          if (!address) return "-";
+
+          const parts = [
+            address.addressLine1,
+            address.addressLine2,
+            address.province?.name,
+            address.regency?.name,
+            address.district?.name,
+          ].filter(Boolean); // Remove empty/null values
+          return parts.join(", ");
+        };
+
+        // Helper function untuk format kontak
+        const formatContact = (contact: typeof primaryContact) => {
+          if (!contact) return "-";
+          const parts = [
+            contact.name,
+            contact.phoneNumber,
+            contact.email,
+          ].filter(Boolean);
+          return parts.join(", ");
+        };
+
+        // Helper function untuk format banking
+        const formatBanking = (banking: typeof primaryBanking) => {
+          if (!banking) return "-";
+          const parts = [
+            banking.bankingBank,
+            banking.bankingNumber,
+            banking.bankingName,
+          ].filter(Boolean);
+          return parts.join(", ");
+        };
+
+        return {
+          Code: vendor.code || "-",
+          "Nama Vendor": vendor.name || "-",
+          Negara: primaryAddress?.country?.name || "-",
+          "Alamat Utama": formatAddress(primaryAddress),
+          "Kontak Utama": formatContact(primaryContact),
+          "No Rekening": formatBanking(primaryBanking),
+          Status: vendor.statusActive ? "Aktif" : "Non-Aktif",
+          "Tanggal Terdaftar": vendor.activeDate
+            ? formatDate(vendor.activeDate)
+            : "-",
+        };
+      });
+
+      if (csvData.length === 0) {
+        toast.error("Tidak ada data untuk diekspor");
+        return;
+      }
 
       exportToCSV(csvData, "data-vendors");
+      toast.success(`${csvData.length} vendor berhasil dieksport`);
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Gagal mengekspor data");
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -181,7 +255,13 @@ export function VendorDataTable<TData extends VendorColumnsProps, TValue>({
 
           {/* Export selected */}
           {selectedCount > 0 && (
-            <Button variant="outline" size="sm" onClick={exportSelectedRows}>
+            <Button
+              variant="outline"
+              size="sm"
+              className=" disabled:opacity-60"
+              onClick={exportSelectedRows}
+              disabled={isExporting}
+            >
               <Download className="mr-2 h-4 w-4" />
               Export ({selectedCount})
             </Button>

@@ -40,7 +40,6 @@ import { CreateMaterialInInput } from "@/schemas/materialInSchema";
 import { trpc } from "@/app/_trpcClient/client";
 import { toast } from "sonner";
 import { z } from "zod";
-import { generateMaterialInNumber } from "./generateTransactionNumber";
 import { StockType } from "@prisma/client";
 import {
   Command,
@@ -85,6 +84,7 @@ interface MaterialIn {
   invoiceNo?: string | null;
   totalAmountBeforeTax: number;
   totalTax?: number | null;
+
   otherCosts?: number | null;
   totalAmount: number;
   notes?: string | null;
@@ -110,13 +110,13 @@ interface MaterialInFormProps {
 
 //  Form validation schema
 const materialInFormSchema = z.object({
-  transactionNo: z.string().min(1),
   supplierId: z.string().min(1, "Supplier harus dipilih"),
   supplierName: z.string().min(1),
   transactionDate: z.date(),
   invoiceNo: z.string(),
   totalAmountBeforeTax: z.number().min(0),
   totalTax: z.number().min(0),
+  taxPercentage: z.number().min(0).max(20).optional(),
   otherCosts: z.number().min(0),
   totalAmount: z.number().min(0),
   notes: z.string(),
@@ -134,13 +134,13 @@ const materialInFormSchema = z.object({
 });
 
 export type MaterialInFormData = {
-  transactionNo: string;
   supplierId: string;
   supplierName: string;
   transactionDate: Date;
   invoiceNo: string;
   totalAmountBeforeTax: number;
   totalTax: number;
+  taxPercentage?: number;
   otherCosts: number;
   totalAmount: number;
   notes: string;
@@ -160,13 +160,13 @@ const getDefaultValues = (
 ): MaterialInFormData => {
   if (mode === "edit" && materialIn) {
     return {
-      transactionNo: materialIn.transactionNo,
       supplierId: materialIn.supplierId,
       supplierName: materialIn.supplierName,
       transactionDate: new Date(materialIn.transactionDate),
       invoiceNo: materialIn.invoiceNo || "",
       totalAmountBeforeTax: materialIn.totalAmountBeforeTax,
       totalTax: materialIn.totalTax || 0,
+      taxPercentage: 0,
       otherCosts: materialIn.otherCosts || 0,
       totalAmount: materialIn.totalAmount,
       notes: materialIn.notes || "",
@@ -181,7 +181,6 @@ const getDefaultValues = (
   }
 
   return {
-    transactionNo: "",
     supplierId: "",
     supplierName: "",
     transactionDate: new Date(),
@@ -190,6 +189,7 @@ const getDefaultValues = (
     totalTax: 0,
     otherCosts: 0,
     totalAmount: 0,
+    taxPercentage: 0,
     notes: "",
     items: [
       {
@@ -214,11 +214,6 @@ export function MaterialInForm({
   const utils = trpc.useUtils();
   const [open, setOpen] = React.useState(false);
   const router = useRouter();
-  //get last seq number
-  const { data: lastTransactionNo } =
-    trpc.MaterialIn.getLastTransactionNumber.useQuery(undefined, {
-      enabled: mode === "create", // Hanya query saat mode create
-    });
 
   const form = useForm<MaterialInFormData>({
     resolver: zodResolver(materialInFormSchema),
@@ -229,13 +224,6 @@ export function MaterialInForm({
     control: form.control,
     name: "items",
   });
-
-  useEffect(() => {
-    if (mode === "create" && lastTransactionNo !== undefined) {
-      const newTransactionNo = generateMaterialInNumber(lastTransactionNo);
-      form.setValue("transactionNo", newTransactionNo);
-    }
-  }, [mode, lastTransactionNo, form]);
 
   const watchSupplierId = form.watch("supplierId");
   const { isDirty, isValid } = form.formState;
@@ -252,6 +240,14 @@ export function MaterialInForm({
 
   const watchTotalTax = form.watch("totalTax");
   const watchOtherCosts = form.watch("otherCosts");
+  const taxPercentage = form.watch("taxPercentage");
+
+  useEffect(() => {
+    if (subtotal && taxPercentage) {
+      const calculatedTax = (subtotal * taxPercentage) / 100;
+      form.setValue("totalTax", calculatedTax);
+    }
+  }, [subtotal, taxPercentage, form]);
 
   useEffect(() => {
     const total = subtotal + (watchTotalTax || 0) + (watchOtherCosts || 0);
@@ -297,12 +293,24 @@ export function MaterialInForm({
   });
 
   const onSubmit = (data: MaterialInFormData) => {
+    const submitData = {
+      supplierId: data.supplierId,
+      supplierName: data.supplierName,
+      transactionDate: data.transactionDate,
+      invoiceNo: data.invoiceNo,
+      totalAmountBeforeTax: data.totalAmountBeforeTax,
+      totalTax: data.totalTax,
+      otherCosts: data.otherCosts,
+      totalAmount: data.totalAmount,
+      notes: data.notes,
+      items: data.items,
+    };
     if (mode === "create") {
-      createMutation.mutate(data as CreateMaterialInInput);
+      createMutation.mutate(submitData as CreateMaterialInInput);
     } else if (materialIn) {
       updateMutation.mutate({
         id: materialIn.id,
-        ...data,
+        ...submitData,
       });
     }
   };
@@ -323,29 +331,7 @@ export function MaterialInForm({
               Informasi Transaksi
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-2">
-            {/* No trans */}
-            <FormField
-              control={form.control}
-              name="transactionNo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    No Transaksi <span className="font-light">*(auto)</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Nomor Transaksi"
-                      {...field}
-                      readOnly
-                      disabled
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
+          <CardContent className="grid gap-4 md:grid-cols-4  items-end ">
             {/* Transaction Date */}
             <FormField
               control={form.control}
@@ -373,13 +359,30 @@ export function MaterialInForm({
                 </FormItem>
               )}
             />
+            {/* Invoice No */}
+            <FormField
+              control={form.control}
+              name="invoiceNo"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    No. Invoice <span className="font-light">*(jika ada)</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input placeholder="Nomor invoice supplier" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             {/* Supplier Field */}
             <FormField
               control={form.control}
               name="supplierId"
               render={({ field }) => {
                 return (
-                  <FormItem className="flex flex-col ">
+                  <FormItem className="flex flex-col col-span-2 ">
                     <FormLabel>
                       Supplier <span className="text-red-500">*</span>
                     </FormLabel>
@@ -445,23 +448,6 @@ export function MaterialInForm({
                   </FormItem>
                 );
               }}
-            />
-
-            {/* Invoice No */}
-            <FormField
-              control={form.control}
-              name="invoiceNo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    No. Invoice <span className="font-light">*(jika ada)</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input placeholder="Nomor invoice supplier" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
             />
           </CardContent>
         </Card>
@@ -837,27 +823,86 @@ export function MaterialInForm({
                 </div>
 
                 {/* Tax Field */}
-                <div className="flex items-center gap-4  mr-5">
-                  <label
-                    htmlFor="totalTax"
-                    className="text-sm font-medium whitespace-nowrap"
-                  >
-                    Pajak
-                  </label>
-                  <Controller
-                    control={form.control}
-                    name="totalTax"
-                    render={({ field }) => (
-                      <Input
-                        id="totalTax"
-                        type="number"
-                        placeholder="0"
-                        className="ml-auto w-40"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
+                <div className="flex flex-col gap-3">
+                  {/* Tax Percentage Input */}
+                  <div className="flex items-center justify-between gap-4 mr-5">
+                    <label
+                      htmlFor="taxPercentage"
+                      className="text-sm font-medium whitespace-nowrap"
+                    >
+                      Pajak
+                    </label>
+                    <div className="flex items-center gap-2">
+                      {/* Tax Amount Field */}
+
+                      <Controller
+                        control={form.control}
+                        name="taxPercentage" // Field sementara, tidak disimpan ke DB
+                        render={({ field }) => (
+                          <Input
+                            id="taxPercentage"
+                            type="number"
+                            placeholder="0"
+                            min="0"
+                            max="20"
+                            step="0.1"
+                            className=" w-16"
+                            {...field}
+                            value={field.value || 0}
+                            onChange={(e) => {
+                              const percentage = Number(e.target.value);
+                              field.onChange(percentage);
+
+                              // Auto-calculate tax berdasarkan subtotal
+                              const currentSubtotal = form.getValues(
+                                "totalAmountBeforeTax"
+                              );
+                              const calculatedTax =
+                                (currentSubtotal * percentage) / 100;
+
+                              // Update field totalTax
+                              form.setValue("totalTax", calculatedTax);
+                            }}
+                          />
+                        )}
                       />
-                    )}
-                  />
+                      <label className="text-sm font-medium whitespace-nowrap">
+                        %
+                      </label>
+                      <Controller
+                        control={form.control}
+                        name="totalTax"
+                        render={({ field }) => (
+                          <Input
+                            id="totalTax"
+                            type="number"
+                            placeholder="0"
+                            className="ml-auto w-40 text-right"
+                            disabled
+                            {...field}
+                            value={field.value || 0}
+                            onChange={(e) => {
+                              const taxAmount = Number(e.target.value);
+                              field.onChange(taxAmount);
+
+                              // Optional: Update persentase jika user manual edit tax amount
+                              const currentSubtotal = form.getValues(
+                                "totalAmountBeforeTax"
+                              );
+                              if (currentSubtotal > 0) {
+                                const calculatedPercentage =
+                                  (taxAmount / currentSubtotal) * 100;
+                                form.setValue(
+                                  "taxPercentage",
+                                  Math.min(calculatedPercentage, 20)
+                                );
+                              }
+                            }}
+                          />
+                        )}
+                      />
+                    </div>
+                  </div>
                 </div>
                 {/* Other Costs Field */}
                 <div className="flex items-center gap-4 mr-5">
@@ -875,7 +920,7 @@ export function MaterialInForm({
                         id="otherCosts"
                         type="number"
                         placeholder="0"
-                        className="ml-auto w-40"
+                        className="ml-auto  w-40 text-right"
                         {...field}
                         onChange={(e) => field.onChange(Number(e.target.value))}
                       />

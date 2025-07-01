@@ -39,6 +39,8 @@ import { exportToCSV } from "@/tools/exportToCSV";
 import { MaterialColumnsProps } from "./Columns";
 import { getMaterialFromRow, searchMaterial } from "./DataTableUtils";
 import { MaterialDataPagination } from "./Pagination";
+import { Brand, MaterialCategory, Unit } from "@prisma/client";
+import { toast } from "sonner";
 
 interface DataTableProps<TData extends MaterialColumnsProps, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -57,6 +59,7 @@ export function MaterialDataTable<TData extends MaterialColumnsProps, TValue>({
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
   const [globalFilter, setGlobalFilter] = React.useState("");
+  const [isExploring, setIsExporting] = React.useState(false);
 
   const table = useReactTable({
     data,
@@ -95,30 +98,55 @@ export function MaterialDataTable<TData extends MaterialColumnsProps, TValue>({
 
   // Export selected rows using utility
   const exportSelectedRows = () => {
-    const selectedRows = table.getFilteredSelectedRowModel().rows;
-    const materials = selectedRows
-      .map((row) => {
-        try {
-          return getMaterialFromRow(row);
-        } catch (error) {
-          console.error("Error getting material from row:", error);
-          return null;
-        }
-      })
-      .filter(
-        (material): material is MaterialColumnsProps => material !== null
-      );
+    try {
+      setIsExporting(true);
+      const selectedRows = table.getFilteredSelectedRowModel().rows;
+      const materials = selectedRows
+        .map((row) => {
+          try {
+            return getMaterialFromRow(row);
+          } catch (error) {
+            console.error("Error getting material from row:", error);
+            return null;
+          }
+        })
+        .filter(
+          (material): material is MaterialColumnsProps => material !== null
+        );
 
-    if (materials.length > 0) {
-      const csvData = materials.map((dt) => ({
-        Code: dt.code,
-        Nama: dt.name,
-        Catergory: dt.category,
-        Brand: dt.brand,
-        Satuan: dt.brand,
-      }));
+      if (materials.length === 0) {
+        console.warn("No material selected for export");
+        return;
+      }
+
+      // Perbaikan: Map setiap vendor dengan index yang sesuai
+      const csvData = materials.map((material) => {
+        return {
+          Code: material.code || "-",
+          "Nama Material": material.name || "-",
+          Kategory: material.category as MaterialCategory,
+          "Satuan Unit": material.unit as Unit,
+          Merk: material.brand as Brand,
+          "Minimum Stock": material.minimumStock || 0,
+          "Maximum Stock": material.maximumStock || 0,
+          "Stock Bagus": material.goodStock || 0,
+          "Stock Jelek": material.badStock || 0,
+          "Harga Satuan Terakhir": material.lastPurchasePrice || 0,
+        };
+      });
+
+      if (csvData.length === 0) {
+        toast.error("Tidak ada data untuk diekspor");
+        return;
+      }
 
       exportToCSV(csvData, "data-materials");
+      toast.success(`${csvData.length} material berhasil dieksport`);
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Gagal mengekspor data");
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -131,7 +159,7 @@ export function MaterialDataTable<TData extends MaterialColumnsProps, TValue>({
         {/* Search */}
         <div className="flex-1 w-full sm:w-auto">
           <Input
-            placeholder="Cari supplier (nama, kode, NPWP, kontak, alamat)..."
+            placeholder="Cari data material (nama, kode,bahan baku, merk)..."
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
             className="max-w-md"
@@ -176,7 +204,13 @@ export function MaterialDataTable<TData extends MaterialColumnsProps, TValue>({
 
           {/* Export selected */}
           {selectedCount > 0 && (
-            <Button variant="outline" size="sm" onClick={exportSelectedRows}>
+            <Button
+              variant="outline"
+              size="sm"
+              className=" disabled:opacity-60"
+              onClick={exportSelectedRows}
+              disabled={isExploring}
+            >
               <Download className="mr-2 h-4 w-4" />
               Export ({selectedCount})
             </Button>
@@ -253,8 +287,8 @@ export function MaterialDataTable<TData extends MaterialColumnsProps, TValue>({
                   className="h-24 text-center"
                 >
                   {globalFilter || table.getState().columnFilters.length > 0
-                    ? "Tidak ada supplier yang sesuai dengan pencarian"
-                    : "Belum ada data supplier"}
+                    ? "Tidak ada material yang sesuai dengan pencarian"
+                    : "Belum ada data material"}
                 </TableCell>
               </TableRow>
             )}

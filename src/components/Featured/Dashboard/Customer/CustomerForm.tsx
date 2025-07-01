@@ -50,11 +50,8 @@ import {
   Phone,
   FileText,
   Mail,
-  CalendarIcon,
 } from "lucide-react";
 import { AddressType, ContactType, StatusActive } from "@prisma/client";
-import { id } from "date-fns/locale";
-import { format } from "date-fns";
 import { formatDateForInput } from "@/tools/formatDateForInput";
 
 interface CustomerFormData {
@@ -180,7 +177,6 @@ export function CustomerForm({
     if (mode === "edit" && customerData) {
       return {
         id: customerData.id,
-        code: customerData.code,
         name: customerData.name,
         statusActive: customerData.statusActive,
         activeDate: formatDateForInput(customerData.activeDate),
@@ -214,7 +210,6 @@ export function CustomerForm({
     }
 
     return {
-      code: "",
       name: "",
       statusActive: "ACTIVE" as StatusActive,
       activeDate: new Date().toISOString().split("T")[0],
@@ -492,28 +487,8 @@ export function CustomerForm({
             </CardTitle>
             <CardDescription>Masukkan informasi dasar customer</CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-6">
+          <CardContent className="grid gap-4">
             <div className="grid gap-4 md:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="code"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Kode Customer <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Ex: CUST-001"
-                        {...field}
-                        disabled={mode === "edit"}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <FormField
                 control={form.control}
                 name="name"
@@ -529,66 +504,63 @@ export function CustomerForm({
                   </FormItem>
                 )}
               />
-            </div>
+              <div className="grid gap-4 md:grid-cols-2  rounded-lg">
+                <FormField
+                  control={form.control}
+                  name="statusActive"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        disabled={mode !== "edit"}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Pilih status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="ACTIVE">
+                            <Badge className="bg-green-500">Active</Badge>
+                          </SelectItem>
+                          <SelectItem value="NOACTIVE">
+                            <Badge variant="destructive">No Active</Badge>
+                          </SelectItem>
+                          <SelectItem value="SUSPENDED">
+                            <Badge
+                              variant="secondary"
+                              className="bg-yellow-500"
+                            >
+                              Ditangguhkan
+                            </Badge>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <div className="grid gap-4 md:grid-cols-2 border p-4 rounded-lg">
-              <FormField
-                control={form.control}
-                name="statusActive"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      disabled={mode !== "edit"}
-                    >
+                <FormField
+                  control={form.control}
+                  name="activeDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tanggal Aktif</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Pilih status" />
-                        </SelectTrigger>
+                        <Input
+                          type="date"
+                          placeholder="Tanggal Terdaftar"
+                          {...field}
+                        />
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="ACTIVE">
-                          <Badge className="bg-green-500">Active</Badge>
-                        </SelectItem>
-                        <SelectItem value="NOACTIVE">
-                          <Badge variant="destructive">No Active</Badge>
-                        </SelectItem>
-                        <SelectItem value="SUSPENDED">
-                          <Badge variant="secondary" className="bg-yellow-500">
-                            Ditangguhkan
-                          </Badge>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="activeDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tanggal Aktif</FormLabel>
-                    <FormControl>
-                      <div className="flex items-center px-3 py-2 border border-input bg-background rounded-md">
-                        <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">
-                          {field.value
-                            ? format(new Date(field.value), "dd MMMM yyyy", {
-                                locale: id,
-                              })
-                            : "Tanggal belum diset"}
-                        </span>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
             <FormField

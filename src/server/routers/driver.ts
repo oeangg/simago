@@ -3,6 +3,7 @@ import { protectedProcedure, router } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import { Gender } from "@prisma/client";
 import { z } from "zod";
+import { generateCodeAutoNumber } from "@/tools/generateCodeAutoNumber";
 
 const requiredDateSchema = z.string().transform((str) => new Date(str));
 
@@ -19,22 +20,24 @@ export const driverRouter = router({
     .input(InputDriverSchema)
     .mutation(async ({ ctx, input }) => {
       try {
-        const driverIsExist = await ctx.db.driver.findUnique({
-          where: {
-            code: input.code,
-          },
-        });
+        const userId = ctx.session?.userId;
 
-        if (driverIsExist) {
+        if (!userId) {
           throw new TRPCError({
-            code: "CONFLICT",
-            message: "Code driver sudah terdaftar!",
+            code: "UNAUTHORIZED",
+            message: "User not authenticated",
           });
         }
+        const code = await generateCodeAutoNumber({
+          db: ctx.db,
+          prefix: "DV",
+          tableName: "drivers",
+          fieldName: "code",
+        });
 
         const newDriver = await ctx.db.driver.create({
           data: {
-            code: input.code,
+            code,
             name: input.name,
             city: input.city,
             gender: input.gender as Gender,
@@ -73,19 +76,6 @@ export const driverRouter = router({
             code: "NOT_FOUND",
             message: "id driver tidak ditemukan!",
           });
-        }
-
-        if (input.code !== driverIsExist.code) {
-          const codeExists = await ctx.db.driver.findUnique({
-            where: { code: input.code },
-          });
-
-          if (codeExists) {
-            throw new TRPCError({
-              code: "CONFLICT",
-              message: "Code driver sudah terdaftar",
-            });
-          }
         }
 
         const result = await ctx.db.driver.update({

@@ -6,6 +6,7 @@ import {
   createMaterialSchema,
   updateMaterialSchema,
 } from "@/schemas/materialSchema";
+import { generateCodeAutoNumber } from "@/tools/generateCodeAutoNumber";
 
 const DecimalSchema = z
   .union([
@@ -28,8 +29,24 @@ export const materialRouter = router({
     .mutation(async ({ ctx, input }) => {
       try {
         // Check if code already exists
+
+        const userId = ctx.session?.userId;
+
+        if (!userId) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "User not authenticated",
+          });
+        }
+        const code = await generateCodeAutoNumber({
+          db: ctx.db,
+          prefix: "MT",
+          tableName: "materials",
+          fieldName: "code",
+        });
+
         const existingMaterial = await ctx.db.material.findUnique({
-          where: { code: input.code },
+          where: { code: code },
         });
 
         if (existingMaterial) {
@@ -41,6 +58,7 @@ export const materialRouter = router({
 
         const data = {
           ...input,
+          code,
           lastPurchasePrice:
             input.lastPurchasePrice !== undefined &&
             input.lastPurchasePrice !== null
@@ -84,20 +102,6 @@ export const materialRouter = router({
             code: "NOT_FOUND",
             message: "Material tidak ditemukan",
           });
-        }
-
-        // Check if new code already exists (if code is being changed)
-        if (input.code !== existingMaterial.code) {
-          const codeExists = await ctx.db.material.findUnique({
-            where: { code: input.code },
-          });
-
-          if (codeExists) {
-            throw new TRPCError({
-              code: "CONFLICT",
-              message: "Kode material sudah digunakan",
-            });
-          }
         }
 
         const data = {

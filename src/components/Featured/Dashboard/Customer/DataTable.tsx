@@ -35,6 +35,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { exportToCSV } from "@/tools/exportToCSV";
+import { toast } from "sonner";
+import { formatDate } from "@/tools/formatDateLocal";
 
 interface DataTableProps<TData extends CustomerColumnsProps, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -53,6 +55,7 @@ export function CustomerDataTable<TData extends CustomerColumnsProps, TValue>({
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
   const [globalFilter, setGlobalFilter] = React.useState("");
+  const [isExporting, setIsExporting] = React.useState(false);
 
   const table = useReactTable({
     data,
@@ -91,34 +94,90 @@ export function CustomerDataTable<TData extends CustomerColumnsProps, TValue>({
 
   // Export selected rows using utility
   const exportSelectedRows = () => {
-    const selectedRows = table.getFilteredSelectedRowModel().rows;
-    const customers = selectedRows
-      .map((row) => {
-        try {
-          return getCustomerFromRow(row);
-        } catch (error) {
-          console.error("Error getting customer from row:", error);
-          return null;
-        }
-      })
-      .filter(
-        (customer): customer is CustomerColumnsProps => customer !== null
-      );
+    try {
+      setIsExporting(true);
+      const selectedRows = table.getFilteredSelectedRowModel().rows;
+      const customers = selectedRows
+        .map((row) => {
+          try {
+            return getCustomerFromRow(row);
+          } catch (error) {
+            console.error("Error getting customer from row:", error);
+            return null;
+          }
+        })
+        .filter(
+          (customer): customer is CustomerColumnsProps => customer !== null
+        );
 
-    if (customers.length > 0) {
-      const csvData = customers.map((emp) => ({
-        Code: emp.code,
-        Nama: emp.name,
-        Alamat: emp.addresses[0]?.addressLine1 || "-",
-        Kontak: emp.contacts[0]?.name || "-",
-        Status: emp.statusActive ? "Aktif" : "Non-Aktif",
-        TanggalAktif: emp.activeDate,
-      }));
+      if (customers.length === 0) {
+        console.warn("No customer selected for export");
+        return;
+      }
+
+      // Perbaikan: Map setiap vendor dengan index yang sesuai
+      const csvData = customers.map((customer) => {
+        // Ambil data berdasarkan vendor yang sedang diproses
+        const primaryAddress = customer.addresses.find(
+          (ad) => ad.isPrimaryAddress
+        );
+        const primaryContact = customer.contacts.find(
+          (contact) => contact.isPrimaryContact
+        );
+
+        // Helper function untuk format alamat
+
+        const formatAddress = (address: typeof primaryAddress) => {
+          if (!address) return "-";
+
+          const parts = [
+            address.addressLine1,
+            address.addressLine2,
+            address.province?.name,
+            address.regency?.name,
+            address.district?.name,
+          ].filter(Boolean); // Remove empty/null values
+          return parts.join(", ");
+        };
+
+        // Helper function untuk format kontak
+        const formatContact = (contact: typeof primaryContact) => {
+          if (!contact) return "-";
+          const parts = [
+            contact.name,
+            contact.phoneNumber,
+            contact.email,
+          ].filter(Boolean);
+          return parts.join(", ");
+        };
+
+        return {
+          Code: customer.code || "-",
+          "Nama Customer": customer.name || "-",
+          Negara: primaryAddress?.country?.name || "-",
+          "Alamat Utama": formatAddress(primaryAddress),
+          "Kontak Utama": formatContact(primaryContact),
+          Status: customer.statusActive ? "Aktif" : "Non-Aktif",
+          "Tanggal Terdaftar": customer.activeDate
+            ? formatDate(customer.activeDate)
+            : "-",
+        };
+      });
+
+      if (csvData.length === 0) {
+        toast.error("Tidak ada data untuk diekspor");
+        return;
+      }
 
       exportToCSV(csvData, "data-customers");
+      toast.success(`${csvData.length} customer berhasil dieksport`);
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Gagal mengekspor data");
+    } finally {
+      setIsExporting(false);
     }
   };
-
   const selectedCount = Object.keys(rowSelection).length;
 
   return (
@@ -175,7 +234,13 @@ export function CustomerDataTable<TData extends CustomerColumnsProps, TValue>({
 
           {/* Export selected */}
           {selectedCount > 0 && (
-            <Button variant="outline" size="sm" onClick={exportSelectedRows}>
+            <Button
+              variant="outline"
+              size="sm"
+              className=" disabled:opacity-60"
+              onClick={exportSelectedRows}
+              disabled={isExporting}
+            >
               <Download className="mr-2 h-4 w-4" />
               Export ({selectedCount})
             </Button>

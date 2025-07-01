@@ -10,6 +10,7 @@ import {
   vendorSchema,
   vendorUpdateSchema,
 } from "@/schemas/vendorSchema";
+import { generateCodeAutoNumber } from "@/tools/generateCodeAutoNumber";
 
 const requiredDateSchema = z.string().transform((str) => new Date(str));
 const optionalDateSchema = z
@@ -36,8 +37,23 @@ export const vendorRouter = router({
         const result = await ctx.db.$transaction(async (tx) => {
           // 1.  code already exists
 
+          const userId = ctx.session?.userId;
+
+          if (!userId) {
+            throw new TRPCError({
+              code: "UNAUTHORIZED",
+              message: "User not authenticated",
+            });
+          }
+          const code = await generateCodeAutoNumber({
+            db: ctx.db,
+            prefix: "VN",
+            tableName: "vendors",
+            fieldName: "code",
+          });
+
           const existingVendor = await tx.vendor.findUnique({
-            where: { code: input.code },
+            where: { code: code },
           });
 
           if (existingVendor) {
@@ -52,7 +68,7 @@ export const vendorRouter = router({
           // 2. Create
           const vendor = await tx.vendor.create({
             data: {
-              code: input.code,
+              code,
               name: input.name,
               notes: input.notes,
               picName: input.picName,
@@ -184,30 +200,14 @@ export const vendorRouter = router({
           }
 
           // 2. Update  data if provided
-          if (input.code && input.code !== existingVendor.code) {
-            const codeExists = await tx.vendor.findUnique({
-              where: { code: input.code },
-            });
-
-            if (codeExists) {
-              throw new TRPCError({
-                code: "CONFLICT",
-                message: "Kode vendor sudah digunakan",
-              });
-            }
-          }
-
-          //cek type npwpDate
-
-          //cek type npwpDate
 
           // Update  basic info
           await tx.vendor.update({
             where: { id: input.id },
             data: {
-              code: input.code,
               name: input.name,
               statusActive: input.statusActive,
+              activeDate: input.activeDate,
               notes: input.notes,
               picName: input.picName,
               picPosition: input.picPosition,

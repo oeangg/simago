@@ -95,7 +95,6 @@ export function DriverForm({
     if (mode === "edit" && driverData) {
       return {
         id: driverData.id,
-        code: driverData.code,
         name: driverData.name,
         gender: driverData.gender as Gender,
         addressLine1: driverData.addressLine1,
@@ -108,7 +107,6 @@ export function DriverForm({
     }
 
     return {
-      code: "",
       name: "",
       gender: "MALE" as Gender,
       addressLine1: "",
@@ -230,26 +228,6 @@ export function DriverForm({
             <div className="grid gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
-                name="code"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Kode Driver <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="ex : DV-001"
-                        {...field}
-                        disabled={mode === "edit"}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
@@ -258,6 +236,21 @@ export function DriverForm({
                     </FormLabel>
                     <FormControl>
                       <Input placeholder="Masukkan nama Driver" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="activeDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Tanggal Aktif <span className="text-red-500">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} className="block w-full" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -362,21 +355,6 @@ export function DriverForm({
                     </FormLabel>
                     <FormControl>
                       <Input placeholder="Masukkan nama kota" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="activeDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Tanggal Aktif <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} className="block w-full" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

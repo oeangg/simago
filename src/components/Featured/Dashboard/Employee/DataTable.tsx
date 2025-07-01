@@ -39,6 +39,9 @@ import { EmployeeColumns } from "./Columns";
 import { getEmployeeFromRow, searchEmployee } from "./DataTableUtils";
 import { EmployeeDataPagination } from "./Pagination";
 import { exportToCSV } from "@/tools/exportToCSV";
+import { formatDate } from "@/tools/formatDateLocal";
+import { Gender } from "@prisma/client";
+import { toast } from "sonner";
 
 interface DataTableProps<TData extends EmployeeColumns, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -57,6 +60,7 @@ export function EmployeeDataTable<TData extends EmployeeColumns, TValue>({
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
   const [globalFilter, setGlobalFilter] = React.useState("");
+  const [isExploring, setIsExporting] = React.useState(false);
 
   const table = useReactTable({
     data,
@@ -96,36 +100,59 @@ export function EmployeeDataTable<TData extends EmployeeColumns, TValue>({
 
   // Export selected rows using utility
   const exportSelectedRows = () => {
-    const selectedRows = table.getFilteredSelectedRowModel().rows;
-    const employees = selectedRows
-      .map((row) => {
-        try {
-          return getEmployeeFromRow(row);
-        } catch (error) {
-          console.error("Error getting employee from row:", error);
-          return null;
-        }
-      })
-      .filter((employee): employee is EmployeeColumns => employee !== null);
+    try {
+      setIsExporting(true);
+      const selectedRows = table.getFilteredSelectedRowModel().rows;
+      const employees = selectedRows
+        .map((row) => {
+          try {
+            return getEmployeeFromRow(row);
+          } catch (error) {
+            console.error("Error getting employee from row:", error);
+            return null;
+          }
+        })
+        .filter((employee): employee is EmployeeColumns => employee !== null);
 
-    if (employees.length > 0) {
-      const csvData = employees.map((emp) => ({
-        NIK: emp.nik,
-        Nama: emp.name,
-        Jabatan: emp.employments[0]?.position.name || "-",
-        Divisi: emp.employments[0]?.division.name || "-",
-        Kota: emp.city,
-        Alamat: emp.address,
-        Gender: emp.gender === "MALE" ? "Laki-laki" : "Perempuan",
-        "No. Telepon": emp.phoneNumber,
-        Status: emp.isActive ? "Aktif" : "Non-Aktif",
-        TanggalAktif: emp.activeDate,
-      }));
+      if (employees.length === 0) {
+        console.warn("No employees selected for export");
+        return;
+      }
 
-      exportToCSV(csvData, "data-karyawan");
+      // Perbaikan: Map setiap vendor dengan index yang sesuai
+      const csvData = employees.map((em) => {
+        // Ambil data berdasarkan vendor yang sedang diproses
+        const lastEmployment = em.employments[0];
+        // Helper function untuk format alamat
+
+        return {
+          NIK: em.nik || "-",
+          "Nama Karyawan": em.name || "-",
+          Kelamin: (em.gender as Gender) === "MALE" ? "Pria" : "Wanita",
+          Alamat: em.address || "-",
+          Kota: em.city || "-",
+          "Phone Number": em.phoneNumber || "-",
+          Divisi: lastEmployment.division.name,
+          Jabatan: lastEmployment.position.name,
+          Status: em.isActive ? "Aktif" : "Non-Aktif",
+          "Tgl Masuk": formatDate(em.activeDate),
+        };
+      });
+
+      if (csvData.length === 0) {
+        toast.error("Tidak ada data untuk diekspor");
+        return;
+      }
+
+      exportToCSV(csvData, "data-vendors");
+      toast.success(`${csvData.length} vendor berhasil dieksport`);
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Gagal mengekspor data");
+    } finally {
+      setIsExporting(false);
     }
   };
-
   const selectedCount = Object.keys(rowSelection).length;
 
   return (
@@ -202,7 +229,13 @@ export function EmployeeDataTable<TData extends EmployeeColumns, TValue>({
 
           {/* Export selected */}
           {selectedCount > 0 && (
-            <Button variant="outline" size="sm" onClick={exportSelectedRows}>
+            <Button
+              variant="outline"
+              size="sm"
+              className=" disabled:opacity-60"
+              onClick={exportSelectedRows}
+              disabled={isExploring}
+            >
               <Download className="mr-2 h-4 w-4" />
               Export ({selectedCount})
             </Button>

@@ -39,6 +39,8 @@ import { SupplierColumnsProps } from "./Columns";
 import { getSupplierFromRow, searchSupplier } from "./DataTableUtils";
 import { SupplierDataPagination } from "./Pagination";
 import { exportToCSV } from "@/tools/exportToCSV";
+import { formatDate } from "@/tools/formatDateLocal";
+import { toast } from "sonner";
 
 interface DataTableProps<TData extends SupplierColumnsProps, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -57,6 +59,7 @@ export function SupplierDataTable<TData extends SupplierColumnsProps, TValue>({
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
   const [globalFilter, setGlobalFilter] = React.useState("");
+  const [isExporting, setIsExporting] = React.useState(false);
 
   const table = useReactTable({
     data,
@@ -95,31 +98,88 @@ export function SupplierDataTable<TData extends SupplierColumnsProps, TValue>({
 
   // Export selected rows using utility
   const exportSelectedRows = () => {
-    const selectedRows = table.getFilteredSelectedRowModel().rows;
-    const suppliers = selectedRows
-      .map((row) => {
-        try {
-          return getSupplierFromRow(row);
-        } catch (error) {
-          console.error("Error getting supplier from row:", error);
-          return null;
-        }
-      })
-      .filter(
-        (supplier): supplier is SupplierColumnsProps => supplier !== null
-      );
+    try {
+      setIsExporting(true);
+      const selectedRows = table.getFilteredSelectedRowModel().rows;
+      const suppliers = selectedRows
+        .map((row) => {
+          try {
+            return getSupplierFromRow(row);
+          } catch (error) {
+            console.error("Error getting supplier from row:", error);
+            return null;
+          }
+        })
+        .filter(
+          (supplier): supplier is SupplierColumnsProps => supplier !== null
+        );
 
-    if (suppliers.length > 0) {
-      const csvData = suppliers.map((supp) => ({
-        Code: supp.code,
-        Nama: supp.name,
-        Alamat: supp.addresses[0]?.addressLine1 || "-",
-        Kontak: supp.contacts[0]?.name || "-",
-        Status: supp.statusActive ? "Aktif" : "Non-Aktif",
-        TanggalAktif: supp.activeDate,
-      }));
+      if (suppliers.length === 0) {
+        console.warn("No suppliers selected for export");
+        return;
+      }
+
+      // Perbaikan: Map setiap vendor dengan index yang sesuai
+      const csvData = suppliers.map((supplier) => {
+        // Ambil data berdasarkan vendor yang sedang diproses
+        const primaryAddress = supplier.addresses.find(
+          (ad) => ad.isPrimaryAddress
+        );
+        const primaryContact = supplier.contacts.find(
+          (contact) => contact.isPrimaryContact
+        );
+
+        // Helper function untuk format alamat
+
+        const formatAddress = (address: typeof primaryAddress) => {
+          if (!address) return "-";
+
+          const parts = [
+            address.addressLine1,
+            address.addressLine2,
+            address.province?.name,
+            address.regency?.name,
+            address.district?.name,
+          ].filter(Boolean); // Remove empty/null values
+          return parts.join(", ");
+        };
+
+        // Helper function untuk format kontak
+        const formatContact = (contact: typeof primaryContact) => {
+          if (!contact) return "-";
+          const parts = [
+            contact.name,
+            contact.phoneNumber,
+            contact.email,
+          ].filter(Boolean);
+          return parts.join(", ");
+        };
+
+        return {
+          Code: supplier.code || "-",
+          "Nama Vendor": supplier.name || "-",
+          Negara: primaryAddress?.country?.name || "-",
+          "Alamat Utama": formatAddress(primaryAddress),
+          "Kontak Utama": formatContact(primaryContact),
+          Status: supplier.statusActive ? "Aktif" : "Non-Aktif",
+          "Tanggal Terdaftar": supplier.activeDate
+            ? formatDate(supplier.activeDate)
+            : "-",
+        };
+      });
+
+      if (csvData.length === 0) {
+        toast.error("Tidak ada data untuk diekspor");
+        return;
+      }
 
       exportToCSV(csvData, "data-suppliers");
+      toast.success(`${csvData.length} supplier berhasil dieksport`);
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Gagal mengekspor data");
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -182,7 +242,13 @@ export function SupplierDataTable<TData extends SupplierColumnsProps, TValue>({
 
           {/* Export selected */}
           {selectedCount > 0 && (
-            <Button variant="outline" size="sm" onClick={exportSelectedRows}>
+            <Button
+              variant="outline"
+              size="sm"
+              className=" disabled:opacity-60"
+              onClick={exportSelectedRows}
+              disabled={isExporting}
+            >
               <Download className="mr-2 h-4 w-4" />
               Export ({selectedCount})
             </Button>

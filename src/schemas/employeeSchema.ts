@@ -27,7 +27,7 @@ export const employeeSchema = z.object({
   nik: z
     .string()
     .min(1, "NIK tidak boleh kosong")
-    .max(10, "NIK Maksimal 10 karakter")
+    .max(12, "NIK Maksimal 12 karakter")
     .regex(/^[A-Z0-9-]+$/, "NIK hanya boleh huruf kapital, angka, dan strip"),
   name: z.string().min(1, { message: "Nama tidak boleh kosong" }),
   isActive: z.boolean(),
@@ -87,7 +87,7 @@ export const inputEmployeeRouterSchema = z.object({
   nik: z
     .string()
     .min(1, "NIK tidak boleh kosong")
-    .max(10, "NIK Maksimal 10 karakter")
+    .max(12, "NIK Maksimal 12 karakter")
     .regex(/^[A-Z0-9-]+$/, "NIK hanya boleh huruf kapital, angka, dan strip"),
   name: z.string().min(1, { message: "Nama tidak boleh kosong" }),
   isActive: z.boolean(),

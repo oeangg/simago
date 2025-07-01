@@ -143,7 +143,6 @@ export function MaterialForm({
     if (mode === "edit" && materialData) {
       return {
         id: materialData.id,
-        code: materialData.code,
         name: materialData.name,
         description: materialData.description || undefined,
         category: materialData.category,
@@ -159,7 +158,6 @@ export function MaterialForm({
     }
 
     return {
-      code: "",
       name: "",
       description: "",
       category: "RAW_MATERIAL" as MaterialCategory,
@@ -293,49 +291,21 @@ export function MaterialForm({
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name="code"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Kode Material <span className="text-red-500">*</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Contoh: MTR-001"
-                          {...field}
-                          disabled={mode === "edit"}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Kode unik untuk identifikasi material
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Nama Material <span className="text-red-500">*</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Masukkan nama material"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Nama Material <span className="text-red-500">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input placeholder="Masukkan nama material" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}
@@ -467,7 +437,7 @@ export function MaterialForm({
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 md:grid-cols-4 place-items-start ">
                 <FormField
                   control={form.control}
                   name="minimumStock"
@@ -498,9 +468,6 @@ export function MaterialForm({
                     </FormItem>
                   )}
                 />
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-3">
                 <FormField
                   control={form.control}
                   name="maximumStock"

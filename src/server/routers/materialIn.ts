@@ -10,6 +10,7 @@ import {
   updateMaterialInInput,
 } from "@/schemas/materialInSchema";
 import { TRPCError } from "@trpc/server";
+import { generateAutoNumberTransaksi } from "@/tools/generateCodeAutoNumber";
 
 export const materialInRouter = router({
   // Create Material In with Transaction
@@ -26,35 +27,13 @@ export const materialInRouter = router({
         });
       }
 
-      // Generate transaction number
-      const today = new Date();
-      const prefix = `MI-${today.getFullYear()}${String(
-        today.getMonth() + 1
-      ).padStart(2, "0")}`;
-
-      // Get last transaction number for today
-      const lastTransaction = await ctx.db.materialIn.findFirst({
-        where: {
-          transactionNo: {
-            startsWith: prefix,
-          },
-        },
-        orderBy: {
-          transactionNo: "desc",
-        },
+      const transactionNo = await generateAutoNumberTransaksi({
+        db: ctx.db,
+        prefix: "MI",
+        tableName: "material_ins",
+        fieldName: "transactionNo",
       });
 
-      let sequence = 1;
-      if (lastTransaction) {
-        const lastSequence = parseInt(
-          lastTransaction.transactionNo.split("-").pop() || "0"
-        );
-        sequence = lastSequence + 1;
-      }
-
-      const transactionNo = `${prefix}-${String(sequence).padStart(4, "0")}`;
-
-      // Use transaction to ensure data consistency
       const result = await ctx.db.$transaction(async (prisma) => {
         // Create Material In
         const materialIn = await prisma.materialIn.create({

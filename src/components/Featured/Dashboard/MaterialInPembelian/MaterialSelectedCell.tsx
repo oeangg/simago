@@ -48,7 +48,6 @@ interface Item {
 }
 
 interface FormSchema {
-  transactionNo: string;
   supplierId: string;
   supplierName: string;
   transactionDate: Date;

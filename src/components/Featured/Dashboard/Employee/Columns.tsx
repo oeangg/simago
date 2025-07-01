@@ -142,7 +142,7 @@ export const employeeColumns = (
       return <DataTableColumnHeaderSort column={column} title="N.I.K" />;
     },
     cell: ({ row }) => (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 max-w-20">
         <div className="font-mono text-sm font-medium text-gray-900 bg-gray-50 px-2 py-1 rounded">
           {row.original.nik}
         </div>

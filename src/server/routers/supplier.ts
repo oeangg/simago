@@ -9,6 +9,7 @@ import {
   supplierSchema,
   supplierUpdateSchema,
 } from "@/schemas/supplierSchema";
+import { generateCodeAutoNumber } from "@/tools/generateCodeAutoNumber";
 
 const requiredDateSchema = z.string().transform((str) => new Date(str));
 const optionalDateSchema = z
@@ -35,8 +36,23 @@ export const supplierRouter = router({
         const result = await ctx.db.$transaction(async (tx) => {
           // 1. Check if customer code already exists
 
+          const userId = ctx.session?.userId;
+
+          if (!userId) {
+            throw new TRPCError({
+              code: "UNAUTHORIZED",
+              message: "User not authenticated",
+            });
+          }
+          const code = await generateCodeAutoNumber({
+            db: ctx.db,
+            prefix: "SU",
+            tableName: "suppliers",
+            fieldName: "code",
+          });
+
           const existingSupplier = await tx.supplier.findUnique({
-            where: { code: input.code },
+            where: { code: code },
           });
 
           if (existingSupplier) {
@@ -49,7 +65,7 @@ export const supplierRouter = router({
           // 2. Create supplier
           const supplier = await tx.supplier.create({
             data: {
-              code: input.code,
+              code: code,
               name: input.name,
               supplierType: input.supplierType,
               notes: input.notes,
@@ -136,27 +152,12 @@ export const supplierRouter = router({
             });
           }
 
-          // 2. Update supplier data if provided
-          if (input.code && input.code !== existingSupplier.code) {
-            const codeExists = await tx.supplier.findUnique({
-              where: { code: input.code },
-            });
-
-            if (codeExists) {
-              throw new TRPCError({
-                code: "CONFLICT",
-                message: "Kode supplier sudah digunakan",
-              });
-            }
-          }
-
           //cek type npwpDate
 
           // Update supplier basic info
           await tx.supplier.update({
             where: { id: input.id },
             data: {
-              code: input.code,
               name: input.name,
               supplierType: input.supplierType,
               statusActive: input.statusActive,
