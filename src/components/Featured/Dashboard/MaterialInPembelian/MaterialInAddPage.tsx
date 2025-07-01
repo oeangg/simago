@@ -12,7 +12,7 @@ export function MaterialInAddPage() {
   // Fetch materials dan suppliers
   const { data: materials, isLoading: loadingMaterials } =
     trpc.Material.getAllMaterial.useQuery({
-      limit: 5,
+      limit: 50,
     });
 
   const { data: suppliers, isLoading: loadingSuppliers } =
@@ -47,6 +47,15 @@ export function MaterialInAddPage() {
     );
   }
 
+  const materialData =
+    materials?.data?.map((mat) => ({
+      ...mat,
+      lastPurchasePrice: mat.lastPurchasePrice
+        ? Number(mat.lastPurchasePrice)
+        : null,
+      // Convert other Decimal fields if any
+    })) || [];
+
   return (
     <div className="container max-w-5xl mx-auto py-6 space-y-4">
       <div className="flex items-center justify-between">
@@ -62,7 +71,7 @@ export function MaterialInAddPage() {
         </Button>
       </div>
       <MaterialInForm
-        materials={materials.data}
+        materials={materialData}
         suppliers={suppliers.data}
         mode="create"
         onCancel={handleCancel}

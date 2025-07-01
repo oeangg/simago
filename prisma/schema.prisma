@@ -351,7 +351,8 @@ model MaterialInItem {
 model MaterialOut {
   id                   String            @id @default(cuid())
   transactionNo        String            @unique // 
-  customerName         String? // Denormalisasi
+  customerId           String
+  customerName         String
   orderId              String? // Reference ke order/project
   shipmentId           String? // Reference ke shipment
   destinationType      String // "CUSTOMER", "PROJECT", "INTERNAL_USE", "WASTE", etc.

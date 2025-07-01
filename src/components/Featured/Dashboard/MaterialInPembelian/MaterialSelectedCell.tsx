@@ -24,16 +24,22 @@ import {
 import { UseFormReturn } from "react-hook-form";
 import { TableCell } from "@/components/ui/table";
 import { StockType } from "@prisma/client";
-
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 interface Material {
-  id: string; // atau number, sesuaikan dengan ID material Anda
+  id: string;
   code: string;
   name: string;
+  unit: string;
   goodStock: number;
   badStock: number;
-  unit: string;
+  lastPurchasePrice?: number | null;
 }
-
 // Definisikan tipe untuk setiap item di 'items' array
 interface Item {
   materialId: string;
@@ -69,6 +75,7 @@ interface MaterialSelectCellProps {
   materials: Material[];
 
   watchItems: Item[];
+  isEdit: boolean;
 }
 
 // Komponen baru untuk satu sel/baris
@@ -77,6 +84,7 @@ export function MaterialSelectCell({
   index,
   materials,
   watchItems,
+  isEdit,
 }: MaterialSelectCellProps) {
   // State untuk Popover ini sekarang lokal untuk komponen ini saja
   const [openOptionMaterial, setOpenOptionMaterial] = useState(false);
@@ -84,6 +92,16 @@ export function MaterialSelectCell({
   // Dapatkan nilai field saat ini untuk render
   const materialId = form.getValues(`items.${index}.materialId`);
   const material = materials.find((mat) => mat.id === materialId);
+
+  const formatCurrency = (value: number | null | undefined) => {
+    if (!value) return "-";
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
 
   return (
     <TableCell>
@@ -101,6 +119,7 @@ export function MaterialSelectCell({
                   <Button
                     variant="outline"
                     role="combobox"
+                    disabled={isEdit}
                     aria-expanded={openOptionMaterial}
                     className={cn(
                       "w-full justify-between",
@@ -128,6 +147,14 @@ export function MaterialSelectCell({
                         value={`${mat.code} ${mat.name}`}
                         onSelect={() => {
                           field.onChange(mat.id);
+
+                          // Auto-fill price dari last purchase price
+                          if (mat.lastPurchasePrice) {
+                            form.setValue(
+                              `items.${index}.unitPrice`,
+                              mat.lastPurchasePrice
+                            );
+                          }
                           setOpenOptionMaterial(false);
                         }}
                       >
@@ -145,6 +172,25 @@ export function MaterialSelectCell({
                             Good: {mat.goodStock} | Bad: {mat.badStock}{" "}
                             {mat.unit}
                           </span>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            {mat.lastPurchasePrice && (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger>
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs"
+                                    >
+                                      {formatCurrency(mat.lastPurchasePrice)}
+                                    </Badge>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Harga pembelian terakhir</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
+                          </div>
                         </div>
                       </CommandItem>
                     ))}
@@ -154,7 +200,7 @@ export function MaterialSelectCell({
             </Popover>
             <FormMessage />
             {material && (
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="text-xs font-thin text-muted-foreground">
                 Stok {watchItems[index]?.stockType === "BAD" ? "Bad" : "Good"}:{" "}
                 {watchItems[index]?.stockType === "BAD"
                   ? material.badStock

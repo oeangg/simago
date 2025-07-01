@@ -65,6 +65,7 @@ interface Material {
   unit: string;
   goodStock: number;
   badStock: number;
+  lastPurchasePrice?: number | null;
 }
 
 interface Supplier {
@@ -132,7 +133,7 @@ const materialInFormSchema = z.object({
     .min(1, "Minimal harus ada 1 item"),
 });
 
-type MaterialInFormData = {
+export type MaterialInFormData = {
   transactionNo: string;
   supplierId: string;
   supplierName: string;
@@ -307,6 +308,7 @@ export function MaterialInForm({
   };
 
   const isLoading = createMutation.isPending || updateMutation.isPending;
+  const isEdit = mode === "edit";
 
   return (
     <Form {...form}>
@@ -354,6 +356,7 @@ export function MaterialInForm({
                   <FormControl>
                     <Input
                       type="date"
+                      disabled={isEdit}
                       {...field}
                       value={
                         field.value ? format(field.value, "yyyy-MM-dd") : ""
@@ -391,7 +394,7 @@ export function MaterialInForm({
                               "w-full justify-between",
                               !field.value && "text-muted-foreground"
                             )}
-                            disabled={mode === "edit"}
+                            disabled={isEdit}
                           >
                             {field.value
                               ? suppliers.find(
@@ -471,6 +474,7 @@ export function MaterialInForm({
               <Button
                 type="button"
                 variant="outline"
+                disabled={isEdit}
                 size="sm"
                 onClick={() =>
                   append({
@@ -488,146 +492,308 @@ export function MaterialInForm({
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-64">
-                    Material <span className="text-red-500">*</span>
-                  </TableHead>
-                  <TableHead className="w-20">
-                    Type Stock <span className="text-red-500">*</span>
-                  </TableHead>
-                  <TableHead className="w-24">
-                    Qty <span className="text-red-500">*</span>
-                  </TableHead>
-                  <TableHead className="w-40">
-                    Harga <span className="text-red-500">*</span>
-                  </TableHead>
-                  <TableHead className="w-32">Total</TableHead>
-                  <TableHead>Catatan</TableHead>
-                  <TableHead className="w-10"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {fields.map((field, index) => {
-                  // const material = materials.find(
-                  //   (m) => m.id === watchItems[index]?.materialId
-                  // );
-                  const itemTotal =
-                    (watchItems[index]?.quantity || 0) *
-                    (watchItems[index]?.unitPrice || 0);
+            {isEdit ? (
+              <div className="rounded-md border p-4 bg-muted/50">
+                <p className="text-sm text-muted-foreground mb-2">
+                  Detail items tidak dapat diubah setelah transaksi dibuat
+                </p>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-64">
+                        Material <span className="text-red-500">*</span>
+                      </TableHead>
+                      <TableHead className="w-20">
+                        Type Stock <span className="text-red-500">*</span>
+                      </TableHead>
+                      <TableHead className="w-40">
+                        Harga Satuan <span className="text-red-500">*</span>
+                      </TableHead>
+                      <TableHead className="w-24">
+                        Qty <span className="text-red-500">*</span>
+                      </TableHead>
 
-                  return (
-                    <TableRow key={field.id}>
-                      {/* //material */}
-
-                      <MaterialSelectCell
-                        form={form}
-                        index={index}
-                        materials={materials}
-                        watchItems={watchItems}
-                      />
-                      {/* // Add select for stock type in table */}
-                      <TableCell>
-                        <FormField
-                          control={form.control}
-                          name={`items.${index}.stockType`}
-                          render={({ field }) => (
-                            <Select
-                              onValueChange={field.onChange}
-                              defaultValue={field.value || "GOOD"}
-                            >
-                              <SelectTrigger className="w-28">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="GOOD">Good</SelectItem>
-                                <SelectItem value="BAD">Bad</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          )}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <FormField
-                          control={form.control}
-                          name={`items.${index}.quantity`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  placeholder="0"
-                                  {...field}
-                                  onChange={(e) =>
-                                    field.onChange(Number(e.target.value))
-                                  }
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <FormField
-                          control={form.control}
-                          name={`items.${index}.unitPrice`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  placeholder="0"
-                                  {...field}
-                                  onChange={(e) =>
-                                    field.onChange(Number(e.target.value))
-                                  }
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <p className="font-medium">
-                          {new Intl.NumberFormat("id-ID", {
-                            style: "currency",
-                            currency: "IDR",
-                          }).format(itemTotal)}
-                        </p>
-                      </TableCell>
-                      <TableCell>
-                        <FormField
-                          control={form.control}
-                          name={`items.${index}.notes`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <Input placeholder="Catatan" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => remove(index)}
-                          disabled={fields.length === 1}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
+                      <TableHead className="w-32">Total</TableHead>
+                      <TableHead>Catatan</TableHead>
+                      <TableHead className="w-10"></TableHead>
                     </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {fields.map((field, index) => {
+                      // const material = materials.find(
+                      //   (m) => m.id === watchItems[index]?.materialId
+                      // );
+                      const itemTotal =
+                        (watchItems[index]?.quantity || 0) *
+                        (watchItems[index]?.unitPrice || 0);
+
+                      return (
+                        <TableRow key={field.id}>
+                          {/* //material */}
+
+                          <MaterialSelectCell
+                            form={form}
+                            index={index}
+                            materials={materials}
+                            watchItems={watchItems}
+                            isEdit={isEdit}
+                          />
+                          {/* // Add select for stock type in table */}
+                          <TableCell>
+                            <FormField
+                              control={form.control}
+                              name={`items.${index}.stockType`}
+                              render={({ field }) => (
+                                <Select
+                                  onValueChange={field.onChange}
+                                  defaultValue={field.value || "GOOD"}
+                                  disabled={isEdit}
+                                >
+                                  <SelectTrigger className="w-28">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="GOOD">Good</SelectItem>
+                                    <SelectItem value="BAD">Bad</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <FormField
+                              control={form.control}
+                              name={`items.${index}.unitPrice`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      disabled={isEdit}
+                                      placeholder="0"
+                                      {...field}
+                                      onChange={(e) =>
+                                        field.onChange(Number(e.target.value))
+                                      }
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <FormField
+                              control={form.control}
+                              name={`items.${index}.quantity`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      placeholder="0"
+                                      disabled={isEdit}
+                                      {...field}
+                                      onChange={(e) =>
+                                        field.onChange(Number(e.target.value))
+                                      }
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </TableCell>
+
+                          <TableCell>
+                            <p className="font-medium">
+                              {new Intl.NumberFormat("id-ID", {
+                                style: "currency",
+                                currency: "IDR",
+                              }).format(itemTotal)}
+                            </p>
+                          </TableCell>
+                          <TableCell>
+                            <FormField
+                              control={form.control}
+                              name={`items.${index}.notes`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormControl>
+                                    <Input
+                                      placeholder="Catatan"
+                                      {...field}
+                                      disabled={isEdit}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => remove(index)}
+                              disabled={fields.length === 1}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              // Normal editable table for create mode
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-64">
+                      Material <span className="text-red-500">*</span>
+                    </TableHead>
+                    <TableHead className="w-20">
+                      Type Stock <span className="text-red-500">*</span>
+                    </TableHead>
+                    <TableHead className="w-40">
+                      Harga Satuan <span className="text-red-500">*</span>
+                    </TableHead>
+                    <TableHead className="w-24">
+                      Qty <span className="text-red-500">*</span>
+                    </TableHead>
+
+                    <TableHead className="w-32">Total</TableHead>
+                    <TableHead>Catatan</TableHead>
+                    <TableHead className="w-10"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {fields.map((field, index) => {
+                    // const material = materials.find(
+                    //   (m) => m.id === watchItems[index]?.materialId
+                    // );
+                    const itemTotal =
+                      (watchItems[index]?.quantity || 0) *
+                      (watchItems[index]?.unitPrice || 0);
+
+                    return (
+                      <TableRow key={field.id}>
+                        {/* //material */}
+
+                        <MaterialSelectCell
+                          form={form}
+                          index={index}
+                          materials={materials}
+                          watchItems={watchItems}
+                          isEdit={isEdit}
+                        />
+                        {/* // Add select for stock type in table */}
+                        <TableCell>
+                          <FormField
+                            control={form.control}
+                            name={`items.${index}.stockType`}
+                            render={({ field }) => (
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value || "GOOD"}
+                              >
+                                <SelectTrigger className="w-28">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="GOOD">Good</SelectItem>
+                                  <SelectItem value="BAD">Bad</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <FormField
+                            control={form.control}
+                            name={`items.${index}.unitPrice`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    placeholder="0"
+                                    {...field}
+                                    onChange={(e) =>
+                                      field.onChange(Number(e.target.value))
+                                    }
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <FormField
+                            control={form.control}
+                            name={`items.${index}.quantity`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    placeholder="0"
+                                    {...field}
+                                    onChange={(e) =>
+                                      field.onChange(Number(e.target.value))
+                                    }
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </TableCell>
+
+                        <TableCell>
+                          <p className="font-medium">
+                            {new Intl.NumberFormat("id-ID", {
+                              style: "currency",
+                              currency: "IDR",
+                            }).format(itemTotal)}
+                          </p>
+                        </TableCell>
+                        <TableCell>
+                          <FormField
+                            control={form.control}
+                            name={`items.${index}.notes`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <Input placeholder="Catatan" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => remove(index)}
+                            disabled={fields.length === 1}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
 

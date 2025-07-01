@@ -240,6 +240,7 @@ export default function ViewMaterialIn({
                 <TableHeader>
                   <TableRow>
                     <TableHead>Material</TableHead>
+                    <TableHead>Nama Material</TableHead>
                     <TableHead>Stock Type</TableHead>
                     <TableHead className="text-right">Qty</TableHead>
                     <TableHead className="text-right">Harga/Unit</TableHead>
@@ -252,6 +253,9 @@ export default function ViewMaterialIn({
                     <TableRow key={item.id}>
                       <TableCell className="font-medium">
                         Item #{index + 1}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {item.material.name}
                       </TableCell>
                       <TableCell>{getStockTypeBadge(item.stockType)}</TableCell>
                       <TableCell className="text-right">
