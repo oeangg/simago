@@ -175,8 +175,8 @@ export function MaterialInDataTable({
         return;
       }
 
-      exportToCSV(csvData, "data-vendors");
-      toast.success(`${csvData.length} vendor berhasil dieksport`);
+      exportToCSV(csvData, "data-pembelian-material");
+      toast.success(`${csvData.length} pembelian material berhasil dieksport`);
     } catch (error) {
       console.error("Export error:", error);
       toast.error("Gagal mengekspor data");

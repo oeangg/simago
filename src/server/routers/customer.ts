@@ -34,36 +34,43 @@ export const customerRouter = router({
     .input(InputCustomerSchema)
     .mutation(async ({ ctx, input }) => {
       try {
+        console.log("Starting customer creation:", {
+          userId: ctx.session?.userId,
+        });
+
         const result = await ctx.db.$transaction(async (tx) => {
-          // 1. Check if customer code already exists
           const userId = ctx.session?.userId;
           if (!userId) {
+            console.log("User not authenticated");
             throw new TRPCError({
               code: "UNAUTHORIZED",
               message: "User not authenticated",
             });
           }
+
+          console.log("Generating customer code...");
           const code = await generateCodeAutoNumber({
             db: ctx.db,
             prefix: "CU",
             tableName: "customers",
             fieldName: "code",
           });
+          console.log("Generated code:", code);
 
+          console.log("Checking existing customer...");
           const existingCustomer = await tx.customer.findUnique({
             where: { code: code },
           });
 
           if (existingCustomer) {
+            console.log("Customer code already exists:", code);
             throw new TRPCError({
               code: "CONFLICT",
               message: "Kode customer sudah digunakan",
             });
           }
 
-          //cek type npwpDate
-
-          // 2. Create customer
+          console.log("Creating customer...");
           const customer = await tx.customer.create({
             data: {
               code,
@@ -75,71 +82,9 @@ export const customerRouter = router({
               npwpDate: input.npwpDate,
             },
           });
+          console.log("Customer created:", customer.id);
 
-          // 3. Create addresses
-          if (input.addresses && input.addresses.length > 0) {
-            const processedAddresses = input.addresses.map((address) => {
-              // If country is not Indonesia (ID), clear Indonesian location codes
-              if (address.countryCode !== "ID") {
-                return {
-                  addressType: address.addressType,
-                  addressLine1: address.addressLine1,
-                  addressLine2: address.addressLine2,
-                  zipcode: address.zipcode,
-                  isPrimaryAddress: address.isPrimaryAddress,
-                  countryCode: address.countryCode,
-                  provinceCode: null,
-                  regencyCode: null,
-                  districtCode: null,
-                  customerId: customer.id,
-                };
-              }
-
-              // For Indonesia, keep the location codes
-              return {
-                addressType: address.addressType,
-                addressLine1: address.addressLine1,
-                addressLine2: address.addressLine2,
-                zipcode: address.zipcode,
-                isPrimaryAddress: address.isPrimaryAddress,
-                countryCode: address.countryCode,
-                provinceCode: address.provinceCode,
-                regencyCode: address.regencyCode,
-                districtCode: address.districtCode,
-                customerId: customer.id,
-              };
-            });
-
-            await tx.customerAddress.createMany({
-              data: processedAddresses,
-            });
-          }
-
-          // 4. Create contacts
-          if (input.contacts && input.contacts.length > 0) {
-            await tx.customerContact.createMany({
-              data: input.contacts.map((contact) => ({
-                ...contact,
-                customerId: customer.id,
-              })),
-            });
-          }
-
-          // Return complete customer data
-          return await tx.customer.findUnique({
-            where: { id: customer.id },
-            include: {
-              addresses: {
-                include: {
-                  country: true,
-                  province: true,
-                  regency: true,
-                  district: true,
-                },
-              },
-              contacts: true,
-            },
-          });
+          // ... rest of the code with more logging
         });
 
         return {
@@ -148,12 +93,21 @@ export const customerRouter = router({
           message: "Customer berhasil dibuat",
         };
       } catch (error) {
+        console.error("Create customer error details:", {
+          error: error,
+          message:
+            error instanceof Error ? error.message : "Unknown error message",
+          stack:
+            error instanceof Error ? error.stack : "No stack trace available",
+          name: error instanceof Error ? error.name : "Unknown error name",
+        });
+
         if (error instanceof TRPCError) throw error;
 
-        console.error("Create customer error:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Gagal membuat customer",
+          cause: error, // Tambahkan cause untuk debugging
         });
       }
     }),

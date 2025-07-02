@@ -264,20 +264,6 @@ export const employeeRouter = router({
           });
         }
 
-        // Check if NIK is being changed and already exists
-        if (input.nik !== existingEmployee.nik) {
-          const nikExists = await ctx.db.employee.findUnique({
-            where: { nik: input.nik },
-          });
-
-          if (nikExists) {
-            throw new TRPCError({
-              code: "CONFLICT",
-              message: "NIK sudah terdaftar",
-            });
-          }
-        }
-
         const result = await ctx.db.$transaction(async (prisma) => {
           // Update employee data
           const employee = await prisma.employee.update({
