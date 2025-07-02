@@ -1,7 +1,7 @@
 // app/customers/page.tsx
 
-import { CustomerUpdateDataTable } from "@/components/Featured/Dashboard/Customer/UpdateDataTable";
+import { IndexPageCustomerDataTable } from "@/components/Featured/Dashboard/Customer/IndexPageDataTable";
 
 export default function Home() {
-  return <CustomerUpdateDataTable />;
+  return <IndexPageCustomerDataTable />;
 }

@@ -44,7 +44,7 @@ const ErrorState = ({ error, onRetry }: ErrorStateProps) => {
   );
 };
 
-export const MaterialInUpdateDataTable = () => {
+export const IndexPageMaterialInDataTable = () => {
   const router = useRouter();
   const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(
     null

@@ -1,5 +1,5 @@
-import { MaterialInUpdateDataTable } from "@/components/Featured/Dashboard/MaterialInPembelian/UpdateDataTable";
+import { IndexPageMaterialInDataTable } from "@/components/Featured/Dashboard/MaterialInPembelian/IndexPageDataTable";
 
 export default function Home() {
-  return <MaterialInUpdateDataTable />;
+  return <IndexPageMaterialInDataTable />;
 }

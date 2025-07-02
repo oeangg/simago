@@ -1,4 +1,4 @@
-import { DriverUpdateDataTable } from "@/components/Featured/Dashboard/Driver/UpdateDataTable";
+import { IndexPageDriverDataTable } from "@/components/Featured/Dashboard/Driver/IndexPageDataTable";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function Home() {
-  return <DriverUpdateDataTable />;
+  return <IndexPageDriverDataTable />;
 }

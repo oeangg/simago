@@ -1,5 +1,5 @@
-import { VehicleUpdateDataTable } from "@/components/Featured/Dashboard/Vehicle/UpdateDataTable";
+import { IndexPageVehicleDataTable } from "@/components/Featured/Dashboard/Vehicle/IndexPageDataTable";
 
 export default function Home() {
-  return <VehicleUpdateDataTable />;
+  return <IndexPageVehicleDataTable />;
 }

@@ -246,7 +246,14 @@ export function MaterialInDataTable({
           </div>
 
           {/* Add Button */}
-          <Button asChild size="sm">
+          <Button
+            asChild
+            size="sm"
+            className={cn(
+              "transition-opacity duration-200",
+              isLoading && "opacity-50 pointer-events-none"
+            )}
+          >
             <Link href="/dashboard/pembelian-material/add">
               <Plus className="mr-2 h-4 w-4" />
               Tambah Pembelian
@@ -314,9 +321,9 @@ export function MaterialInDataTable({
       {/* Table */}
 
       <div className="relative">
-        {/* Beautiful loading overlay */}
+        {/* loading  */}
         {isLoading && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-md">
+          <div className="absolute inset-0 z-10 flex border items-center justify-center rounded-md">
             <div className="absolute inset-0 bg-background/60 backdrop-blur-sm rounded-md" />
             <div className="relative flex flex-col items-center gap-3">
               <div className="relative">

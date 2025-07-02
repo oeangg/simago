@@ -22,7 +22,7 @@ import {
 } from "@tanstack/react-table";
 import React from "react";
 
-import { Plus, Download, Settings2 } from "lucide-react";
+import { Plus, Download, Settings2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -41,15 +41,18 @@ import { getMaterialFromRow, searchMaterial } from "./DataTableUtils";
 import { MaterialDataPagination } from "./Pagination";
 import { Brand, MaterialCategory, Unit } from "@prisma/client";
 import { toast } from "sonner";
+import { cn } from "@/lib/cn";
 
 interface DataTableProps<TData extends MaterialColumnsProps, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  isLoading?: boolean;
 }
 
 export function MaterialDataTable<TData extends MaterialColumnsProps, TValue>({
   columns,
   data,
+  isLoading = false,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -157,7 +160,12 @@ export function MaterialDataTable<TData extends MaterialColumnsProps, TValue>({
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
         {/* Search */}
-        <div className="flex-1 w-full sm:w-auto">
+        <div
+          className={cn(
+            "flex-1 w-full sm:w-auto transition-opacity duration-200",
+            isLoading && "opacity-50 pointer-events-none"
+          )}
+        >
           <Input
             placeholder="Cari data material (nama, kode,bahan baku, merk)..."
             value={globalFilter}
@@ -167,7 +175,12 @@ export function MaterialDataTable<TData extends MaterialColumnsProps, TValue>({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2">
+        <div
+          className={cn(
+            "flex items-center gap-2 transition-opacity duration-200",
+            isLoading && "opacity-50 pointer-events-none"
+          )}
+        >
           {/* Column visibility */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -217,7 +230,13 @@ export function MaterialDataTable<TData extends MaterialColumnsProps, TValue>({
           )}
 
           {/* Add Supplier */}
-          <Button asChild>
+          <Button
+            asChild
+            className={cn(
+              "transition-opacity duration-200",
+              isLoading && "opacity-50 pointer-events-none"
+            )}
+          >
             <Link href="/dashboard/material/add">
               <Plus className="mr-2 h-4 w-4" />
               Tambah Material
@@ -243,61 +262,89 @@ export function MaterialDataTable<TData extends MaterialColumnsProps, TValue>({
       )}
 
       {/* Table */}
-      <div className="rounded-md border  overflow-x-auto  ">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
+      <div className="relative">
+        {isLoading && (
+          <div className="absolute inset-0 z-10 flex border items-center justify-center rounded-md">
+            <div className="absolute inset-0 bg-background/60 backdrop-blur-sm rounded-md" />
+            <div className="relative flex flex-col items-center gap-3">
+              <div className="relative">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <div className="absolute inset-0 blur-xl bg-primary/20 animate-pulse" />
+              </div>
+              <div className="text-sm font-medium text-muted-foreground">
+                Memuat data...
+              </div>
+            </div>
+          </div>
+        )}
+        <div
+          className={cn(
+            "rounded-md border overflow-x-auto transition-opacity duration-200",
+            isLoading && "opacity-50"
+          )}
+        >
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    return (
+                      <TableHead key={header.id}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                      </TableHead>
+                    );
+                  })}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  {globalFilter || table.getState().columnFilters.length > 0
-                    ? "Tidak ada material yang sesuai dengan pencarian"
-                    : "Belum ada data material"}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    {globalFilter || table.getState().columnFilters.length > 0
+                      ? "Tidak ada material yang sesuai dengan pencarian"
+                      : "Belum ada data material"}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       {/* Pagination */}
-      <MaterialDataPagination table={table} />
+      <div
+        className={cn(
+          "transition-opacity duration-200",
+          isLoading && "opacity-50 pointer-events-none"
+        )}
+      >
+        <MaterialDataPagination table={table} />
+      </div>
     </div>
   );
 }

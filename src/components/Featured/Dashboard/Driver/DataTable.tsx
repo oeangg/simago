@@ -22,7 +22,7 @@ import {
 } from "@tanstack/react-table";
 import React from "react";
 
-import { Plus, Download, Settings2 } from "lucide-react";
+import { Plus, Download, Settings2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -41,15 +41,18 @@ import { DriverColumnsProps } from "./Columns";
 import { getDriverFromRow, searchDriver } from "./DataTableUtils";
 import { DriverDataPagination } from "./Pagination";
 import { formatDate } from "@/tools/formatDateLocal";
+import { cn } from "@/lib/cn";
 
 interface DataTableProps<TData extends DriverColumnsProps, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  isLoading?: boolean;
 }
 
 export function DriverDataTable<TData extends DriverColumnsProps, TValue>({
   columns,
   data,
+  isLoading = false,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -133,7 +136,12 @@ export function DriverDataTable<TData extends DriverColumnsProps, TValue>({
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
         {/* Search */}
-        <div className="flex-1 w-full sm:w-auto">
+        <div
+          className={cn(
+            "flex-1 w-full sm:w-auto transition-opacity duration-200",
+            isLoading && "opacity-50 pointer-events-none"
+          )}
+        >
           <Input
             placeholder="Cari driver (kode, nama, alamat, telepon)..."
             value={globalFilter}
@@ -143,7 +151,12 @@ export function DriverDataTable<TData extends DriverColumnsProps, TValue>({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2">
+        <div
+          className={cn(
+            "flex items-center gap-2 transition-opacity duration-200",
+            isLoading && "opacity-50 pointer-events-none"
+          )}
+        >
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
@@ -207,7 +220,13 @@ export function DriverDataTable<TData extends DriverColumnsProps, TValue>({
           )}
 
           {/* Add Employee */}
-          <Button asChild>
+          <Button
+            asChild
+            className={cn(
+              "transition-opacity duration-200",
+              isLoading && "opacity-50 pointer-events-none"
+            )}
+          >
             <Link href="/dashboard/driver/add">
               <Plus className="mr-2 h-4 w-4" />
               Tambah Driver
@@ -233,61 +252,89 @@ export function DriverDataTable<TData extends DriverColumnsProps, TValue>({
       )}
 
       {/* Table */}
-      <div className="rounded-md border overflow-x-auto">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id} className="whitespace-nowrap">
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="py-3">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
+      <div className="relative">
+        {isLoading && (
+          <div className="absolute inset-0 z-10 flex border items-center justify-center rounded-md">
+            <div className="absolute inset-0 bg-background/60 backdrop-blur-sm rounded-md" />
+            <div className="relative flex flex-col items-center gap-3">
+              <div className="relative">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <div className="absolute inset-0 blur-xl bg-primary/20 animate-pulse" />
+              </div>
+              <div className="text-sm font-medium text-muted-foreground">
+                Memuat data...
+              </div>
+            </div>
+          </div>
+        )}
+        <div
+          className={cn(
+            "rounded-md border overflow-x-auto transition-opacity duration-200",
+            isLoading && "opacity-50"
+          )}
+        >
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    return (
+                      <TableHead key={header.id} className="whitespace-nowrap">
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                      </TableHead>
+                    );
+                  })}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  {globalFilter || table.getState().columnFilters.length > 0
-                    ? "Tidak ada driver yang sesuai dengan pencarian"
-                    : "Belum ada data driver"}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id} className="py-3">
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    {globalFilter || table.getState().columnFilters.length > 0
+                      ? "Tidak ada driver yang sesuai dengan pencarian"
+                      : "Belum ada data driver"}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       {/* Pagination */}
-      <DriverDataPagination table={table} />
+      <div
+        className={cn(
+          "transition-opacity duration-200",
+          isLoading && "opacity-50 pointer-events-none"
+        )}
+      >
+        <DriverDataPagination table={table} />
+      </div>
     </div>
   );
 }

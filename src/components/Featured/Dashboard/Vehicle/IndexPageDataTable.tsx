@@ -3,74 +3,12 @@
 import { useEffect, useState } from "react";
 import { trpc } from "@/app/_trpcClient/client";
 import { toast } from "sonner";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { Gender, VehicleType } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { VehicleColumns, VehicleColumnsProps } from "./Columns";
 import ViewVehicle from "./VehicleView";
 import { VehicleDataTable } from "./DataTable";
-
-// Skeleton component untuk loading state
-const TableSkeleton = () => {
-  return (
-    <div className="space-y-4">
-      {/* Filter skeleton */}
-      <div className="flex flex-row items-center gap-3">
-        <div className="w-full max-w-xl">
-          <Skeleton className="h-10 w-full" />
-        </div>
-        <Skeleton className="h-10 w-32" />
-      </div>
-
-      {/* Table skeleton */}
-      <Card className="rounded-md border">
-        <div className="p-4">
-          {/* Header skeleton */}
-          <div className="flex space-x-4 pb-4">
-            <Skeleton className="h-4 w-4" />
-            <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-4 w-16" />
-            <Skeleton className="h-4 w-40" />
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-4 w-16" />
-            <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-4 w-16" />
-          </div>
-
-          {/* Rows skeleton */}
-          {Array.from({ length: 6 }).map((_, index) => (
-            <div key={index} className="flex space-x-4 py-3 border-t">
-              <Skeleton className="h-4 w-4" />
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-4 w-16" />
-              <Skeleton className="h-4 w-40" />
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-4 w-16" />
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-4 w-16" />
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      {/* Pagination skeleton */}
-      <div className="flex items-center justify-between">
-        <Skeleton className="h-4 w-32" />
-        <div className="flex items-center space-x-2">
-          <Skeleton className="h-8 w-20" />
-          <Skeleton className="h-8 w-8" />
-          <Skeleton className="h-8 w-8" />
-          <Skeleton className="h-8 w-20" />
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // Interface untuk filter parameters sesuai dengan tRPC schema
 export interface VehicleFilters {
@@ -80,7 +18,7 @@ export interface VehicleFilters {
   gender?: Gender[];
 }
 
-export const VehicleUpdateDataTable = () => {
+export const IndexPageVehicleDataTable = () => {
   const [dataVehicle, setDataVehicle] = useState<VehicleColumnsProps[]>([]);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(
     null
@@ -201,11 +139,6 @@ export const VehicleUpdateDataTable = () => {
     );
   }
 
-  // Show skeleton while loading
-  if (isLoadingVehicle) {
-    return <TableSkeleton />;
-  }
-
   // Create columns with actions
   const columnsWithActions = VehicleColumns({
     onView: handleViewVehicle,
@@ -241,7 +174,11 @@ export const VehicleUpdateDataTable = () => {
         />
       )}
 
-      <VehicleDataTable columns={columnsWithActions} data={dataVehicle} />
+      <VehicleDataTable
+        columns={columnsWithActions}
+        data={dataVehicle}
+        isLoading={isLoadingVehicle}
+      />
 
       {/* Load more button */}
       {dataVehicleTrpc && dataVehicleTrpc.totalPages > dataVehicleTrpc.page && (

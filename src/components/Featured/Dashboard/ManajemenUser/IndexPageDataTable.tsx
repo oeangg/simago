@@ -12,20 +12,7 @@ import { toast } from "sonner";
 import { trpc } from "@/app/_trpcClient/client";
 import { Role } from "@prisma/client";
 
-const generateSkeletonData = (count: number): IUserProps[] => {
-  return Array.from({ length: count }).map((_, index) => ({
-    id: `skeleton-${index}`,
-    fullname: "nama...",
-    username: "username...",
-    email: "user@email.com..",
-    profilPic: null, //
-    role: Role.USER, //
-    createdAt: new Date(),
-    isActive: false, //
-  }));
-};
-
-export const UpdateDataTable = () => {
+export const IndexPageManUserDataTable = () => {
   const [data, setData] = useState<IUserProps[]>([]);
   const [editingRoleId, setEditingRoleId] = useState<string | null>(null);
   const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
@@ -112,7 +99,11 @@ export const UpdateDataTable = () => {
     }),
   ];
 
-  const displayData = isLoadingUsers ? generateSkeletonData(4) : data;
-
-  return <DataTableManUser columns={columns} data={displayData} />;
+  return (
+    <DataTableManUser
+      columns={columns}
+      data={data}
+      isLoading={isLoadingUsers}
+    />
+  );
 };

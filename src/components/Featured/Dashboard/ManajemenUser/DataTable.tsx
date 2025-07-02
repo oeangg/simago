@@ -22,15 +22,19 @@ import {
 import React from "react";
 import { ManUserDataPagination } from "./Pagination";
 import { FilterInputManUser } from "./FilterInput";
+import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/cn";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  isLoading?: boolean;
 }
 
 export function DataTableManUser<TData, TValue>({
   columns,
   data,
+  isLoading = false,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -57,61 +61,97 @@ export function DataTableManUser<TData, TValue>({
   return (
     <div className="space-y-4">
       <h2>Daftar User</h2>
-      <FilterInputManUser
-        placeholder="cari berdasarkan email..."
-        column={table.getColumn("email")}
-      />
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  Tidak ada data..
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+      <div
+        className={cn(
+          "transition-opacity duration-200",
+          isLoading && "opacity-50 pointer-events-none"
+        )}
+      >
+        <FilterInputManUser
+          placeholder="cari berdasarkan email..."
+          column={table.getColumn("email")}
+        />
       </div>
-      <ManUserDataPagination table={table} />
+
+      <div className="relative">
+        {isLoading && (
+          <div className="absolute inset-0 z-10 flex border items-center justify-center rounded-md">
+            <div className="absolute inset-0 bg-background/60 backdrop-blur-sm rounded-md" />
+            <div className="relative flex flex-col items-center gap-3">
+              <div className="relative">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <div className="absolute inset-0 blur-xl bg-primary/20 animate-pulse" />
+              </div>
+              <div className="text-sm font-medium text-muted-foreground">
+                Memuat data...
+              </div>
+            </div>
+          </div>
+        )}
+        <div
+          className={cn(
+            "rounded-md border overflow-x-auto transition-opacity duration-200",
+            isLoading && "opacity-50"
+          )}
+        >
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    return (
+                      <TableHead key={header.id}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                      </TableHead>
+                    );
+                  })}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    Tidak ada data..
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+      <div
+        className={cn(
+          "transition-opacity duration-200",
+          isLoading && "opacity-50 pointer-events-none"
+        )}
+      >
+        <ManUserDataPagination table={table} />
+      </div>
     </div>
   );
 }

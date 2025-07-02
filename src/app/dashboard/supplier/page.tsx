@@ -1,7 +1,7 @@
 // app/customers/page.tsx
 
-import { SupplierUpdateDataTable } from "@/components/Featured/Dashboard/Supplier/UpdateDataTable";
+import { IndexPageSupplierDataTable } from "@/components/Featured/Dashboard/Supplier/IndexPageDataTable";
 
 export default function Home() {
-  return <SupplierUpdateDataTable />;
+  return <IndexPageSupplierDataTable />;
 }

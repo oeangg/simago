@@ -1,4 +1,4 @@
-import { UpdateDataTable } from "@/components/Featured/Dashboard/ManajemenUser/UpdateDataTable";
+import { IndexPageManUserDataTable } from "@/components/Featured/Dashboard/ManajemenUser/IndexPageDataTable";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function Home() {
-  return <UpdateDataTable />;
+  return <IndexPageManUserDataTable />;
 }
