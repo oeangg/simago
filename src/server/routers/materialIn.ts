@@ -33,62 +33,133 @@ export const materialInRouter = router({
         tableName: "material_ins",
         fieldName: "transactionNo",
       });
+      try {
+        const result = await ctx.db.$transaction(
+          async (prisma) => {
+            // Create Material In
+            const materialIn = await prisma.materialIn.create({
+              data: {
+                transactionNo,
+                supplierId: input.supplierId,
+                supplierName: input.supplierName,
+                transactionDate: input.transactionDate || new Date(),
+                invoiceNo: input.invoiceNo || null,
+                totalAmountBeforeTax: input.totalAmountBeforeTax,
+                totalTax: input.totalTax || null,
+                otherCosts: input.otherCosts || null,
+                totalAmount: input.totalAmount,
+                notes: input.notes || null,
+                createdBy: userId,
+                items: {
+                  create: await Promise.all(
+                    input.items.map(async (item) => {
+                      // Get current stock
+                      const material = await prisma.material.findUnique({
+                        where: { id: item.materialId },
+                      });
 
-      const result = await ctx.db.$transaction(async (prisma) => {
-        // Create Material In
-        const materialIn = await prisma.materialIn.create({
+                      if (!material) {
+                        throw new TRPCError({
+                          code: "NOT_FOUND",
+                          message: `Material with id ${item.materialId} not found`,
+                        });
+                      }
+
+                      const stockField =
+                        item.stockType === "BAD" ? "badStock" : "goodStock";
+                      const currentStock = material[stockField];
+
+                      console.log(`CURENT STOCK : ${currentStock}`);
+
+                      // Update material stock
+                      await prisma.material.update({
+                        where: { id: item.materialId },
+                        data: { [stockField]: currentStock + item.quantity },
+                      });
+
+                      return {
+                        materialId: item.materialId,
+                        quantity: item.quantity,
+                        unitPrice: item.unitPrice,
+                        totalPrice: item.quantity * item.unitPrice,
+                        stockType: item.stockType || "GOOD",
+                        notes: item.notes || null,
+                        stockBefore: currentStock,
+                        stockAfter: currentStock + item.quantity,
+                      };
+                    })
+                  ),
+                },
+              },
+              include: {
+                items: {
+                  include: {
+                    material: true,
+                  },
+                },
+              },
+            });
+
+            return materialIn;
+          },
+          {
+            timeout: 20000,
+          }
+        );
+
+        return result;
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+
+        console.error("Create customer error:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Gagal membuat customer",
+        });
+      }
+    }),
+
+  // Update Material In
+  updateMaterialIn: protectedProcedure
+    .input(updateMaterialInInput)
+    .output(materialInSchema)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const { id, ...updateData } = input;
+
+        // Check if material in exists
+        const existing = await ctx.db.materialIn.findUnique({
+          where: { id },
+        });
+
+        if (!existing) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Material In not found",
+          });
+        }
+
+        // Update only main data (not items in this example)
+        const updated = await ctx.db.materialIn.update({
+          where: { id },
           data: {
-            transactionNo,
-            supplierId: input.supplierId,
-            supplierName: input.supplierName,
-            transactionDate: input.transactionDate || new Date(),
-            invoiceNo: input.invoiceNo || null,
-            totalAmountBeforeTax: input.totalAmountBeforeTax,
-            totalTax: input.totalTax || null,
-            otherCosts: input.otherCosts || null,
-            totalAmount: input.totalAmount,
-            notes: input.notes || null,
-            createdBy: userId,
-            items: {
-              create: await Promise.all(
-                input.items.map(async (item) => {
-                  // Get current stock
-                  const material = await prisma.material.findUnique({
-                    where: { id: item.materialId },
-                  });
-
-                  if (!material) {
-                    throw new TRPCError({
-                      code: "NOT_FOUND",
-                      message: `Material with id ${item.materialId} not found`,
-                    });
-                  }
-
-                  const stockField =
-                    item.stockType === "BAD" ? "badStock" : "goodStock";
-                  const currentStock = material[stockField];
-
-                  console.log(`CURENT STOCK : ${currentStock}`);
-
-                  // Update material stock
-                  await prisma.material.update({
-                    where: { id: item.materialId },
-                    data: { [stockField]: currentStock + item.quantity },
-                  });
-
-                  return {
-                    materialId: item.materialId,
-                    quantity: item.quantity,
-                    unitPrice: item.unitPrice,
-                    totalPrice: item.quantity * item.unitPrice,
-                    stockType: item.stockType || "GOOD",
-                    notes: item.notes || null,
-                    stockBefore: currentStock,
-                    stockAfter: currentStock + item.quantity,
-                  };
-                })
-              ),
-            },
+            ...updateData,
+            invoiceNo:
+              updateData.invoiceNo !== undefined
+                ? updateData.invoiceNo || null
+                : undefined,
+            totalTax:
+              updateData.totalTax !== undefined
+                ? updateData.totalTax || null
+                : undefined,
+            otherCosts:
+              updateData.otherCosts !== undefined
+                ? updateData.otherCosts || null
+                : undefined,
+            notes:
+              updateData.notes !== undefined
+                ? updateData.notes || null
+                : undefined,
           },
           include: {
             items: {
@@ -99,63 +170,16 @@ export const materialInRouter = router({
           },
         });
 
-        return materialIn;
-      });
+        return updated;
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
 
-      return result;
-    }),
-
-  // Update Material In
-  updateMaterialIn: protectedProcedure
-    .input(updateMaterialInInput)
-    .output(materialInSchema)
-    .mutation(async ({ ctx, input }) => {
-      const { id, ...updateData } = input;
-
-      // Check if material in exists
-      const existing = await ctx.db.materialIn.findUnique({
-        where: { id },
-      });
-
-      if (!existing) {
+        console.error("Create customer error:", error);
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Material In not found",
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Gagal membuat customer",
         });
       }
-
-      // Update only main data (not items in this example)
-      const updated = await ctx.db.materialIn.update({
-        where: { id },
-        data: {
-          ...updateData,
-          invoiceNo:
-            updateData.invoiceNo !== undefined
-              ? updateData.invoiceNo || null
-              : undefined,
-          totalTax:
-            updateData.totalTax !== undefined
-              ? updateData.totalTax || null
-              : undefined,
-          otherCosts:
-            updateData.otherCosts !== undefined
-              ? updateData.otherCosts || null
-              : undefined,
-          notes:
-            updateData.notes !== undefined
-              ? updateData.notes || null
-              : undefined,
-        },
-        include: {
-          items: {
-            include: {
-              material: true,
-            },
-          },
-        },
-      });
-
-      return updated;
     }),
 
   // Get Material In by ID

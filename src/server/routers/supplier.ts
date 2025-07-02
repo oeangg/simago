@@ -33,85 +33,90 @@ export const supplierRouter = router({
     .input(supplierInputSchema)
     .mutation(async ({ ctx, input }) => {
       try {
-        const result = await ctx.db.$transaction(async (tx) => {
-          // 1. Check if customer code already exists
+        const result = await ctx.db.$transaction(
+          async (tx) => {
+            // 1. Check if customer code already exists
 
-          const userId = ctx.session?.userId;
+            const userId = ctx.session?.userId;
 
-          if (!userId) {
-            throw new TRPCError({
-              code: "UNAUTHORIZED",
-              message: "User not authenticated",
+            if (!userId) {
+              throw new TRPCError({
+                code: "UNAUTHORIZED",
+                message: "User not authenticated",
+              });
+            }
+            const code = await generateCodeAutoNumber({
+              db: ctx.db,
+              prefix: "SU",
+              tableName: "suppliers",
+              fieldName: "code",
             });
-          }
-          const code = await generateCodeAutoNumber({
-            db: ctx.db,
-            prefix: "SU",
-            tableName: "suppliers",
-            fieldName: "code",
-          });
 
-          const existingSupplier = await tx.supplier.findUnique({
-            where: { code: code },
-          });
-
-          if (existingSupplier) {
-            throw new TRPCError({
-              code: "CONFLICT",
-              message: "Kode supplier sudah digunakan",
+            const existingSupplier = await tx.supplier.findUnique({
+              where: { code: code },
             });
-          }
 
-          // 2. Create supplier
-          const supplier = await tx.supplier.create({
-            data: {
-              code: code,
-              name: input.name,
-              supplierType: input.supplierType,
-              notes: input.notes,
-              npwpNumber: input.npwpNumber,
-              npwpName: input.npwpName,
-              npwpAddress: input.npwpAddress,
-              npwpDate: input.npwpDate,
-            },
-          });
+            if (existingSupplier) {
+              throw new TRPCError({
+                code: "CONFLICT",
+                message: "Kode supplier sudah digunakan",
+              });
+            }
 
-          // 3. Create addresses
-          if (input.addresses && input.addresses.length > 0) {
-            await tx.supplierAddress.createMany({
-              data: input.addresses.map((address) => ({
-                ...address,
-                supplierId: supplier.id,
-              })),
-            });
-          }
-
-          // 4. Create contacts
-          if (input.contacts && input.contacts.length > 0) {
-            await tx.supplierContact.createMany({
-              data: input.contacts.map((contact) => ({
-                ...contact,
-                supplierId: supplier.id,
-              })),
-            });
-          }
-
-          // Return complete supplier data
-          return await tx.supplier.findUnique({
-            where: { id: supplier.id },
-            include: {
-              addresses: {
-                include: {
-                  country: true,
-                  province: true,
-                  regency: true,
-                  district: true,
-                },
+            // 2. Create supplier
+            const supplier = await tx.supplier.create({
+              data: {
+                code: code,
+                name: input.name,
+                supplierType: input.supplierType,
+                notes: input.notes,
+                npwpNumber: input.npwpNumber,
+                npwpName: input.npwpName,
+                npwpAddress: input.npwpAddress,
+                npwpDate: input.npwpDate,
               },
-              contacts: true,
-            },
-          });
-        });
+            });
+
+            // 3. Create addresses
+            if (input.addresses && input.addresses.length > 0) {
+              await tx.supplierAddress.createMany({
+                data: input.addresses.map((address) => ({
+                  ...address,
+                  supplierId: supplier.id,
+                })),
+              });
+            }
+
+            // 4. Create contacts
+            if (input.contacts && input.contacts.length > 0) {
+              await tx.supplierContact.createMany({
+                data: input.contacts.map((contact) => ({
+                  ...contact,
+                  supplierId: supplier.id,
+                })),
+              });
+            }
+
+            // Return complete supplier data
+            return await tx.supplier.findUnique({
+              where: { id: supplier.id },
+              include: {
+                addresses: {
+                  include: {
+                    country: true,
+                    province: true,
+                    regency: true,
+                    district: true,
+                  },
+                },
+                contacts: true,
+              },
+            });
+          },
+          {
+            timeout: 20000,
+          }
+        );
 
         return {
           success: true,
@@ -134,169 +139,177 @@ export const supplierRouter = router({
     .input(updateSupplierSchema)
     .mutation(async ({ ctx, input }) => {
       try {
-        const result = await ctx.db.$transaction(async (tx) => {
-          // 1. Check if customer exists
+        const result = await ctx.db.$transaction(
+          async (tx) => {
+            // 1. Check if customer exists
 
-          const existingSupplier = await tx.supplier.findUnique({
-            where: { id: input.id },
-            include: {
-              addresses: true,
-              contacts: true,
-            },
-          });
-
-          if (!existingSupplier) {
-            throw new TRPCError({
-              code: "NOT_FOUND",
-              message: "Supplier tidak ditemukan",
-            });
-          }
-
-          //cek type npwpDate
-
-          // Update supplier basic info
-          await tx.supplier.update({
-            where: { id: input.id },
-            data: {
-              name: input.name,
-              supplierType: input.supplierType,
-              statusActive: input.statusActive,
-              notes: input.notes,
-              npwpNumber: input.npwpNumber,
-              npwpName: input.npwpName,
-              npwpAddress: input.npwpAddress,
-              npwpDate: input.npwpDate,
-            },
-          });
-
-          // 3. Update addresses if provided
-          if (input.addresses && input.addresses.length > 0) {
-            for (const address of input.addresses) {
-              if (address.id) {
-                // Update existing address - hanya update provided fields
-                const updateData: Partial<InputSupplierAddressTypeSchema> = {};
-                if (address.addressType !== undefined)
-                  updateData.addressType = address.addressType;
-                if (address.addressLine1 !== undefined)
-                  updateData.addressLine1 = address.addressLine1;
-                if (address.addressLine2 !== undefined)
-                  updateData.addressLine2 = address.addressLine2;
-                if (address.zipcode !== undefined)
-                  updateData.zipcode = address.zipcode;
-                if (address.isPrimaryAddress !== undefined)
-                  updateData.isPrimaryAddress = address.isPrimaryAddress;
-                if (address.countryCode !== undefined)
-                  updateData.countryCode = address.countryCode;
-                if (address.provinceCode !== undefined)
-                  updateData.provinceCode = address.provinceCode;
-                if (address.regencyCode !== undefined)
-                  updateData.regencyCode = address.regencyCode;
-                if (address.districtCode !== undefined)
-                  updateData.districtCode = address.districtCode;
-
-                await tx.supplierAddress.update({
-                  where: { id: address.id },
-                  data: updateData,
-                });
-              } else {
-                // Create new jika address msh kosong - cek data wajib diisi sudah tersedia
-                if (
-                  !address.addressType ||
-                  !address.addressLine1 ||
-                  !address.countryCode ||
-                  address.isPrimaryAddress === undefined
-                ) {
-                  throw new TRPCError({
-                    code: "BAD_REQUEST",
-                    message:
-                      "Data alamat tidak lengkap untuk membuat alamat baru",
-                  });
-                }
-
-                //jika address kosong create
-                await tx.supplierAddress.create({
-                  data: {
-                    addressType: address.addressType,
-                    addressLine1: address.addressLine1,
-                    addressLine2: address.addressLine2 || null,
-                    zipcode: address.zipcode || null,
-                    isPrimaryAddress: address.isPrimaryAddress,
-                    countryCode: address.countryCode,
-                    provinceCode: address.provinceCode || null,
-                    regencyCode: address.regencyCode || null,
-                    districtCode: address.districtCode || null,
-                    supplierId: input.id,
-                  },
-                });
-              }
-            }
-          }
-
-          // 4. Update contacts if provided
-          if (input.contacts && input.contacts.length > 0) {
-            for (const contact of input.contacts) {
-              if (contact.id) {
-                // Update existing contact - only update provided fields
-                const updateData: Partial<InputSupplierContactTypeSchema> = {};
-                if (contact.contactType !== undefined)
-                  updateData.contactType = contact.contactType;
-                if (contact.name !== undefined) updateData.name = contact.name;
-                if (contact.phoneNumber !== undefined)
-                  updateData.phoneNumber = contact.phoneNumber;
-                if (contact.email !== undefined)
-                  updateData.email = contact.email;
-                if (contact.isPrimaryContact !== undefined)
-                  updateData.isPrimaryContact = contact.isPrimaryContact;
-
-                await tx.supplierContact.update({
-                  where: { id: contact.id },
-                  data: updateData,
-                });
-              } else {
-                // Create new contact - ensure required fields
-                if (
-                  !contact.contactType ||
-                  !contact.name ||
-                  !contact.phoneNumber ||
-                  contact.isPrimaryContact === undefined
-                ) {
-                  throw new TRPCError({
-                    code: "BAD_REQUEST",
-                    message:
-                      "Data kontak tidak lengkap untuk membuat kontak baru",
-                  });
-                }
-
-                await tx.supplierContact.create({
-                  data: {
-                    contactType: contact.contactType,
-                    name: contact.name,
-                    phoneNumber: contact.phoneNumber,
-                    email: contact.email || null,
-                    isPrimaryContact: contact.isPrimaryContact,
-                    supplierId: input.id,
-                  },
-                });
-              }
-            }
-          }
-
-          // Return updated supplier data
-          return await tx.supplier.findUnique({
-            where: { id: input.id },
-            include: {
-              addresses: {
-                include: {
-                  country: true,
-                  province: true,
-                  regency: true,
-                  district: true,
-                },
+            const existingSupplier = await tx.supplier.findUnique({
+              where: { id: input.id },
+              include: {
+                addresses: true,
+                contacts: true,
               },
-              contacts: true,
-            },
-          });
-        });
+            });
+
+            if (!existingSupplier) {
+              throw new TRPCError({
+                code: "NOT_FOUND",
+                message: "Supplier tidak ditemukan",
+              });
+            }
+
+            //cek type npwpDate
+
+            // Update supplier basic info
+            await tx.supplier.update({
+              where: { id: input.id },
+              data: {
+                name: input.name,
+                supplierType: input.supplierType,
+                statusActive: input.statusActive,
+                notes: input.notes,
+                npwpNumber: input.npwpNumber,
+                npwpName: input.npwpName,
+                npwpAddress: input.npwpAddress,
+                npwpDate: input.npwpDate,
+              },
+            });
+
+            // 3. Update addresses if provided
+            if (input.addresses && input.addresses.length > 0) {
+              for (const address of input.addresses) {
+                if (address.id) {
+                  // Update existing address - hanya update provided fields
+                  const updateData: Partial<InputSupplierAddressTypeSchema> =
+                    {};
+                  if (address.addressType !== undefined)
+                    updateData.addressType = address.addressType;
+                  if (address.addressLine1 !== undefined)
+                    updateData.addressLine1 = address.addressLine1;
+                  if (address.addressLine2 !== undefined)
+                    updateData.addressLine2 = address.addressLine2;
+                  if (address.zipcode !== undefined)
+                    updateData.zipcode = address.zipcode;
+                  if (address.isPrimaryAddress !== undefined)
+                    updateData.isPrimaryAddress = address.isPrimaryAddress;
+                  if (address.countryCode !== undefined)
+                    updateData.countryCode = address.countryCode;
+                  if (address.provinceCode !== undefined)
+                    updateData.provinceCode = address.provinceCode;
+                  if (address.regencyCode !== undefined)
+                    updateData.regencyCode = address.regencyCode;
+                  if (address.districtCode !== undefined)
+                    updateData.districtCode = address.districtCode;
+
+                  await tx.supplierAddress.update({
+                    where: { id: address.id },
+                    data: updateData,
+                  });
+                } else {
+                  // Create new jika address msh kosong - cek data wajib diisi sudah tersedia
+                  if (
+                    !address.addressType ||
+                    !address.addressLine1 ||
+                    !address.countryCode ||
+                    address.isPrimaryAddress === undefined
+                  ) {
+                    throw new TRPCError({
+                      code: "BAD_REQUEST",
+                      message:
+                        "Data alamat tidak lengkap untuk membuat alamat baru",
+                    });
+                  }
+
+                  //jika address kosong create
+                  await tx.supplierAddress.create({
+                    data: {
+                      addressType: address.addressType,
+                      addressLine1: address.addressLine1,
+                      addressLine2: address.addressLine2 || null,
+                      zipcode: address.zipcode || null,
+                      isPrimaryAddress: address.isPrimaryAddress,
+                      countryCode: address.countryCode,
+                      provinceCode: address.provinceCode || null,
+                      regencyCode: address.regencyCode || null,
+                      districtCode: address.districtCode || null,
+                      supplierId: input.id,
+                    },
+                  });
+                }
+              }
+            }
+
+            // 4. Update contacts if provided
+            if (input.contacts && input.contacts.length > 0) {
+              for (const contact of input.contacts) {
+                if (contact.id) {
+                  // Update existing contact - only update provided fields
+                  const updateData: Partial<InputSupplierContactTypeSchema> =
+                    {};
+                  if (contact.contactType !== undefined)
+                    updateData.contactType = contact.contactType;
+                  if (contact.name !== undefined)
+                    updateData.name = contact.name;
+                  if (contact.phoneNumber !== undefined)
+                    updateData.phoneNumber = contact.phoneNumber;
+                  if (contact.email !== undefined)
+                    updateData.email = contact.email;
+                  if (contact.isPrimaryContact !== undefined)
+                    updateData.isPrimaryContact = contact.isPrimaryContact;
+
+                  await tx.supplierContact.update({
+                    where: { id: contact.id },
+                    data: updateData,
+                  });
+                } else {
+                  // Create new contact - ensure required fields
+                  if (
+                    !contact.contactType ||
+                    !contact.name ||
+                    !contact.phoneNumber ||
+                    contact.isPrimaryContact === undefined
+                  ) {
+                    throw new TRPCError({
+                      code: "BAD_REQUEST",
+                      message:
+                        "Data kontak tidak lengkap untuk membuat kontak baru",
+                    });
+                  }
+
+                  await tx.supplierContact.create({
+                    data: {
+                      contactType: contact.contactType,
+                      name: contact.name,
+                      phoneNumber: contact.phoneNumber,
+                      email: contact.email || null,
+                      isPrimaryContact: contact.isPrimaryContact,
+                      supplierId: input.id,
+                    },
+                  });
+                }
+              }
+            }
+
+            // Return updated supplier data
+            return await tx.supplier.findUnique({
+              where: { id: input.id },
+              include: {
+                addresses: {
+                  include: {
+                    country: true,
+                    province: true,
+                    regency: true,
+                    district: true,
+                  },
+                },
+                contacts: true,
+              },
+            });
+          },
+          {
+            timeout: 20000,
+          }
+        );
 
         return {
           success: true,
