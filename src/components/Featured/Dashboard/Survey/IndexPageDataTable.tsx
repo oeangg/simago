@@ -11,6 +11,7 @@ import { endOfDay } from "date-fns";
 import { SurveyInColumns, SurveyInColumnsProps } from "./Columns";
 import ViewSurvey from "./SurveyView";
 import { SurveyDataTable } from "./DataTable";
+import { useSurveyPDF } from "./SurveyPrintPDF";
 
 // Error component dengan TRPC typing
 
@@ -49,6 +50,9 @@ export const IndexPageSurveyDataTable = () => {
   const [selectedSurveyId, setSelectedSurveyId] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [searchTerm, setSearchTerm] = useState("");
+  const { downloadPDF } = useSurveyPDF();
+
+  // tRPC utils
 
   const [debouncedSearch] = useDebounce(searchTerm, 1000); // 500ms delay
   // Query untuk fetch data
@@ -150,10 +154,6 @@ export const IndexPageSurveyDataTable = () => {
     }
   };
 
-  const handlePrintPdf = (survey: SurveyInColumnsProps) => {
-    window.alert(`Print PDF "${survey.surveyNo}"?`);
-  };
-
   // Handle error state
   if (error && !isLoading) {
     return <ErrorState error={error} onRetry={refetch} />;
@@ -170,7 +170,7 @@ export const IndexPageSurveyDataTable = () => {
     onView: handleView,
     onEdit: handleEdit,
     onDelete: handleDelete,
-    onPrintPdf: handlePrintPdf,
+    onPrintPdf: downloadPDF,
     onRefresh: handleRefresh,
   });
 

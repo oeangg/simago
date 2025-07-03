@@ -417,6 +417,7 @@ const StatusHistoryTooltip = ({ surveyId }: { surveyId: string }) => {
                         )}
                       </span>
                     </div>
+
                     {history.remarks && (
                       <p className="text-background italic pl-2 text-xs">
                         &#34;{history.remarks}&#34;

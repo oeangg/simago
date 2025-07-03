@@ -555,6 +555,8 @@ model SurveyStatusHistory {
 
   @@map("survey_status_histories")
 }
+
+
 enum SurveyStatus {
   ONPROGRESS
   APPROVED

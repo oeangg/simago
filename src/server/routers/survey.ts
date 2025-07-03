@@ -122,8 +122,12 @@ export const surveyRouter = router({
         include: {
           customers: {
             include: {
-              addresses: true,
-              contacts: true,
+              addresses: {
+                where: { isPrimaryAddress: true },
+              },
+              contacts: {
+                where: { isPrimaryContact: true },
+              },
             },
           },
           surveyItems: true,
