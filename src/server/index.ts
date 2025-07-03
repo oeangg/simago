@@ -9,6 +9,7 @@ import { materialRouter } from "./routers/material";
 import { materialInRouter } from "./routers/materialIn";
 import { positionRouter } from "./routers/position";
 import { supplierRouter } from "./routers/supplier";
+import { surveyRouter } from "./routers/survey";
 import { userRouter } from "./routers/user";
 import { vehicleRouter } from "./routers/vehicle";
 import { vendorRouter } from "./routers/vendor";
@@ -29,6 +30,7 @@ export const appRouter = router({
   Vehicle: vehicleRouter,
   Material: materialRouter,
   MaterialIn: materialInRouter,
+  survey: surveyRouter,
 });
 
 export type AppRouter = typeof appRouter;

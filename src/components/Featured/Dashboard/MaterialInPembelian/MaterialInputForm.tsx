@@ -324,12 +324,7 @@ export function MaterialInForm({
         {/* Header Information */}
         <Card>
           <CardHeader>
-            <CardTitle>
-              {/* {mode === "create"
-                ? "Tambah Material Masuk"
-                : "Edit Material Masuk"} */}
-              Informasi Transaksi
-            </CardTitle>
+            <CardTitle>Informasi Transaksi</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-4  items-end ">
             {/* Transaction Date */}

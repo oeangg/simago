@@ -74,24 +74,8 @@ export const data: sidebarData = {
       roles: ["USER", "SUPERVISOR", "MANAGER", "ADMIN", "SUPER_ADMIN"],
       items: [
         {
-          title: "Data Marketing satu",
-          url: "#",
-        },
-        {
-          title: "Data Marketing dua",
-          url: "#",
-        },
-        {
-          title: "Data Marketing tiga",
-          url: "#",
-        },
-        {
-          title: "Data Marketing empat",
-          url: "#",
-        },
-        {
-          title: "Data Marketing lima",
-          url: "#",
+          title: "Survey",
+          url: "/dashboard/survey",
         },
       ],
     },

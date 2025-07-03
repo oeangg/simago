@@ -44,11 +44,6 @@ export async function generateCodeAutoNumber({
   prefix,
   fieldName = "transactionNo",
 }: GenerateTransactionOptions): Promise<string> {
-  //   const today = new Date();
-  //   const yearMonth = `${today.getFullYear()}${String(
-  //     today.getMonth() + 1
-  //   ).padStart(2, "0")}`;
-
   const fullPrefix = `${prefix}`;
 
   // Fix: Gunakan template literal dengan escape yang benar

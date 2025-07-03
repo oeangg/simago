@@ -30,6 +30,7 @@ model Customer {
   updatedAt    DateTime          @updatedAt
   addresses    CustomerAddress[]
   contacts     CustomerContact[]
+  surveys Survey[]
 
   @@index([name])
   @@map("customers")
@@ -496,8 +497,88 @@ model User {
   //realtion stock
   materialIns  MaterialIn[]
   materialOuts MaterialOut[]
+  SurveyStatusHistories SurveyStatusHistory[]
 
   @@map("users")
+}
+model Survey {
+  id              String               @id @default(cuid())
+  surveyNo        String               @unique
+  surveyDate      DateTime
+  workDate        DateTime
+  customerId      String
+  origin          String
+  destination     String
+  cargoType       CargoType
+  shipmentType    ShipmentType
+  shipmentDetail  ShipmentDetail
+  statusSurvey    SurveyStatus         @default(ONPROGRESS)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  
+  customers        Customer             @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  surveyItems     SurveyItem[]
+  statusHistories SurveyStatusHistory[]
+  
+  @@map("surveys")
+}
+
+model SurveyItem {
+  id         String  @id @default(cuid())
+  surveyId   String
+  name       String
+  width      Float
+  length     Float
+  height     Float
+  quantity   Int
+  cbm        Float
+  note       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  survey     Survey  @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  
+  @@map("survey_items")
+}
+
+model SurveyStatusHistory {
+  id          String       @id @default(cuid())
+  surveyId    String
+  status      SurveyStatus
+  changedBy   String       // User ID who changed the status
+  changedAt   DateTime     @default(now())
+  remarks     String?      // Optional remarks for status change
+  createdAt   DateTime     @default(now())
+  
+  survey      Survey       @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  user  User @relation(fields: [changedBy], references: [id], onDelete: Cascade)
+
+  @@map("survey_status_histories")
+}
+enum SurveyStatus {
+  ONPROGRESS
+  APPROVED
+  REJECT
+}
+// LCL (Less Container Load): Bayar per CBM yang digunakan
+// FCL (Full Container Load): Sewa full container (20ft/40ft)
+// Air Freight: Hitung volumetric weight vs actual weight
+
+enum CargoType {
+  FULL_TRUCK
+  FCL
+  LCL
+}
+
+enum ShipmentType {
+  DOMESTIC
+  INTERNATIONAL
+}
+
+enum ShipmentDetail {
+  SEA
+  DOM
+  AIR
 }
 
 //enum
