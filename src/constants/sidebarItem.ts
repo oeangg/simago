@@ -89,18 +89,6 @@ export const data: sidebarData = {
           title: "Data finance satu",
           url: "#",
         },
-        {
-          title: "Data finance dua",
-          url: "#",
-        },
-        {
-          title: "Data finance tiga",
-          url: "#",
-        },
-        {
-          title: "Data finance empat",
-          url: "#",
-        },
       ],
     },
     {
@@ -111,14 +99,6 @@ export const data: sidebarData = {
       items: [
         {
           title: "Data Pengiriman satu",
-          url: "#",
-        },
-        {
-          title: "Data Pengiriman dua",
-          url: "#",
-        },
-        {
-          title: "Data Pengiriman tiga",
           url: "#",
         },
       ],
@@ -133,18 +113,6 @@ export const data: sidebarData = {
           title: "Laporan satu",
           url: "#",
         },
-        {
-          title: "Laporan dua",
-          url: "#",
-        },
-        {
-          title: "Laporan tiga",
-          url: "#",
-        },
-        {
-          title: "Laporan empat",
-          url: "#",
-        },
       ],
     },
     {
@@ -156,10 +124,6 @@ export const data: sidebarData = {
         {
           title: "Pembelian Material",
           url: "/dashboard/pembelian-material",
-        },
-        {
-          title: "Pengeluaran Material",
-          url: "#",
         },
       ],
     },

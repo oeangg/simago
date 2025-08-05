@@ -26,7 +26,6 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { MaterialInColumnsProps } from "./Columns";
-import { MaterialInDataPagination } from "./Pagination";
 import { DateRange } from "react-day-picker";
 import { addDays, format } from "date-fns";
 import { DateRangePicker } from "./DateRangePicker";
@@ -36,6 +35,7 @@ import { getMaterialInFromRow } from "./DataTableUtils";
 import { exportToCSV } from "@/tools/exportToCSV";
 import { toast } from "sonner";
 import { formatDate } from "@/tools/formatDateLocal";
+import { DataPagination } from "../DataPagination";
 
 interface DataTableProps {
   columns: ColumnDef<MaterialInColumnsProps>[];
@@ -201,11 +201,11 @@ export function MaterialInDataTable({
           {/* Search Input */}
           <div className="flex-1 w-full sm:w-auto">
             <Input
-              placeholder="Cari transaksi (no transaksi, supplier, invoice)..."
+              placeholder="Cari data pembelian berdasarkan no transaksi, supplier, invoice..."
               value={searchValue}
               onChange={(e) => onSearchChange?.(e.target.value)}
               disabled={isLoading}
-              className="h-9 w-full max-w-md"
+              className="h-9 w-full max-w-xl"
             />
           </div>
 
@@ -417,7 +417,7 @@ export function MaterialInDataTable({
           isLoading && "opacity-50 pointer-events-none"
         )}
       >
-        <MaterialInDataPagination table={table} />
+        <DataPagination table={table} />
       </div>
     </div>
   );

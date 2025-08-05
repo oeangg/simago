@@ -162,7 +162,9 @@ export const customerColumns = (
   {
     accessorKey: "code",
     header: ({ column }) => {
-      return <DataTableColumnHeaderSort column={column} title="Kode" />;
+      return (
+        <DataTableColumnHeaderSort column={column} title="Kode Customer" />
+      );
     },
     cell: ({ row }) => (
       <div className="font-mono text-sm font-medium">
@@ -196,7 +198,7 @@ export const customerColumns = (
             <Globe className="h-4 w-4 text-green-500 flex-shrink-0" />
           )}
           <div className="flex flex-col">
-            <span className="font-medium">{customer.name}</span>
+            <span className="font-medium capitalize">{customer.name}</span>
             <span className="text-xs text-muted-foreground">{country}</span>
           </div>
         </div>
@@ -226,11 +228,14 @@ export const customerColumns = (
           <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
           <div className="text-sm min-w-0">
             <div className="flex items-center gap-1 mb-1">
-              <Badge variant="outline" className="text-xs px-1 py-0">
+              <Badge
+                variant="outline"
+                className="text-xs px-2 py-0.5 bg-secondary/10 text-secondary border-secondary/40"
+              >
                 {getAddressTypeLabel(primaryAddress.addressType)}
               </Badge>
             </div>
-            <p className="line-clamp-1 font-medium">
+            <p className="line-clamp-1 font-medium capitalize">
               {primaryAddress.addressLine1}
             </p>
             {primaryAddress.addressLine2 && (
@@ -266,14 +271,17 @@ export const customerColumns = (
       }
 
       return (
-        <div className="space-y-2 min-w-[160px]">
+        <div className="space-y-1 min-w-[160px]">
           <div className="flex items-center gap-1 mb-1">
-            <Badge variant="outline" className="text-xs px-1 py-0">
+            <Badge
+              variant="outline"
+              className="text-xs px-2 py-0.5 bg-primary/10 text-primary border-primary/40"
+            >
               {getContactTypeLabel(primaryContact.contactType)}
             </Badge>
           </div>
           <div className="text-sm">
-            <p className="font-medium">{primaryContact.name}</p>
+            <p className="font-medium capitalize">{primaryContact.name}</p>
           </div>
           <div className="flex items-center gap-2">
             <Phone className="h-3 w-3 text-muted-foreground flex-shrink-0" />

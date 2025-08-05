@@ -39,8 +39,8 @@ import { Input } from "@/components/ui/input";
 import { exportToCSV } from "@/tools/exportToCSV";
 import { VehicleColumnsProps } from "./Columns";
 import { getVehicleFromRow, searchVehicle } from "./DataTableUtils";
-import { VehicleDataPagination } from "./Pagination";
 import { cn } from "@/lib/cn";
+import { DataPagination } from "../DataPagination";
 
 interface DataTableProps<TData extends VehicleColumnsProps, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -138,10 +138,10 @@ export function VehicleDataTable<TData extends VehicleColumnsProps, TValue>({
           )}
         >
           <Input
-            placeholder="Cari nomor type, merk dan tahun pembuatan kendaraan..."
+            placeholder="Cari data kendaraan berdasarkan nomor, type, merk dan tahun pembuatan..."
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
-            className="max-w-md"
+            className="max-w-xl"
           />
         </div>
 
@@ -149,7 +149,7 @@ export function VehicleDataTable<TData extends VehicleColumnsProps, TValue>({
         <div
           className={cn(
             "flex items-center gap-2 transition-opacity duration-200",
-            "opacity-50 pointer-events-none"
+            isLoading && "opacity-50 pointer-events-none"
           )}
         >
           <DropdownMenu>
@@ -211,7 +211,7 @@ export function VehicleDataTable<TData extends VehicleColumnsProps, TValue>({
             asChild
             className={cn(
               "transition-opacity duration-200",
-              "opacity-50 pointer-events-none"
+              isLoading && "opacity-50 pointer-events-none"
             )}
           >
             <Link href="/dashboard/kendaraan/add">
@@ -320,7 +320,7 @@ export function VehicleDataTable<TData extends VehicleColumnsProps, TValue>({
           isLoading && "opacity-50 pointer-events-none"
         )}
       >
-        <VehicleDataPagination table={table} />
+        <DataPagination table={table} />
       </div>
     </div>
   );

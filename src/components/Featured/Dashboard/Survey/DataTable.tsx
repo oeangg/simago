@@ -35,7 +35,7 @@ import { toast } from "sonner";
 import { formatDate } from "@/tools/formatDateLocal";
 import { SurveyInColumnsProps } from "./Columns";
 import { getSurveyInFromRow } from "./DataTableUtils";
-import { SurveyDataPagination } from "./Pagination";
+import { DataPagination } from "../DataPagination";
 
 interface DataTableProps {
   columns: ColumnDef<SurveyInColumnsProps>[];
@@ -198,11 +198,11 @@ export function SurveyDataTable({
           {/* Search Input */}
           <div className="flex-1 w-full sm:w-auto">
             <Input
-              placeholder="Cari transaksi (no transaksi, supplier, invoice)..."
+              placeholder="Cari data survey berdasarkan no, customer, rute..."
               value={searchValue}
               onChange={(e) => onSearchChange?.(e.target.value)}
               disabled={isLoading}
-              className="h-9 w-full max-w-md"
+              className="h-9 w-full max-w-xl"
             />
           </div>
 
@@ -414,7 +414,7 @@ export function SurveyDataTable({
           isLoading && "opacity-50 pointer-events-none"
         )}
       >
-        <SurveyDataPagination table={table} />
+        <DataPagination table={table} />
       </div>
     </div>
   );

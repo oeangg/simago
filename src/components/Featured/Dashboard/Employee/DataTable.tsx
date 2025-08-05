@@ -37,12 +37,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { EmployeeColumns } from "./Columns";
 import { getEmployeeFromRow, searchEmployee } from "./DataTableUtils";
-import { EmployeeDataPagination } from "./Pagination";
 import { exportToCSV } from "@/tools/exportToCSV";
 import { formatDate } from "@/tools/formatDateLocal";
 import { Gender } from "@prisma/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/cn";
+import { DataPagination } from "../DataPagination";
 
 interface DataTableProps<TData extends EmployeeColumns, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -170,10 +170,10 @@ export function EmployeeDataTable<TData extends EmployeeColumns, TValue>({
           )}
         >
           <Input
-            placeholder="Cari karyawan (nama, NIK, divisi, jabatan, alamat, telepon)..."
+            placeholder="Cari karyawan berdasarkan nama, NIK, divisi, jabatan, alamat, telepon..."
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
-            className="max-w-md"
+            className="max-w-xl"
           />
         </div>
 
@@ -368,7 +368,7 @@ export function EmployeeDataTable<TData extends EmployeeColumns, TValue>({
           isLoading && "opacity-50 pointer-events-none"
         )}
       >
-        <EmployeeDataPagination table={table} />
+        <DataPagination table={table} />
       </div>
     </div>
   );

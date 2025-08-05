@@ -29,10 +29,15 @@ import {
   TrendingDown,
   Tag,
   Scale,
+  Trash,
+  Wrench,
+  Box,
+  Bolt,
 } from "lucide-react";
 import { Brand, MaterialCategory, Unit } from "@prisma/client";
 import { DataTableColumnHeaderSort } from "../DataTableColumnHeaderSort";
 import { cn } from "@/lib/cn";
+import React from "react";
 
 export interface MaterialColumnsProps {
   id?: string;
@@ -72,7 +77,7 @@ const formatNumber = (value: number | undefined | null) => {
   return new Intl.NumberFormat("id-ID").format(value);
 };
 
-// Helper function to get stock status
+// get stock status
 const getStockStatus = (current: number, min: number, max?: number | null) => {
   if (current <= min) {
     return { status: "critical", label: "Stok Kritis", color: "destructive" };
@@ -86,42 +91,44 @@ const getStockStatus = (current: number, min: number, max?: number | null) => {
   return { status: "normal", label: "Stok Normal", color: "success" };
 };
 
-// Helper function to get category display
+type CategoryConfig = {
+  label: string;
+  icon: React.ElementType;
+  color: string;
+};
+const CATEGORY_CONFIG = {
+  RAW_MATERIAL: {
+    label: "Bahan Baku",
+    icon: Package,
+    color: "bg-blue-100 text-blue-800",
+  },
+  CONSUMABLES: {
+    label: "Habis Pakai",
+    icon: Trash,
+    color: "bg-orange-100 text-orange-800",
+  },
+  SPARE_PARTS: {
+    label: "Suku Cadang",
+    icon: Wrench,
+    color: "bg-purple-100 text-purple-800",
+  },
+  PACKAGING: {
+    label: "Kemasan",
+    icon: Box,
+    color: "bg-teal-100 text-teal-800",
+  },
+  TOOLS: {
+    label: "Perkakas",
+    icon: Bolt,
+    color: "bg-amber-100 text-amber-800",
+  },
+} as const satisfies Record<MaterialCategory, CategoryConfig>;
+// get category display
 const getCategoryDisplay = (category: MaterialCategory) => {
-  const categoryMap: Partial<
-    Record<MaterialCategory, { label: string; icon: string; color: string }>
-  > = {
-    RAW_MATERIAL: {
-      label: "Bahan Baku",
-      icon: "📦",
-      color: "bg-blue-100 text-blue-800",
-    },
-    CONSUMABLES: {
-      label: "Habis Pakai",
-      icon: "🔧",
-      color: "bg-orange-100 text-orange-800",
-    },
-    SPARE_PARTS: {
-      label: "Suku Cadang",
-      icon: "⚙️",
-      color: "bg-purple-100 text-purple-800",
-    },
-
-    PACKAGING: {
-      label: "Kemasan",
-      icon: "📦",
-      color: "bg-teal-100 text-teal-800",
-    },
-    TOOLS: {
-      label: "Perkakas",
-      icon: "🛠️",
-      color: "bg-amber-100 text-amber-800",
-    },
-  };
   return (
-    categoryMap[category] || {
+    CATEGORY_CONFIG[category] || {
       label: category,
-      icon: "📦",
+      icon: Box,
       color: "bg-gray-100 text-gray-800",
     }
   );
@@ -207,13 +214,18 @@ export const MaterialColumns = (
     },
     cell: ({ row }) => {
       const category = row.getValue("category") as MaterialCategory;
-      const { label, icon, color } = getCategoryDisplay(category);
+      const { label, icon: Icon, color } = getCategoryDisplay(category);
 
       return (
-        <Badge variant="secondary" className={cn("gap-1", color)}>
-          <span>{icon}</span>
+        <div
+          className={cn(
+            "gap-1.5 flex px-3 py-1 rounded-md  font-medium text-xs  items-center",
+            color
+          )}
+        >
+          <Icon className="h-3 w-3" />
           {label}
-        </Badge>
+        </div>
       );
     },
     filterFn: (row, id, value) => {
@@ -257,11 +269,7 @@ export const MaterialColumns = (
   },
   {
     accessorKey: "currentStock",
-    header: ({ column }) => {
-      return (
-        <DataTableColumnHeaderSort column={column} title="Stok Saat Ini" />
-      );
-    },
+    header: "Stok Saat Ini",
     cell: ({ row }) => {
       const material = row.original;
       const stockStatus = getStockStatus(
@@ -272,7 +280,7 @@ export const MaterialColumns = (
 
       return (
         <div className="flex items-center gap-2">
-          <div className="flex flex-col items-end">
+          <div className="flex flex-col gap-1 items-end">
             <div className="flex items-center gap-2">
               {stockStatus.status === "critical" && (
                 <AlertTriangle className="h-4 w-4 text-red-500" />
@@ -340,16 +348,16 @@ export const MaterialColumns = (
             <TooltipContent>
               <div className="space-y-2">
                 <p className="font-medium">Detail Stok:</p>
-                <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="grid grid-cols-2 font-normal  gap-2 text-xs">
                   <span>Stok Minimum:</span>
-                  <span className="font-medium">
+                  <span>
                     {formatNumber(material.minimumStock)} {material.unit}
                   </span>
 
                   {material.maximumStock && (
                     <>
                       <span>Stok Maximum:</span>
-                      <span className="font-medium">
+                      <span>
                         {formatNumber(material.maximumStock)} {material.unit}
                       </span>
                     </>
@@ -359,7 +367,7 @@ export const MaterialColumns = (
                     material.goodStock !== undefined && (
                       <>
                         <span>Stok Baik:</span>
-                        <span className="font-medium text-green-600">
+                        <span>
                           {formatNumber(material.goodStock)} {material.unit}
                         </span>
                       </>
@@ -369,7 +377,7 @@ export const MaterialColumns = (
                     material.badStock !== undefined && (
                       <>
                         <span>Stok Rusak:</span>
-                        <span className="font-medium text-red-600">
+                        <span>
                           {formatNumber(material.badStock)} {material.unit}
                         </span>
                       </>

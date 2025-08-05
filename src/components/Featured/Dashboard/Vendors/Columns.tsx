@@ -186,7 +186,7 @@ export const vendorColumns = (
   {
     accessorKey: "code",
     header: ({ column }) => {
-      return <DataTableColumnHeaderSort column={column} title="Kode" />;
+      return <DataTableColumnHeaderSort column={column} title="Kode Vendor" />;
     },
     cell: ({ row }) => (
       <div className="font-mono text-sm font-medium">
@@ -301,14 +301,17 @@ export const vendorColumns = (
       }
 
       return (
-        <div className="space-y-2 min-w-[160px]">
+        <div className="space-y-1 min-w-[160px]">
           <div className="flex items-center gap-1 mb-1">
-            <Badge variant="outline" className="text-xs px-1 py-0">
+            <Badge
+              variant="outline"
+              className="text-xs px-2 py-0.5 bg-primary/10 text-primary border-primary/40"
+            >
               {getContactTypeLabel(primaryContact.contactType)}
             </Badge>
           </div>
           <div className="text-sm">
-            <p className="font-medium">{primaryContact.name}</p>
+            <p className="font-medium capitalize">{primaryContact.name}</p>
           </div>
           <div className="flex items-center gap-2">
             <Phone className="h-3 w-3 text-muted-foreground flex-shrink-0" />

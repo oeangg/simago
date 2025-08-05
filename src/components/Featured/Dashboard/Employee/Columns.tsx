@@ -20,15 +20,14 @@ import {
   Phone,
   Edit,
   Briefcase,
-  Venus,
-  Mars,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Gender } from "@prisma/client";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { DataTableColumnHeaderSort } from "../DataTableColumnHeaderSort";
+import { BadgeChartAt } from "@/components/ui/badgeChartAt";
+import { getGenderConfig } from "../Driver/Columns";
 
 // Type definition based on your router response
 export type EmployeeColumns = {
@@ -138,11 +137,15 @@ export const employeeColumns = (
   },
   {
     accessorKey: "nik",
-    header: ({ column }) => {
-      return <DataTableColumnHeaderSort column={column} title="N.I.K" />;
+    header: () => {
+      return (
+        <div className="font-medium text-muted-foreground">
+          <span>N.I.K</span>
+        </div>
+      );
     },
     cell: ({ row }) => (
-      <div className="flex items-center gap-2 max-w-20">
+      <div className="flex items-center gap-2 max-w-28">
         <div className="font-mono text-sm font-medium text-gray-900 bg-gray-50 px-2 py-1 rounded">
           {row.original.nik}
         </div>
@@ -176,15 +179,8 @@ export const employeeColumns = (
 
       return (
         <div className="flex items-center gap-3 min-w-[220px]">
-          <Avatar className="h-8 w-8">
-            <AvatarImage
-              src={employee.photo || undefined}
-              alt={employee.name}
-            />
-            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-sm font-semibold">
-              {getInitials(employee.name)}
-            </AvatarFallback>
-          </Avatar>
+          <BadgeChartAt>{getInitials(employee.name)}</BadgeChartAt>
+
           <div className="flex flex-col">
             <p className="font-semibold text-gray-900">{employee.name}</p>
             {latestEmployment && (
@@ -209,43 +205,7 @@ export const employeeColumns = (
     header: "Jenis Kelamin",
     cell: ({ row }) => {
       const gender = row.original.gender as Gender;
-
-      const genderConfig = {
-        MALE: {
-          icon: <Mars className="w-4 h-4 text-blue-600" />,
-          label: "Pria",
-          bgColor: "bg-blue-50",
-          borderColor: "border-blue-200",
-          textColor: "text-blue-700",
-          dotColor: "bg-blue-500",
-        },
-        FEMALE: {
-          icon: <Venus className="w-4 h-4 text-pink-600" />,
-          label: "Wanita",
-          bgColor: "bg-pink-50",
-          borderColor: "border-pink-200",
-          textColor: "text-pink-700",
-          dotColor: "bg-pink-500",
-        },
-      };
-
-      const config = genderConfig[gender] || genderConfig.MALE;
-
-      return (
-        <div className="flex items-center gap-2 min-w-[90px]">
-          <div
-            className={`
-          flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border
-          ${config.bgColor} ${config.borderColor} ${config.textColor}
-          transition-all duration-200 hover:shadow-sm
-        `}
-          >
-            <div className={`w-2 h-2 rounded-full ${config.dotColor}`} />
-            {config.icon}
-            <span className="text-sm font-medium">{config.label}</span>
-          </div>
-        </div>
-      );
+      return getGenderConfig(gender);
     },
   },
   {

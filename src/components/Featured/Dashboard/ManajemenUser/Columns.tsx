@@ -34,9 +34,9 @@ import {
 import { cn } from "@/lib/cn";
 import { useState } from "react";
 import { Role } from "@prisma/client";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { BadgeChartAt } from "@/components/ui/badgeChartAt";
 
 export interface IUserProps extends IUser {
   createdAt: Date;
@@ -53,41 +53,26 @@ const RoleOptions = [
     value: "SUPER_ADMIN",
     label: "Super Admin",
     icon: Crown,
-    color: "from-purple-500 to-pink-500",
-    bgColor: "bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200",
-    textColor: "text-purple-700",
   },
   {
     value: "ADMIN",
     label: "Admin",
     icon: Shield,
-    color: "from-blue-500 to-indigo-500",
-    bgColor: "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200",
-    textColor: "text-blue-700",
   },
   {
     value: "MANAGER",
     label: "Manager",
     icon: Sparkles,
-    color: "from-emerald-500 to-teal-500",
-    bgColor: "bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200",
-    textColor: "text-emerald-700",
   },
   {
     value: "SUPERVISOR",
     label: "Supervisor",
     icon: UserCheck,
-    color: "from-orange-500 to-yellow-500",
-    bgColor: "bg-gradient-to-r from-orange-50 to-yellow-50 border-orange-200",
-    textColor: "text-orange-700",
   },
   {
     value: "USER",
     label: "User",
     icon: User,
-    color: "from-gray-500 to-slate-500",
-    bgColor: "bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200",
-    textColor: "text-gray-700",
   },
 ] as const;
 
@@ -109,7 +94,6 @@ export const manUserbaseColumn: ColumnDef<IUserProps>[] = [
           }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Select all"
-          className="border-2 border-slate-300 data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-blue-500 data-[state=checked]:to-purple-500"
         />
       </div>
     ),
@@ -119,7 +103,6 @@ export const manUserbaseColumn: ColumnDef<IUserProps>[] = [
           checked={row.getIsSelected()}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
           aria-label="Select row"
-          className="border-2 border-slate-300 data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-blue-500 data-[state=checked]:to-purple-500"
         />
       </div>
     ),
@@ -134,34 +117,25 @@ export const manUserbaseColumn: ColumnDef<IUserProps>[] = [
       return (
         <Button
           variant="ghost"
-          className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 rounded-xl"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          <Calendar className="mr-2 h-4 w-4 text-blue-500" />
-          <span className="font-semibold text-slate-700">Registration</span>
-          <ArrowUpDown className="ml-2 h-4 w-4 text-slate-500" />
+          <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
+          <span className="font-semibold">Registration</span>
+          <ArrowUpDown className="ml-2 h-4 w-4 text-muted-foreground" />
         </Button>
       );
     },
     cell: ({ row }) => {
-      if (row.original.id.startsWith("skeleton-")) {
-        return (
-          <div className="flex flex-col space-y-2">
-            <Skeleton className="h-4 w-24 rounded-lg" />
-            <Skeleton className="h-3 w-16 rounded-lg" />
-          </div>
-        );
-      }
       const date = new Date(row.original.createdAt);
       const daysPassed = Math.floor(
         (new Date().getTime() - date.getTime()) / (1000 * 60 * 60 * 24)
       );
 
       return (
-        <div className="flex flex-col space-y-1.5 p-2 rounded-lg bg-gradient-to-r from-slate-50 to-blue-50">
+        <div className="flex flex-col space-y-1.5 p-2 rounded-md ">
           <div className="flex items-center space-x-2">
-            <Calendar className="h-3.5 w-3.5 text-blue-500" />
-            <span className="text-sm font-semibold text-slate-900">
+            <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-sm font-medium">
               {date.toLocaleDateString("id-ID", {
                 year: "numeric",
                 month: "short",
@@ -170,8 +144,8 @@ export const manUserbaseColumn: ColumnDef<IUserProps>[] = [
             </span>
           </div>
           <div className="flex items-center space-x-2">
-            <Clock className="h-3 w-3 text-slate-400" />
-            <span className="text-xs text-slate-600">
+            <Clock className="h-3 w-3 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">
               {date.toLocaleTimeString("id-ID", {
                 hour: "2-digit",
                 minute: "2-digit",
@@ -194,38 +168,18 @@ export const manUserbaseColumn: ColumnDef<IUserProps>[] = [
     accessorKey: "username",
     header: () => (
       <div className="flex items-center space-x-2">
-        <User className="h-4 w-4 text-purple-500" />
-        <span className="font-semibold text-slate-700">Username</span>
+        <User className="h-4 w-4 text-muted-foreground" />
+        <span className="font-semibold">Username</span>
       </div>
     ),
     cell: ({ row }) => {
-      if (row.original.id.startsWith("skeleton-")) {
-        return <Skeleton className="h-12 w-40 rounded-lg" />;
-      }
       const firstLetter = row.original.username.charAt(0).toUpperCase();
-      const colors = [
-        "from-purple-500 to-pink-500",
-        "from-blue-500 to-cyan-500",
-        "from-green-500 to-emerald-500",
-        "from-orange-500 to-red-500",
-        "from-indigo-500 to-purple-500",
-      ];
-      const colorIndex = row.original.username.charCodeAt(0) % colors.length;
 
       return (
-        <div className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 transition-all duration-300">
-          <div
-            className={cn(
-              "flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br text-white font-bold shadow-lg",
-              colors[colorIndex]
-            )}
-          >
-            {firstLetter}
-          </div>
+        <div className="flex items-center space-x-3 p-2 rounded-md hover:bg-muted/50 transition-colors">
+          <BadgeChartAt>{firstLetter}</BadgeChartAt>
           <div className="flex flex-col">
-            <span className="font-semibold text-slate-900 capitalize">
-              {row.original.username}
-            </span>
+            <span className="font-medium ">{row.original.username}</span>
           </div>
         </div>
       );
@@ -238,23 +192,19 @@ export const manUserbaseColumn: ColumnDef<IUserProps>[] = [
       return (
         <Button
           variant="ghost"
-          className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 rounded-xl"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          <UserCheck className="mr-2 h-4 w-4 text-green-500" />
-          <span className="font-semibold text-slate-700">Full Name</span>
-          <ArrowUpDown className="ml-2 h-4 w-4 text-slate-500" />
+          <UserCheck className="mr-2 h-4 w-4 text-muted-foreground" />
+          <span className="font-semibold">Full Name</span>
+          <ArrowUpDown className="ml-2 h-4 w-4 text-muted-foreground" />
         </Button>
       );
     },
     cell: ({ row }) => {
-      if (row.original.id.startsWith("skeleton-")) {
-        return <Skeleton className="h-6 w-48 rounded-lg" />;
-      }
       return (
         <div className="flex items-center space-x-2">
-          <div className="h-2 w-2 rounded-full bg-gradient-to-r from-green-400 to-emerald-400"></div>
-          <span className="font-medium text-slate-900 capitalize">
+          <div className="h-2 w-2 rounded-full bg-primary"></div>
+          <span className="font-medium capitalize">
             {row.original.fullname}
           </span>
         </div>
@@ -266,32 +216,27 @@ export const manUserbaseColumn: ColumnDef<IUserProps>[] = [
     accessorKey: "email",
     header: () => (
       <div className="flex items-center space-x-2">
-        <Mail className="h-4 w-4 text-blue-500" />
-        <span className="font-semibold text-slate-700">Email</span>
+        <Mail className="h-4 w-4 text-muted-foreground" />
+        <span className="font-semibold">Email</span>
       </div>
     ),
     cell: ({ row }) => {
-      if (row.original.id.startsWith("skeleton-")) {
-        return <Skeleton className="h-8 w-56 rounded-lg" />;
-      }
       const email = row.original.email;
       const [username, domain] = email!.split("@");
 
       return (
-        <div className="flex items-center space-x-3 p-2 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500 shadow-md">
-            <Mail className="h-4 w-4 text-white" />
-          </div>
+        <div className="flex items-center space-x-3 p-2 rounded-md ">
+          <BadgeChartAt>
+            <Mail className="h-4 w-4 text-primary-foreground" />
+          </BadgeChartAt>
+
           <div className="flex flex-col">
-            <span className="text-sm text-slate-900">
+            <span className="text-sm">
               <span className="font-medium">{username}</span>
-              <span className="text-slate-500">@{domain}</span>
+              <span className="text-muted-foreground">@{domain}</span>
             </span>
             {email!.endsWith(".com") && (
-              <Badge
-                variant="outline"
-                className="w-fit text-xs mt-0.5 border-blue-200 text-blue-600"
-              >
+              <Badge variant="outline" className="w-fit text-xs mt-0.5">
                 Verified
               </Badge>
             )}
@@ -326,32 +271,23 @@ export function ManUserStatusColumn({
           value={filterValue === undefined ? "All" : String(filterValue)}
           onValueChange={handleFilterChange}
         >
-          <SelectTrigger className="w-[200px] border-2 border-slate-200 hover:border-blue-400 transition-all duration-300 rounded-xl bg-gradient-to-r from-white to-slate-50">
-            <SelectValue placeholder="🔄 Status Filter" />
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Status Filter" />
           </SelectTrigger>
-          <SelectContent className="rounded-xl border-2 shadow-2xl">
-            <SelectItem
-              value="All"
-              className="rounded-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 cursor-pointer"
-            >
+          <SelectContent>
+            <SelectItem value="All">
               <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 rounded-full bg-gradient-to-r from-blue-400 to-purple-400"></div>
+                <div className="w-2 h-2 rounded-full bg-muted-foreground"></div>
                 <span>All Status</span>
               </div>
             </SelectItem>
-            <SelectItem
-              value="true"
-              className="rounded-lg hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 cursor-pointer"
-            >
+            <SelectItem value="true">
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 rounded-full bg-green-500"></div>
                 <span>Active Only</span>
               </div>
             </SelectItem>
-            <SelectItem
-              value="false"
-              className="rounded-lg hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 cursor-pointer"
-            >
+            <SelectItem value="false">
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 rounded-full bg-red-500"></div>
                 <span>Inactive Only</span>
@@ -362,14 +298,6 @@ export function ManUserStatusColumn({
       );
     },
     cell: ({ row }) => {
-      if (row.original.id.startsWith("skeleton-")) {
-        return (
-          <div className="flex flex-row items-center gap-4">
-            <Skeleton className="h-10 w-32 rounded-xl" />
-            <Skeleton className="h-10 w-10 rounded-full" />
-          </div>
-        );
-      }
       const status = row.original.isActive;
       const isAdmin = row.original.role === Role.SUPER_ADMIN;
       const isLoading = editingStatusId === row.original.id;
@@ -378,20 +306,19 @@ export function ManUserStatusColumn({
         <div className="flex flex-row items-center gap-3">
           <div
             className={cn(
-              "relative overflow-hidden rounded-xl border-2 px-4 py-2 text-sm font-semibold transition-all duration-300 shadow-lg hover:shadow-xl",
+              "relative overflow-hidden rounded-md border px-4 py-2 text-sm font-medium transition-colors",
               status
-                ? "bg-gradient-to-r from-green-500 to-emerald-500 border-green-400 text-white"
-                : "bg-gradient-to-r from-red-500 to-pink-500 border-red-400 text-white"
+                ? "bg-green-100 border-green-200 text-green-800"
+                : "bg-red-100 border-red-200 text-red-800"
             )}
           >
             <div className="flex items-center space-x-2">
               <div
                 className={cn(
-                  "h-2 w-2 rounded-full animate-pulse",
-                  status ? "bg-white" : "bg-white/70"
+                  "h-2 w-2 rounded-full",
+                  status ? "bg-green-500" : "bg-red-500"
                 )}
               />
-
               <span>{status ? "Active" : "Inactive"}</span>
             </div>
           </div>
@@ -400,28 +327,28 @@ export function ManUserStatusColumn({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant="ghost"
-                  className={cn(
-                    "h-10 w-10 p-0 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-110",
-                    isAdmin || isLoading
-                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      : "bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600"
-                  )}
+                  variant="outline"
                   size="icon"
+                  className={cn(
+                    "h-10 w-10",
+                    isAdmin || isLoading
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-primary hover:text-primary-foreground"
+                  )}
                   disabled={isAdmin || isLoading}
                   onClick={() => onToggleStatus?.(row.original.id, !status)}
                 >
                   {isLoading ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    <Pencil className="h-5 w-5" />
+                    <Pencil className="h-4 w-4" />
                   )}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent className="bg-gradient-to-r from-gray-800 to-gray-900 text-white rounded-xl shadow-xl border-0">
-                <p className="font-medium text-sm">
+              <TooltipContent>
+                <p>
                   {isAdmin
-                    ? "🔒 Cannot modify Admin status"
+                    ? "Cannot modify Admin status"
                     : `Click to ${status ? "deactivate" : "activate"} user`}
                 </p>
               </TooltipContent>
@@ -456,29 +383,22 @@ export function ManUserRoleColumn({
 
       return (
         <Select value={filterValue || "All"} onValueChange={handleFilterChange}>
-          <SelectTrigger className="w-[200px] border-2 border-slate-200 hover:border-purple-400 transition-all duration-300 rounded-xl bg-gradient-to-r from-white to-purple-50">
-            <SelectValue placeholder="👑 Role Filter" />
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Role Filter" />
           </SelectTrigger>
-          <SelectContent className="rounded-xl border-2 shadow-2xl">
-            <SelectItem
-              value="All"
-              className="rounded-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 cursor-pointer"
-            >
+          <SelectContent>
+            <SelectItem value="All">
               <div className="flex items-center space-x-2">
-                <Crown className="h-4 w-4 text-purple-500" />
+                <Crown className="h-4 w-4 text-muted-foreground" />
                 <span>All Roles</span>
               </div>
             </SelectItem>
             {RoleOptions.map((opt) => {
               const IconComponent = opt.icon;
               return (
-                <SelectItem
-                  key={opt.value}
-                  value={opt.value}
-                  className="rounded-lg  hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 cursor-pointer"
-                >
+                <SelectItem key={opt.value} value={opt.value}>
                   <div className="flex items-center space-x-2">
-                    <IconComponent className={cn("h-3 w-3", opt.textColor)} />
+                    <IconComponent className="h-3 w-3 text-muted-foreground" />
                     <span>{opt.label}</span>
                   </div>
                 </SelectItem>
@@ -489,14 +409,6 @@ export function ManUserRoleColumn({
       );
     },
     cell: ({ row }) => {
-      if (row.original.id.startsWith("skeleton-")) {
-        return (
-          <div className="flex flex-row items-center gap-4">
-            <Skeleton className="h-12 w-40 rounded-xl" />
-            <Skeleton className="h-10 w-10 rounded-full" />
-          </div>
-        );
-      }
       return (
         <RoleCell
           role={row.original.role}
@@ -543,27 +455,23 @@ function RoleCell({
   return (
     <div className="flex flex-row items-center gap-4">
       {editing ? (
-        <div className="flex flex-row gap-3 rounded-xl border-2 border-purple-300 bg-gradient-to-r from-purple-50 to-pink-50 p-3 shadow-xl">
+        <div className="flex flex-row gap-3 rounded-md border  p-3">
           <Select
             value={selectedRole}
             disabled={isLoading}
             onValueChange={(value) => handleChangeRole(value as Role)}
           >
-            <SelectTrigger className="w-[160px] border-2 border-purple-300 rounded-lg">
+            <SelectTrigger className="w-[160px]">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="rounded-xl shadow-xl">
+            <SelectContent>
               {RoleOptions.map((opt) => {
                 const OptionIcon = opt.icon;
                 return (
-                  <SelectItem
-                    key={opt.value}
-                    value={opt.value}
-                    className="rounded-lg cursor-pointer"
-                  >
+                  <SelectItem key={opt.value} value={opt.value}>
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center space-x-2">
-                        <OptionIcon className="h-4 w-4" />
+                        <OptionIcon className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium">{opt.label}</span>
                       </div>
                     </div>
@@ -575,7 +483,6 @@ function RoleCell({
           <Button
             variant="outline"
             size="sm"
-            className="border-2 border-red-300 text-red-600 hover:bg-red-50 rounded-lg transition-all duration-300"
             onClick={() => {
               setEditing(false);
               setSelectedRole(role);
@@ -588,24 +495,10 @@ function RoleCell({
         </div>
       ) : (
         <>
-          <div
-            className={cn(
-              "flex items-center space-x-3 rounded-xl border-2 px-4 py-2.5 shadow-lg transition-all duration-300 hover:shadow-xl relative overflow-hidden group",
-              currentRoleConfig?.bgColor,
-              currentRoleConfig?.textColor
-            )}
-          >
-            <div className="relative">
-              <IconComponent className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
-              <div
-                className={cn(
-                  "absolute -inset-1 rounded-full opacity-40 blur-sm bg-gradient-to-r",
-                  currentRoleConfig?.color
-                )}
-              />
-            </div>
+          <div className="flex items-center space-x-3 rounded-md border bg-muted/50 px-4 py-2.5">
+            <IconComponent className="h-5 w-5 text-muted-foreground" />
             <div className="flex flex-col">
-              <span className="font-bold text-sm">
+              <span className="font-medium text-sm">
                 {currentRoleConfig?.label || role}
               </span>
             </div>
@@ -615,28 +508,28 @@ function RoleCell({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant="ghost"
-                  className={cn(
-                    "h-10 w-10 p-0 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-110",
-                    isLoading || isAdmin
-                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      : "bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600"
-                  )}
+                  variant="outline"
                   size="icon"
+                  className={cn(
+                    "h-10 w-10",
+                    isLoading || isAdmin
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-primary hover:text-primary-foreground"
+                  )}
                   disabled={isLoading || isAdmin}
                   onClick={() => setEditing(true)}
                 >
                   {isLoading ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    <Pencil className="h-5 w-5" />
+                    <Pencil className="h-4 w-4" />
                   )}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent className="bg-gradient-to-r from-gray-800 to-gray-900 text-white rounded-xl shadow-xl border-0">
-                <p className="font-medium text-sm">
+              <TooltipContent>
+                <p>
                   {isAdmin
-                    ? "🔒 Cannot modify Admin role"
+                    ? "Cannot modify Admin role"
                     : "Click to change user role"}
                 </p>
               </TooltipContent>

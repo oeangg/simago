@@ -38,10 +38,10 @@ import { Input } from "@/components/ui/input";
 import { exportToCSV } from "@/tools/exportToCSV";
 import { VendorColumnsProps } from "./Columns";
 import { getVendorFromRow, searchVendor } from "./DataTableUtils";
-import { VendorDataPagination } from "./Pagination";
 import { formatDate } from "@/tools/formatDateLocal";
 import { toast } from "sonner";
 import { cn } from "@/lib/cn";
+import { DataPagination } from "../DataPagination";
 
 interface DataTableProps<TData extends VendorColumnsProps, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -213,10 +213,10 @@ export function VendorDataTable<TData extends VendorColumnsProps, TValue>({
           )}
         >
           <Input
-            placeholder="Cari vendor (nama, kode, NPWP, kontak, alamat)..."
+            placeholder="Cari data vendor berdasarkan nama, kode, NPWP, kontak, alamat..."
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
-            className="max-w-md"
+            className="max-w-xl"
           />
         </div>
 
@@ -394,7 +394,7 @@ export function VendorDataTable<TData extends VendorColumnsProps, TValue>({
           isLoading && "opacity-50 pointer-events-none"
         )}
       >
-        <VendorDataPagination table={table} />
+        <DataPagination table={table} />
       </div>
     </div>
   );

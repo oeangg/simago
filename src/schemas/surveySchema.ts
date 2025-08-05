@@ -135,32 +135,6 @@ export const SurveyWithRelationsSchema = z.object({
   statusHistories: z.array(SurveyStatusHistorySchema),
 });
 
-export const SurveyListOutputSchema = z.object({
-  surveys: z.array(SurveyWithRelationsSchema),
-  pagination: z.object({
-    page: z.number(),
-    limit: z.number(),
-    total: z.number(),
-    totalPages: z.number(),
-  }),
-});
-
-export const SurveyStatsOutputSchema = z.object({
-  totalSurveys: z.number(),
-  todaySurveys: z.number(),
-  thisMonthSurveys: z.number(),
-  statusBreakdown: z.object({
-    onProgress: z.number(),
-    approved: z.number(),
-    rejected: z.number(),
-  }),
-});
-
-export const SurveyDeleteOutputSchema = z.object({
-  success: z.boolean(),
-  message: z.string(),
-});
-
 export const SurveyStatusHistoryListOutputSchema = z.array(
   SurveyStatusHistorySchema
 );
@@ -235,9 +209,3 @@ export type SurveyStatusUpdateInput = z.infer<
   typeof SurveyStatusUpdateInputSchema
 >;
 export type SurveyFormData = z.infer<typeof SurveyFormDataSchema>;
-export type SurveyListOutput = z.infer<typeof SurveyListOutputSchema>;
-export type SurveyStatsOutput = z.infer<typeof SurveyStatsOutputSchema>;
-export type SurveyDeleteOutput = z.infer<typeof SurveyDeleteOutputSchema>;
-export type SurveyStatusHistoryListOutput = z.infer<
-  typeof SurveyStatusHistoryListOutputSchema
->;

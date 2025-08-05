@@ -21,7 +21,6 @@ import {
   VisibilityState,
 } from "@tanstack/react-table";
 import React from "react";
-import { CustomerDataPagination } from "./Pagination";
 import { Plus, Download, Settings2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -38,6 +37,7 @@ import { exportToCSV } from "@/tools/exportToCSV";
 import { toast } from "sonner";
 import { formatDate } from "@/tools/formatDateLocal";
 import { cn } from "@/lib/cn";
+import { DataPagination } from "../DataPagination";
 
 interface DataTableProps<TData extends CustomerColumnsProps, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -195,10 +195,10 @@ export function CustomerDataTable<TData extends CustomerColumnsProps, TValue>({
           )}
         >
           <Input
-            placeholder="Cari customer (nama, kode, NPWP, kontak, alamat)..."
+            placeholder="Cari data customer berdasarkan kode, nama, NPWP, kontak, alamat..."
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
-            className="max-w-md"
+            className="max-w-xl"
           />
         </div>
 
@@ -374,7 +374,7 @@ export function CustomerDataTable<TData extends CustomerColumnsProps, TValue>({
           isLoading && "opacity-50 pointer-events-none"
         )}
       >
-        <CustomerDataPagination table={table} />
+        <DataPagination table={table} />
       </div>
     </div>
   );

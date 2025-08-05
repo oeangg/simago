@@ -32,7 +32,7 @@ export function DashboardUserProfil({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="data-[state=open]:bg-sidebar-accent w-fit flex flex-row gap-2 py-1 px-2 border rounded-2xl items-center data-[state=open]:text-sidebar-accent-foreground">
+      <DropdownMenuTrigger className="data-[state=open]:bg-sidebar-accent w-fit flex flex-row gap-2 py-1 px-2 border rounded-xl items-center data-[state=open]:text-sidebar-accent-foreground">
         <Avatar className="h-8 w-8 rounded-lg">
           <AvatarImage
             src={dataUser?.profilPic ?? "/avatar1.png"}

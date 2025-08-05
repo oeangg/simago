@@ -38,10 +38,10 @@ import { Input } from "@/components/ui/input";
 import { exportToCSV } from "@/tools/exportToCSV";
 import { MaterialColumnsProps } from "./Columns";
 import { getMaterialFromRow, searchMaterial } from "./DataTableUtils";
-import { MaterialDataPagination } from "./Pagination";
 import { Brand, MaterialCategory, Unit } from "@prisma/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/cn";
+import { DataPagination } from "../DataPagination";
 
 interface DataTableProps<TData extends MaterialColumnsProps, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -167,10 +167,10 @@ export function MaterialDataTable<TData extends MaterialColumnsProps, TValue>({
           )}
         >
           <Input
-            placeholder="Cari data material (nama, kode,bahan baku, merk)..."
+            placeholder="Cari data material berdasarkan kode, nama..."
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
-            className="max-w-md"
+            className="max-w-xl"
           />
         </div>
 
@@ -343,7 +343,7 @@ export function MaterialDataTable<TData extends MaterialColumnsProps, TValue>({
           isLoading && "opacity-50 pointer-events-none"
         )}
       >
-        <MaterialDataPagination table={table} />
+        <DataPagination table={table} />
       </div>
     </div>
   );

@@ -3,15 +3,12 @@ import { z } from "zod";
 import { protectedProcedure, router } from "../trpc";
 import {
   SurveyCreateInputSchema,
-  SurveyDeleteOutputSchema,
   SurveyDeleteSchema,
   SurveyGetByIdSchema,
-  SurveyStatsOutputSchema,
-  SurveyStatusHistoryListOutputSchema,
   SurveyStatusUpdateInputSchema,
   SurveyUpdateInputSchema,
 } from "@/schemas/surveySchema";
-import { generateSurveyCode } from "@/tools/generateCodeSurvey";
+import { generateSurveyNumber } from "@/tools/generateSurveyNumber";
 import { Prisma } from "@prisma/client";
 
 export const surveyRouter = router({
@@ -152,7 +149,7 @@ export const surveyRouter = router({
     .input(SurveyCreateInputSchema)
     .mutation(async ({ ctx, input }) => {
       try {
-        const result = await ctx.db.$transaction(
+        const createdSurvey = await ctx.db.$transaction(
           async (tx) => {
             // Verify customer exists
             const customer = await tx.customer.findUnique({
@@ -167,7 +164,7 @@ export const surveyRouter = router({
             }
 
             // Generate survey number
-            const surveyNo = await generateSurveyCode({
+            const surveyNo = await generateSurveyNumber({
               db: ctx.db,
               shipmentType: input.shipmentType,
               shipmentDetail: input.shipmentDetail,
@@ -186,6 +183,11 @@ export const surveyRouter = router({
                 shipmentType: input.shipmentType,
                 shipmentDetail: input.shipmentDetail,
                 statusSurvey: "ONPROGRESS", // Default status
+              },
+              include: {
+                customers: true,
+                surveyItems: true,
+                statusHistories: true,
               },
             });
 
@@ -213,23 +215,6 @@ export const surveyRouter = router({
             timeout: 20000,
           }
         );
-
-        // Return the created survey with relations
-        const createdSurvey = await ctx.db.survey.findUnique({
-          where: { id: result.id },
-          include: {
-            customers: true,
-            surveyItems: true,
-            statusHistories: true,
-          },
-        });
-
-        if (!createdSurvey) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to retrieve created survey",
-          });
-        }
 
         return createdSurvey;
       } catch (error) {
@@ -412,7 +397,6 @@ export const surveyRouter = router({
   // Get survey status history
   getStatusSurveyHistory: protectedProcedure
     .input(SurveyGetByIdSchema)
-    .output(SurveyStatusHistoryListOutputSchema)
     .query(async ({ ctx, input }) => {
       const statusHistory = await ctx.db.surveyStatusHistory.findMany({
         where: { surveyId: input.id },
@@ -424,7 +408,6 @@ export const surveyRouter = router({
   // Delete survey
   deleteSurvey: protectedProcedure
     .input(SurveyDeleteSchema)
-    .output(SurveyDeleteOutputSchema)
     .mutation(async ({ ctx, input }) => {
       try {
         // Check if survey exists
@@ -458,54 +441,52 @@ export const surveyRouter = router({
     }),
 
   // Get survey statistics
-  getStatsSurvey: protectedProcedure
-    .output(SurveyStatsOutputSchema)
-    .query(async ({ ctx }) => {
-      const [
-        totalSurveys,
-        todaySurveys,
-        thisMonthSurveys,
-        onProgressSurveys,
-        approvedSurveys,
-        rejectedSurveys,
-      ] = await Promise.all([
-        ctx.db.survey.count(),
-        ctx.db.survey.count({
-          where: {
-            createdAt: {
-              gte: new Date(new Date().setHours(0, 0, 0, 0)),
-            },
+  getStatsSurvey: protectedProcedure.query(async ({ ctx }) => {
+    const [
+      totalSurveys,
+      todaySurveys,
+      thisMonthSurveys,
+      onProgressSurveys,
+      approvedSurveys,
+      rejectedSurveys,
+    ] = await Promise.all([
+      ctx.db.survey.count(),
+      ctx.db.survey.count({
+        where: {
+          createdAt: {
+            gte: new Date(new Date().setHours(0, 0, 0, 0)),
           },
-        }),
-        ctx.db.survey.count({
-          where: {
-            createdAt: {
-              gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-            },
-          },
-        }),
-        ctx.db.survey.count({
-          where: { statusSurvey: "ONPROGRESS" },
-        }),
-        ctx.db.survey.count({
-          where: { statusSurvey: "APPROVED" },
-        }),
-        ctx.db.survey.count({
-          where: { statusSurvey: "REJECT" },
-        }),
-      ]);
-
-      return {
-        totalSurveys,
-        todaySurveys,
-        thisMonthSurveys,
-        statusBreakdown: {
-          onProgress: onProgressSurveys,
-          approved: approvedSurveys,
-          rejected: rejectedSurveys,
         },
-      };
-    }),
+      }),
+      ctx.db.survey.count({
+        where: {
+          createdAt: {
+            gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+          },
+        },
+      }),
+      ctx.db.survey.count({
+        where: { statusSurvey: "ONPROGRESS" },
+      }),
+      ctx.db.survey.count({
+        where: { statusSurvey: "APPROVED" },
+      }),
+      ctx.db.survey.count({
+        where: { statusSurvey: "REJECT" },
+      }),
+    ]);
+
+    return {
+      totalSurveys,
+      todaySurveys,
+      thisMonthSurveys,
+      statusBreakdown: {
+        onProgress: onProgressSurveys,
+        approved: approvedSurveys,
+        rejected: rejectedSurveys,
+      },
+    };
+  }),
 
   // Get active customers for dropdown
   getActiveCustomers: protectedProcedure.query(async ({ ctx }) => {

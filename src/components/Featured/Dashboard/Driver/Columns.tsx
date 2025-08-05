@@ -12,21 +12,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  MoreHorizontal,
-  Edit,
-  Trash2,
-  Eye,
-  Phone,
-  MapPin,
-  User,
-  Mars,
-  Venus,
-} from "lucide-react";
+import { MoreHorizontal, Edit, Trash2, Eye, Phone, MapPin } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { Gender } from "@prisma/client";
 import { DataTableColumnHeaderSort } from "../DataTableColumnHeaderSort";
+import { BadgeChartAt } from "@/components/ui/badgeChartAt";
 
 export interface DriverColumnsProps {
   id: string;
@@ -67,10 +58,9 @@ const getStatusBadge = (status: boolean) => {
   );
 };
 
-const getGenderConfig = (gender: Gender) => {
+export const getGenderConfig = (gender: Gender) => {
   const clsGender = {
     MALE: {
-      icon: <Mars className="w-4 h-4 text-blue-600" />,
       label: "Pria",
       bgColor: "bg-blue-50",
       borderColor: "border-blue-200",
@@ -78,7 +68,6 @@ const getGenderConfig = (gender: Gender) => {
       dotColor: "bg-blue-500",
     },
     FEMALE: {
-      icon: <Venus className="w-4 h-4 text-pink-600" />,
       label: "Wanita",
       bgColor: "bg-pink-50",
       borderColor: "border-pink-200",
@@ -93,13 +82,12 @@ const getGenderConfig = (gender: Gender) => {
     <div className="flex items-center gap-2 min-w-[90px]">
       <div
         className={`
-          flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border
+          flex items-center gap-1.5 px-3 py-1.5 rounded-xl border
           ${config.bgColor} ${config.borderColor} ${config.textColor}
           transition-all duration-200 hover:shadow-sm
         `}
       >
         <div className={`w-2 h-2 rounded-full ${config.dotColor}`} />
-        {config.icon}
         <span className="text-sm font-medium">{config.label}</span>
       </div>
     </div>
@@ -161,9 +149,11 @@ export const driverColumns = (
     cell: ({ row }) => {
       const driver = row.original;
 
+      const firstLetter = driver.name.charAt(0).toUpperCase();
+
       return (
         <div className="flex items-center gap-2 min-w-[180px]">
-          <User className="h-4 w-4 text-blue-500 flex-shrink-0" />
+          <BadgeChartAt> {firstLetter} </BadgeChartAt>
           <div className="flex flex-col">
             <span className="font-medium line-clamp-1">{driver.name}</span>
             <span className="text-xs font-light text-muted-foreground">

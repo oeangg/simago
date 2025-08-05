@@ -1,11 +1,11 @@
 import { VehicleType } from "@prisma/client";
 import { VehicleColumnsProps } from "./Columns";
-
 // Type guard untuk memastikan data adalah EmployeeColumns
 export function isVehicleData(data: unknown): data is VehicleColumnsProps {
   return (
     typeof data === "object" &&
     data !== null &&
+    "id" in data &&
     "vehicleNumber" in data &&
     "vehicleType" in data &&
     "vehicleMake" in data &&

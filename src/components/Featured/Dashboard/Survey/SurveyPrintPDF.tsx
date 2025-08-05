@@ -165,7 +165,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   table: {
-    // Removed display: "table" and replaced with flexbox for table-like structure
     flexDirection: "column", // Organize rows vertically
     width: "auto",
     borderStyle: "solid",
@@ -183,7 +182,7 @@ const styles = StyleSheet.create({
     },
   },
   tableHeader: {
-    backgroundColor: "#2563eb",
+    backgroundColor: "#f3f4f6",
     borderBottomWidth: 1,
     borderBottomColor: "#1d4ed8",
   },
@@ -191,11 +190,11 @@ const styles = StyleSheet.create({
     padding: 8,
     fontSize: 9,
     fontWeight: "bold",
-    color: "#ffffff",
+    color: "#2563eb",
     textAlign: "center",
     borderStyle: "solid",
     borderWidth: 1, // Individual cell borders
-    borderColor: "#1d4ed8",
+    borderColor: "#e5e7eb",
     flexGrow: 1, // Allow cells to grow
     flexShrink: 0, // Prevent cells from shrinking
   },
@@ -213,12 +212,13 @@ const styles = StyleSheet.create({
     textAlign: "left",
   },
   summarySection: {
-    backgroundColor: "#2563eb",
-    color: "#ffffff",
+    color: "#2563eb",
+    backgroundColor: "#f3f4f6",
     padding: 15,
     marginTop: 20,
     textAlign: "center",
     borderRadius: 5,
+    marginBottom: 40,
   },
   summaryTitle: {
     fontSize: 14,
@@ -246,9 +246,23 @@ const styles = StyleSheet.create({
     fontSize: 8,
     fontWeight: "bold",
   },
+  footerTtd: {
+    width: "100%",
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+
+  footerTtdText: {
+    fontSize: 10,
+    fontWeight: "bold",
+    color: "#6b7280",
+  },
+
   logo: {
-    width: 185, // Atur lebar gambar
-    height: 60, // Atur tinggi gambar
+    width: 155, // Atur lebar gambar
+    height: 50, // Atur tinggi gambar
     marginBottom: 10,
     alignSelf: "center", // Untuk menengahkan gambar di dalam View header
   },
@@ -469,6 +483,11 @@ export const SurveyPDFDocument = ({ surveyData }: SurveyPDFProps) => {
 
         {/* Footer */}
         <View style={styles.footer}>
+          <View style={styles.footerTtd}>
+            <Text style={styles.footerTtdText}>Tanda tangan Surveyor</Text>
+            <Text style={styles.footerTtdText}>Tanda tangan Customer/PIC</Text>
+          </View>
+
           <Text style={styles.footerText}>
             Generated on: {new Date().toLocaleDateString("id-ID")} at{" "}
             {new Date().toLocaleTimeString("id-ID")}

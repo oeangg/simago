@@ -39,9 +39,9 @@ import { Input } from "@/components/ui/input";
 import { exportToCSV } from "@/tools/exportToCSV";
 import { DriverColumnsProps } from "./Columns";
 import { getDriverFromRow, searchDriver } from "./DataTableUtils";
-import { DriverDataPagination } from "./Pagination";
 import { formatDate } from "@/tools/formatDateLocal";
 import { cn } from "@/lib/cn";
+import { DataPagination } from "../DataPagination";
 
 interface DataTableProps<TData extends DriverColumnsProps, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -143,10 +143,10 @@ export function DriverDataTable<TData extends DriverColumnsProps, TValue>({
           )}
         >
           <Input
-            placeholder="Cari driver (kode, nama, alamat, telepon)..."
+            placeholder="Cari data driver berdasarkan kode, nama, alamat, telepon..."
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
-            className="max-w-md"
+            className="max-w-xl"
           />
         </div>
 
@@ -333,7 +333,7 @@ export function DriverDataTable<TData extends DriverColumnsProps, TValue>({
           isLoading && "opacity-50 pointer-events-none"
         )}
       >
-        <DriverDataPagination table={table} />
+        <DataPagination table={table} />
       </div>
     </div>
   );

@@ -20,10 +20,10 @@ import {
   getPaginationRowModel,
 } from "@tanstack/react-table";
 import React from "react";
-import { ManUserDataPagination } from "./Pagination";
 import { FilterInputManUser } from "./FilterInput";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { DataPagination } from "../DataPagination";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -60,15 +60,10 @@ export function DataTableManUser<TData, TValue>({
 
   return (
     <div className="space-y-4">
-      <h2>Daftar User</h2>
-      <div
-        className={cn(
-          "transition-opacity duration-200",
-          isLoading && "opacity-50 pointer-events-none"
-        )}
-      >
+      <h2 className="text-2xl font-bold tracking-tight">Daftar User</h2>
+      <div className="flex gap-4">
         <FilterInputManUser
-          placeholder="cari berdasarkan email..."
+          placeholder="Cari berdasarkan email..."
           column={table.getColumn("email")}
         />
       </div>
@@ -119,6 +114,7 @@ export function DataTableManUser<TData, TValue>({
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
+                    className="hover:bg-muted/50 transition-colors"
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id}>
@@ -136,7 +132,11 @@ export function DataTableManUser<TData, TValue>({
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    Tidak ada data..
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="text-muted-foreground">
+                        Tidak ada data user yang sesuai dengan pencarian{" "}
+                      </div>
+                    </div>
                   </TableCell>
                 </TableRow>
               )}
@@ -150,7 +150,7 @@ export function DataTableManUser<TData, TValue>({
           isLoading && "opacity-50 pointer-events-none"
         )}
       >
-        <ManUserDataPagination table={table} />
+        <DataPagination table={table} />
       </div>
     </div>
   );

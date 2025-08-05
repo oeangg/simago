@@ -16,21 +16,22 @@ datasource db {
 }
 
 model Customer {
-  id           String            @id @default(cuid())
-  code         String            @unique
-  name         String
-  statusActive StatusActive      @default(ACTIVE)
-  activeDate   DateTime          @default(now())
-  notes        String?
-  npwpNumber   String?
-  npwpName     String?
-  npwpAddress  String?
-  npwpDate     DateTime?
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
-  addresses    CustomerAddress[]
-  contacts     CustomerContact[]
-  surveys Survey[]
+  id                 String              @id @default(cuid())
+  code               String              @unique
+  name               String
+  statusActive       StatusActive        @default(ACTIVE)
+  activeDate         DateTime            @default(now())
+  notes              String?
+  npwpNumber         String?
+  npwpName           String?
+  npwpAddress        String?
+  npwpDate           DateTime?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  addresses          CustomerAddress[]
+  contacts           CustomerContact[]
+  surveys            Survey[]
+  quotationDomestics QuotationDomestic[]
 
   @@index([name])
   @@map("customers")
@@ -339,7 +340,7 @@ model MaterialInItem {
   quantity     Int
   unitPrice    Decimal    @db.Decimal(10, 2)
   totalPrice   Decimal    @db.Decimal(12, 2) // quantity * unitPrice
-  stockType StockType @default(GOOD)
+  stockType    StockType  @default(GOOD)
   notes        String?
   stockBefore  Int // Stock sebelum transaksi
   stockAfter   Int // Stock setelah transaksi
@@ -350,25 +351,25 @@ model MaterialInItem {
 }
 
 model MaterialOut {
-  id                   String            @id @default(cuid())
-  transactionNo        String            @unique // 
+  id                   String   @id @default(cuid())
+  transactionNo        String   @unique // 
   customerId           String
   customerName         String
   orderId              String? // Reference ke order/project
   shipmentId           String? // Reference ke shipment
   destinationType      String // "CUSTOMER", "PROJECT", "INTERNAL_USE", "WASTE", etc.
-  transactionDate      DateTime          @default(now())
-  totalAmountBeforeTax Decimal           @db.Decimal(12, 2)
-  totalTax             Decimal           @db.Decimal(12, 2)
-  otherCosts           Decimal           @db.Decimal(12, 2)
-  totalAmount          Decimal           @db.Decimal(12, 2)
+  transactionDate      DateTime @default(now())
+  totalAmountBeforeTax Decimal  @db.Decimal(12, 2)
+  totalTax             Decimal  @db.Decimal(12, 2)
+  otherCosts           Decimal  @db.Decimal(12, 2)
+  totalAmount          Decimal  @db.Decimal(12, 2)
 
-  notes                String?
-  createdBy            String
-  createdByUser        User              @relation(fields: [createdBy], references: [id])
-  createdAt            DateTime          @default(now())
-  updatedAt            DateTime          @updatedAt
-  items                MaterialOutItem[]
+  notes         String?
+  createdBy     String
+  createdByUser User              @relation(fields: [createdBy], references: [id])
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  items         MaterialOutItem[]
 
   @@map("material_outs")
 }
@@ -380,11 +381,11 @@ model MaterialOutItem {
   materialId    String
   material      Material    @relation(fields: [materialId], references: [id])
 
-  quantity  Int
-  unitCost  Decimal? @db.Decimal(10, 2) // Cost per unit (untuk internal costing)
-  totalCost Decimal? @db.Decimal(12, 2) // quantity * unitCost
-  notes     String?
-  stockType StockType @default(GOOD)
+  quantity    Int
+  unitCost    Decimal?  @db.Decimal(10, 2) // Cost per unit (untuk internal costing)
+  totalCost   Decimal?  @db.Decimal(12, 2) // quantity * unitCost
+  notes       String?
+  stockType   StockType @default(GOOD)
   // Stock tracking
   stockBefore Int // Stock sebelum transaksi
   stockAfter  Int // Stock setelah transaksi
@@ -495,73 +496,136 @@ model User {
   session   Session?
 
   //realtion stock
-  materialIns  MaterialIn[]
-  materialOuts MaterialOut[]
-  SurveyStatusHistories SurveyStatusHistory[]
+  materialIns                      MaterialIn[]
+  materialOuts                     MaterialOut[]
+  SurveyStatusHistories            SurveyStatusHistory[]
+  quotationDomesticStatusHistories QuotationDomesticStatusHistory[]
 
   @@map("users")
 }
+
 model Survey {
-  id              String               @id @default(cuid())
-  surveyNo        String               @unique
-  surveyDate      DateTime
-  workDate        DateTime
-  customerId      String
-  origin          String
-  destination     String
-  cargoType       CargoType
-  shipmentType    ShipmentType
-  shipmentDetail  ShipmentDetail
-  statusSurvey    SurveyStatus         @default(ONPROGRESS)
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
-  
-  customers        Customer             @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  surveyItems     SurveyItem[]
-  statusHistories SurveyStatusHistory[]
-  
+  id             String         @id @default(cuid())
+  surveyNo       String         @unique
+  surveyDate     DateTime
+  workDate       DateTime
+  customerId     String
+  origin         String
+  destination    String
+  cargoType      CargoType
+  shipmentType   ShipmentType
+  shipmentDetail ShipmentDetail
+  statusSurvey   SurveyStatus   @default(ONPROGRESS)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  customers          Customer              @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  surveyItems        SurveyItem[]
+  statusHistories    SurveyStatusHistory[]
+  quotationDomestics QuotationDomestic[]
+
   @@map("surveys")
 }
 
 model SurveyItem {
-  id         String  @id @default(cuid())
-  surveyId   String
-  name       String
-  width      Float
-  length     Float
-  height     Float
-  quantity   Int
-  cbm        Float
-  note       String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  
-  survey     Survey  @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  
+  id        String   @id @default(cuid())
+  surveyId  String
+  name      String
+  width     Float
+  length    Float
+  height    Float
+  quantity  Int
+  cbm       Float
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  survey Survey @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+
   @@map("survey_items")
 }
 
+model QuotationDomestic {
+  id              String          @id @default(cuid())
+  quotationNo     String          @unique // Auto-generated di backend
+  quotationDate   DateTime        @default(now())
+  surveyId        String
+  customerId      String
+  leadTime        Int // Dalam hari
+  marketingName   String
+  statusQuotation QuotationStatus @default(ONPROGRESS)
+
+  // Pricing fields (optional karena mungkin belum diisi saat create)
+  trucking  Decimal? @db.Decimal(12, 2)
+  packing   Decimal? @db.Decimal(12, 2)
+  handling  Decimal? @db.Decimal(12, 2)
+  unloading Decimal? @db.Decimal(12, 2)
+  reposisi  Decimal? @db.Decimal(12, 2)
+  total     Decimal? @db.Decimal(12, 2)
+
+  // Optional: untuk multi-currency / quotation international
+  // currency        String          @default("IDR")
+  // exchangeRate    Decimal?        @db.Decimal(10, 4)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  customer Customer @relation(fields: [customerId], references: [id])
+  survey   Survey   @relation(fields: [surveyId], references: [id])
+
+  quotationStatusHistory QuotationDomesticStatusHistory[]
+
+  @@index([customerId])
+  @@index([surveyId])
+  @@index([statusQuotation])
+  @@map("quotation_domestics")
+}
+
+model QuotationDomesticStatusHistory {
+  id              String          @id @default(cuid())
+  quotationId     String
+  statusQuotation QuotationStatus
+  changedBy       String
+  changedAt       DateTime        @default(now())
+  remarks         String?         @db.Text // Untuk catatan panjang
+
+  quotationDomestic QuotationDomestic @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  user              User              @relation(fields: [changedBy], references: [id])
+
+  @@index([quotationId])
+  @@index([changedBy])
+  @@map("quotation_domestic_status_history")
+}
+
 model SurveyStatusHistory {
-  id          String       @id @default(cuid())
-  surveyId    String
-  status      SurveyStatus
-  changedBy   String       // User ID who changed the status
-  changedAt   DateTime     @default(now())
-  remarks     String?      // Optional remarks for status change
-  createdAt   DateTime     @default(now())
-  
-  survey      Survey       @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  user  User @relation(fields: [changedBy], references: [id], onDelete: Cascade)
+  id        String       @id @default(cuid())
+  surveyId  String
+  status    SurveyStatus
+  changedBy String // User ID who changed the status
+  changedAt DateTime     @default(now())
+  remarks   String? // Optional remarks for status change
+  createdAt DateTime     @default(now())
+
+  survey Survey @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [changedBy], references: [id], onDelete: Cascade)
 
   @@map("survey_status_histories")
 }
 
+enum QuotationStatus {
+  ONPROGRESS
+  APPROVED
+  REJECTED
+  CANCELLED
+}
 
 enum SurveyStatus {
   ONPROGRESS
   APPROVED
   REJECT
 }
+
 // LCL (Less Container Load): Bayar per CBM yang digunakan
 // FCL (Full Container Load): Sewa full container (20ft/40ft)
 // Air Freight: Hitung volumetric weight vs actual weight

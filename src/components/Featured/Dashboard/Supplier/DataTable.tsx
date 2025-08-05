@@ -37,11 +37,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { SupplierColumnsProps } from "./Columns";
 import { getSupplierFromRow, searchSupplier } from "./DataTableUtils";
-import { SupplierDataPagination } from "./Pagination";
 import { exportToCSV } from "@/tools/exportToCSV";
 import { formatDate } from "@/tools/formatDateLocal";
 import { toast } from "sonner";
 import { cn } from "@/lib/cn";
+import { DataPagination } from "../DataPagination";
 
 interface DataTableProps<TData extends SupplierColumnsProps, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -200,10 +200,10 @@ export function SupplierDataTable<TData extends SupplierColumnsProps, TValue>({
           )}
         >
           <Input
-            placeholder="Cari supplier (nama, kode, NPWP, kontak, alamat)..."
+            placeholder="Cari data supplier berdasarkan kode, nama, npwp, kontak, alamat..."
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
-            className="max-w-md"
+            className="max-w-xl"
           />
         </div>
 
@@ -382,7 +382,7 @@ export function SupplierDataTable<TData extends SupplierColumnsProps, TValue>({
           isLoading && "opacity-50 pointer-events-none"
         )}
       >
-        <SupplierDataPagination table={table} />
+        <DataPagination table={table} />
       </div>
     </div>
   );
