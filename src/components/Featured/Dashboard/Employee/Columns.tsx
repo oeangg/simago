@@ -28,6 +28,7 @@ import { id } from "date-fns/locale";
 import { DataTableColumnHeaderSort } from "../DataTableColumnHeaderSort";
 import { BadgeChartAt } from "@/components/ui/badgeChartAt";
 import { getGenderConfig } from "../Driver/Columns";
+import { getInitials } from "@/tools/getInitials";
 
 // Type definition based on your router response
 export type EmployeeColumns = {
@@ -166,16 +167,6 @@ export const employeeColumns = (
       // Format tanggal helper
       const date = row.getValue("activeDate") as string | null;
       if (!date) return <span className="text-muted-foreground">-</span>;
-
-      // Get initials for avatar
-      const getInitials = (name: string) => {
-        return name
-          .split(" ")
-          .map((n) => n[0])
-          .join("")
-          .toUpperCase()
-          .slice(0, 2);
-      };
 
       return (
         <div className="flex items-center gap-3 min-w-[220px]">

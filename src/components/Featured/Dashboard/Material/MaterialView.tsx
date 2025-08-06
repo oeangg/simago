@@ -11,7 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -44,6 +43,7 @@ import { cn } from "@/lib/cn";
 import { trpc } from "@/app/_trpcClient/client";
 import { MaterialCategory } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
+import { getInitials } from "@/tools/getInitials";
 
 interface ViewMaterialProps {
   materialId: string;
@@ -173,15 +173,6 @@ export default function ViewMaterial({
     }
   );
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
   const renderDialogContent = () => {
     if (isLoading) {
       return (
@@ -243,11 +234,9 @@ export default function ViewMaterial({
         <Card className="border-2 bg-gradient-to-r from-blue-50 to-indigo-50">
           <CardContent className="pt-6">
             <div className="flex items-start gap-4">
-              <Avatar className="h-16 w-16">
-                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-lg font-bold">
-                  {getInitials(dataMaterial.name)}
-                </AvatarFallback>
-              </Avatar>
+              <div className="h-20 w-20 bg-gradient-to-br text-lg md:text-xl font-medium from-blue-500 to-purple-600 rounded-xl text-white flex items-center justify-center">
+                {getInitials(dataMaterial.name)}
+              </div>
 
               <div className="flex-1 space-y-3">
                 <div className="flex items-start justify-between">

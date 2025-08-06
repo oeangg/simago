@@ -26,7 +26,7 @@ export const CardAuthWrapper = ({
   children,
 }: cardAuthWrapperProps) => {
   return (
-    <Card className="w-full px-5 py-2">
+    <Card className="w-full px-5 py-2 shadow-2xl">
       <CardHeader>
         <AuthHeader titleHeader={titleHeader} descHeader={descHeader} />
       </CardHeader>

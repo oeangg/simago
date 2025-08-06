@@ -195,10 +195,10 @@ export function CustomerDataTable<TData extends CustomerColumnsProps, TValue>({
           )}
         >
           <Input
-            placeholder="Cari data customer berdasarkan kode, nama, NPWP, kontak, alamat..."
+            placeholder="Cari data customer ..."
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
-            className="max-w-xl"
+            className="max-w-md"
           />
         </div>
 

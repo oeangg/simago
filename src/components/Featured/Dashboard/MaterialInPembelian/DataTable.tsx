@@ -201,11 +201,11 @@ export function MaterialInDataTable({
           {/* Search Input */}
           <div className="flex-1 w-full sm:w-auto">
             <Input
-              placeholder="Cari data pembelian berdasarkan no transaksi, supplier, invoice..."
+              placeholder="Cari data pembelian material..."
               value={searchValue}
               onChange={(e) => onSearchChange?.(e.target.value)}
               disabled={isLoading}
-              className="h-9 w-full max-w-xl"
+              className="h-9 w-full max-w-md"
             />
           </div>
 

@@ -245,7 +245,7 @@ export const supplierColumns = (
       ].filter(Boolean);
 
       return (
-        <div className="flex items-start gap-2 max-w-[200px]">
+        <div className="flex items-start gap-2 max-w-[250px]">
           <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
           <div className="text-sm min-w-0">
             <div className="flex items-center gap-1 mb-1">

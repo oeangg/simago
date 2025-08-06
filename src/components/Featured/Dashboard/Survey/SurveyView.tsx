@@ -191,11 +191,9 @@ export default function ViewSurvey({
         <Card className="border-2 bg-gradient-to-r from-blue-50 to-indigo-50">
           <CardContent className="pt-6">
             <div className="flex items-start gap-4">
-              <Avatar className="h-16 w-16">
-                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-lg font-bold">
-                  <FileText className="h-8 w-8" />
-                </AvatarFallback>
-              </Avatar>
+              <div className="h-20 w-20 bg-gradient-to-br text-lg md:text-xl font-medium from-blue-500 to-purple-600 rounded-xl text-white flex items-center justify-center">
+                <FileText className="h-8 w-8" />
+              </div>
 
               <div className="flex-1 space-y-3">
                 <div className="flex items-start justify-between">

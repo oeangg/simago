@@ -143,10 +143,10 @@ export function DriverDataTable<TData extends DriverColumnsProps, TValue>({
           )}
         >
           <Input
-            placeholder="Cari data driver berdasarkan kode, nama, alamat, telepon..."
+            placeholder="Cari data driver ..."
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
-            className="max-w-xl"
+            className="max-w-md"
           />
         </div>
 

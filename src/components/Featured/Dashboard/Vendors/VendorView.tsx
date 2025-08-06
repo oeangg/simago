@@ -11,7 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Phone,
   Mail,
@@ -42,6 +41,7 @@ import { trpc } from "@/app/_trpcClient/client";
 
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
+import { getInitials } from "@/tools/getInitials";
 
 interface ViewVendorProps {
   vendorId: string;
@@ -84,19 +84,21 @@ export default function ViewVendor({
       [StatusActive.ACTIVE]: {
         variant: "default" as const,
         label: "Aktif",
-        className: "bg-green-500 hover:bg-green-600 text-white",
+        className:
+          "border-green-300 bg-green-100 hover:bg-green-200 text-green-600",
         icon: "🟢",
       },
       [StatusActive.NOACTIVE]: {
         variant: "destructive" as const,
         label: "Tidak Aktif",
-        className: "bg-red-500 hover:bg-red-600 text-white",
+        className: "border-red-300 bg-red-100 hover:bg-red-200 text-red-600",
         icon: "🔴",
       },
       [StatusActive.SUSPENDED]: {
         variant: "secondary" as const,
         label: "Ditangguhkan",
-        className: "bg-yellow-500 hover:bg-yellow-600 text-white",
+        className:
+          "border-yellow-300 bg-yellow-100 hover:bg-yellow-200 text-yellow-600",
         icon: "🟡",
       },
     };
@@ -230,15 +232,6 @@ export default function ViewVendor({
     return parts.join(", ");
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
   // Find primary address and contact
   const primaryAddress = dataVendor?.vendorAddresses?.find(
     (addr) => addr.isPrimaryAddress
@@ -300,11 +293,9 @@ export default function ViewVendor({
         <Card className="border-2 bg-gradient-to-r from-orange-50 to-red-50">
           <CardContent className="pt-6">
             <div className="flex items-start gap-4">
-              <Avatar className="h-16 w-16">
-                <AvatarFallback className="bg-gradient-to-br from-orange-500 to-red-600 text-white text-lg font-bold">
-                  {getInitials(dataVendor.name)}
-                </AvatarFallback>
-              </Avatar>
+              <div className="h-20 w-20 bg-gradient-to-br text-lg md:text-xl font-medium from-blue-500 to-purple-600 rounded-xl text-white flex items-center justify-center">
+                {getInitials(dataVendor.name)}
+              </div>
 
               <div className="flex-1 space-y-2">
                 <div>

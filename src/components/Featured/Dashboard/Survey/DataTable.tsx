@@ -198,11 +198,11 @@ export function SurveyDataTable({
           {/* Search Input */}
           <div className="flex-1 w-full sm:w-auto">
             <Input
-              placeholder="Cari data survey berdasarkan no, customer, rute..."
+              placeholder="Cari data survey ..."
               value={searchValue}
               onChange={(e) => onSearchChange?.(e.target.value)}
               disabled={isLoading}
-              className="h-9 w-full max-w-xl"
+              className="h-9 w-full max-w-md"
             />
           </div>
 

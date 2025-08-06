@@ -134,7 +134,7 @@ export default function ViewVehicle({
         <Card className="border-2">
           <CardContent className="pt-6">
             <div className="flex items-start gap-4">
-              <div className="h-20 w-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+              <div className="h-20 w-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
                 <Car className="h-10 w-10 text-white" />
               </div>
 
@@ -157,6 +157,14 @@ export default function ViewVehicle({
                     )}
                   </div>
                 </div>
+              </div>
+              <div className="space-y-2">
+                <span className="text-sm font-medium text-gray-700">
+                  ID Kendaraan:
+                </span>
+                <p className="text-sm text-gray-600 font-mono bg-gray-50 p-2 rounded">
+                  {dataVehicle.id}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -255,56 +263,6 @@ export default function ViewVehicle({
             </CardContent>
           </Card>
         </div>
-
-        {/* Additional Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Info className="h-5 w-5 text-gray-600" />
-              Informasi Tambahan
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <span className="text-sm font-medium text-gray-700">
-                  ID Kendaraan:
-                </span>
-                <p className="text-sm text-gray-600 font-mono bg-gray-50 p-2 rounded">
-                  {dataVehicle.id}
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <span className="text-sm font-medium text-gray-700">
-                  Informasi Lengkap:
-                </span>
-                <div className="text-sm bg-gray-50 p-3 rounded-lg space-y-1">
-                  <p>
-                    <span className="font-medium">Nomor:</span>{" "}
-                    {dataVehicle.vehicleNumber}
-                  </p>
-                  <p>
-                    <span className="font-medium">Tipe:</span>{" "}
-                    {vehicleTypeConfig.label}
-                  </p>
-                  {dataVehicle.vehicleMake && (
-                    <p>
-                      <span className="font-medium">Merek:</span>{" "}
-                      {dataVehicle.vehicleMake}
-                    </p>
-                  )}
-                  {dataVehicle.vehicleYear && (
-                    <p>
-                      <span className="font-medium">Tahun:</span>{" "}
-                      {dataVehicle.vehicleYear}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     );
   };

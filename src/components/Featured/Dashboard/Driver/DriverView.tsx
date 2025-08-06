@@ -10,7 +10,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   MapPin,
   Building,
@@ -20,8 +19,6 @@ import {
   Calendar,
   IdCard,
   MapIcon,
-  Clock,
-  FileText,
   Mars,
   Venus,
   Truck,
@@ -32,6 +29,7 @@ import { trpc } from "@/app/_trpcClient/client";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { Gender } from "@prisma/client";
+import { getInitials } from "@/tools/getInitials";
 
 interface ViewDriverProps {
   driverId: string;
@@ -108,15 +106,6 @@ export default function ViewDriver({
     }
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
   const formatAddress = (
     addressLine1: string,
     addressLine2?: string | null,
@@ -179,11 +168,9 @@ export default function ViewDriver({
         <Card className="border-2">
           <CardContent className="pt-6">
             <div className="flex items-start gap-4">
-              <Avatar className="h-20 w-20">
-                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-lg font-bold">
-                  {getInitials(dataDriver.name)}
-                </AvatarFallback>
-              </Avatar>
+              <div className="h-20 w-20 bg-gradient-to-br text-lg md:text-xl font-medium from-blue-500 to-purple-600 rounded-xl text-white flex items-center justify-center">
+                {getInitials(dataDriver.name)}
+              </div>
 
               <div className="flex-1 space-y-3">
                 <div>
@@ -210,6 +197,14 @@ export default function ViewDriver({
                     </span>
                   </div>
                 </div>
+              </div>
+              <div className="space-y-2">
+                <span className="text-sm font-medium text-gray-700">
+                  ID Driver:
+                </span>
+                <p className="text-sm text-gray-600 font-mono bg-gray-50 p-2 rounded">
+                  {dataDriver.id}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -341,42 +336,6 @@ export default function ViewDriver({
                   dataDriver.city
                 )}
               </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Additional Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <FileText className="h-5 w-5 text-gray-600" />
-              Informasi Tambahan
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <span className="text-sm font-medium text-gray-700">
-                  ID Driver:
-                </span>
-                <p className="text-sm text-gray-600 font-mono bg-gray-50 p-2 rounded">
-                  {dataDriver.id}
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <span className="text-sm font-medium text-gray-700">
-                  Status Terakhir Update:
-                </span>
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-blue-500" />
-                  <span className="text-sm text-blue-600">
-                    {dataDriver.statusActive
-                      ? "Driver Aktif"
-                      : "Driver Tidak Aktif"}
-                  </span>
-                </div>
-              </div>
             </div>
           </CardContent>
         </Card>

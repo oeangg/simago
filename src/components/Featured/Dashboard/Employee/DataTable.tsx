@@ -170,10 +170,10 @@ export function EmployeeDataTable<TData extends EmployeeColumns, TValue>({
           )}
         >
           <Input
-            placeholder="Cari karyawan berdasarkan nama, NIK, divisi, jabatan, alamat, telepon..."
+            placeholder="Cari data karyawan ..."
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
-            className="max-w-xl"
+            className="max-w-md"
           />
         </div>
 

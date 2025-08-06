@@ -138,10 +138,10 @@ export function VehicleDataTable<TData extends VehicleColumnsProps, TValue>({
           )}
         >
           <Input
-            placeholder="Cari data kendaraan berdasarkan nomor, type, merk dan tahun pembuatan..."
+            placeholder="Cari data kendaraan ..."
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
-            className="max-w-xl"
+            className="max-w-md"
           />
         </div>
 

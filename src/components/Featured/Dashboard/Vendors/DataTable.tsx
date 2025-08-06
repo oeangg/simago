@@ -213,10 +213,10 @@ export function VendorDataTable<TData extends VendorColumnsProps, TValue>({
           )}
         >
           <Input
-            placeholder="Cari data vendor berdasarkan nama, kode, NPWP, kontak, alamat..."
+            placeholder="Cari data vendor ..."
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
-            className="max-w-xl"
+            className="max-w-md"
           />
         </div>
 

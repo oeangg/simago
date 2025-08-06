@@ -23,7 +23,6 @@ import {
   Printer,
   MapPin,
   Package,
-  User,
   Calendar,
   Truck,
   Ship,
@@ -68,6 +67,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { BadgeChartAt } from "@/components/ui/badgeChartAt";
+import { getInitials } from "@/tools/getInitials";
 
 interface SurveyItems {
   id: string;
@@ -520,7 +521,7 @@ export const SurveyInColumns = (
       const customer = row.original.customer;
       return (
         <div className="flex items-center gap-2">
-          <User className="h-4 w-4 text-muted-foreground" />
+          <BadgeChartAt>{getInitials(customer.name)}</BadgeChartAt>
           <div className="flex flex-col">
             <span className="font-medium text-sm">{customer.name}</span>
             <span className="text-xs text-muted-foreground">

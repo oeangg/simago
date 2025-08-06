@@ -35,6 +35,7 @@ import { trpc } from "@/app/_trpcClient/client";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { Gender } from "@prisma/client";
+import { getInitials } from "@/tools/getInitials";
 
 interface ViewEmployeeProps {
   employeeId: string;
@@ -139,15 +140,6 @@ export default function ViewEmployee({
         {divisionName}
       </Badge>
     );
-  };
-
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
   };
 
   const renderDialogContent = () => {

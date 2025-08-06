@@ -167,10 +167,10 @@ export function MaterialDataTable<TData extends MaterialColumnsProps, TValue>({
           )}
         >
           <Input
-            placeholder="Cari data material berdasarkan kode, nama..."
+            placeholder="Cari data material..."
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
-            className="max-w-xl"
+            className="max-w-md"
           />
         </div>
 

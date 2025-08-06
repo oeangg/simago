@@ -325,68 +325,41 @@ export const MaterialColumns = (
       const material = row.original;
 
       return (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex flex-col gap-1 cursor-help">
-                <div className="flex items-center gap-1 text-xs">
-                  <span className="text-muted-foreground">Min:</span>
-                  <span className="font-medium">
-                    {formatNumber(material.minimumStock)}
-                  </span>
-                </div>
-                {material.maximumStock && (
-                  <div className="flex items-center gap-1 text-xs">
-                    <span className="text-muted-foreground">Max:</span>
-                    <span className="font-medium">
-                      {formatNumber(material.maximumStock)}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <div className="space-y-2">
-                <p className="font-medium">Detail Stok:</p>
-                <div className="grid grid-cols-2 font-normal  gap-2 text-xs">
-                  <span>Stok Minimum:</span>
-                  <span>
-                    {formatNumber(material.minimumStock)} {material.unit}
-                  </span>
+        <div className="flex flex-col gap-1 ">
+          <div className="flex items-center gap-1 text-xs">
+            <span className="text-muted-foreground">Min :</span>
+            <span className="font-medium">
+              {formatNumber(material.minimumStock)} {material.unit}
+            </span>
+          </div>
 
-                  {material.maximumStock && (
-                    <>
-                      <span>Stok Maximum:</span>
-                      <span>
-                        {formatNumber(material.maximumStock)} {material.unit}
-                      </span>
-                    </>
-                  )}
+          {material.maximumStock && (
+            <div className="flex items-center gap-1 text-xs">
+              <span>Max :</span>
+              <span>
+                {formatNumber(material.maximumStock)} {material.unit}
+              </span>
+            </div>
+          )}
 
-                  {material.goodStock !== null &&
-                    material.goodStock !== undefined && (
-                      <>
-                        <span>Stok Baik:</span>
-                        <span>
-                          {formatNumber(material.goodStock)} {material.unit}
-                        </span>
-                      </>
-                    )}
+          {material.goodStock !== null && material.goodStock !== undefined && (
+            <div className="flex items-center text-green-600 font-semibold gap-1 text-sm">
+              <span>Baik :</span>
+              <span>
+                {formatNumber(material.goodStock)} {material.unit}
+              </span>
+            </div>
+          )}
 
-                  {material.badStock !== null &&
-                    material.badStock !== undefined && (
-                      <>
-                        <span>Stok Rusak:</span>
-                        <span>
-                          {formatNumber(material.badStock)} {material.unit}
-                        </span>
-                      </>
-                    )}
-                </div>
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+          {material.badStock !== null && material.badStock !== undefined && (
+            <div className="flex items-center text-red-600 gap-1 text-xs">
+              <span>Rusak :</span>
+              <span>
+                {formatNumber(material.badStock)} {material.unit}
+              </span>
+            </div>
+          )}
+        </div>
       );
     },
   },
